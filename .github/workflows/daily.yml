@@ -1,0 +1,60 @@
+# Daily data collection for compute-curve (simulation only; no trading).
+#
+# Runs scripts/daily.sh: collect today's prices from approved sources, rebuild
+# the index, run the paper account, evaluate, then commit new raw data and
+# reports and push them to the branch the run started from.
+#
+# Idempotent: a second run on the same UTC day collects nothing, rewrites
+# identical reports and makes no commit.
+#
+# Scheduled runs only fire from the repository's default branch, so this
+# starts working once the file is on that branch. Use this workflow or a cron
+# job on your own machine, not both.
+name: Daily collection
+
+on:
+  schedule:
+    - cron: "30 23 * * *" # 23:30 UTC; GitHub cron is always UTC and may start late under load
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-collection-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # The paper ledger lives in var/, which is git-ignored. Carry it between
+      # runs in the Actions cache. If the cache is evicted, the paper account
+      # restarts on that day; the daily report shows the first processed day.
+      - name: Restore the paper ledger
+        uses: actions/cache@v4
+        with:
+          path: var
+          key: paper-ledger-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            paper-ledger-${{ github.ref_name }}-
+
+      - name: Set the commit author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Collect, commit and push
+        run: bash scripts/daily.sh

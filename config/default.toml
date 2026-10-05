@@ -1,0 +1,104 @@
+# compute-curve default configuration.
+#
+# Any value marked `verified = false` or annotated ASSUMPTION is not a
+# finding. Reports print these assumptions next to every result.
+
+[project]
+seed = 20261005
+data_dir = "data"
+var_dir = "var"
+reports_dir = "reports"
+
+[http]
+user_agent = "compute-curve-research/0.1 (non-commercial research)"
+min_interval_s = 2.0      # minimum seconds between requests to the same host
+timeout_s = 30.0
+max_retries = 2
+
+# ---------------------------------------------------------------------------
+# Contract specifications. NOT VERIFIED against the CME rulebook: cmegroup.com
+# blocks automated access (docs/blockers.md B2). See docs/contract_specs.md.
+# ---------------------------------------------------------------------------
+[contracts.GPU1]
+product = "GPU1"
+gpu_model = "H100"
+underlying_index = "Silicon Data H100 Rental Index"
+gpu_hours_per_contract = 730.0   # from task brief; unverified
+listed_months = 36               # from task brief; unverified
+tick_size = 0.01                 # ASSUMPTION: USD 0.01 per GPU-hour = USD 7.30 per contract
+settlement_days = "calendar"     # ASSUMPTION: arithmetic average over calendar days
+exchange_fee_per_contract = 2.50 # ASSUMPTION: conservative placeholder
+initial_margin_per_contract = 400.0  # ASSUMPTION: about 25% of notional at ~USD 2.2/GPU-h
+verified = false
+notes = "All numeric terms pending rulebook verification."
+
+[contracts.GPU2]
+product = "GPU2"
+gpu_model = "B200"
+underlying_index = "Silicon Data B200 Rental Index"
+gpu_hours_per_contract = 730.0
+listed_months = 36
+tick_size = 0.01
+settlement_days = "calendar"
+exchange_fee_per_contract = 2.50
+initial_margin_per_contract = 1000.0 # ASSUMPTION: about 25% of notional at ~USD 5.5/GPU-h
+verified = false
+notes = "All numeric terms pending rulebook verification."
+
+[index]
+method = "provider_weighted_median"   # pre-registered primary method
+trim_fraction = 0.1                   # used only by the trimmed_mean variant
+min_providers = 2
+min_listings = 3
+terms = ["on_demand"]
+exclude_providers = []
+
+[index.variants]
+H100 = ["SXM", "PCIE", "NVL", "UNKNOWN"]
+B200 = ["SXM", "UNKNOWN"]
+
+# Conservative default trading costs for a thin, newly listed market.
+[costs]
+half_spread_ticks = 5.0     # ASSUMPTION: USD 0.05/GPU-h each way; wide for a new contract
+slippage_ticks = 2.0        # ASSUMPTION
+fee_per_contract = 5.00     # ASSUMPTION: exchange + clearing + broker, per side
+sensitivity_multipliers = [0.0, 0.5, 1.0, 2.0, 4.0]
+
+[risk]
+starting_cash = 100000.0
+max_contracts_per_month = 5
+max_gross_contracts = 10
+daily_loss_limit = 2000.0
+max_drawdown = 7500.0
+halt_days_after_daily_breach = 1
+
+[nowcast]
+min_training_months = 6
+min_days_observed = 1
+publication_lag_days = 1    # ASSUMPTION: index value for day d usable from d+1
+
+[schwartz_smith]
+dt_years = 0.0027397260273972603   # 1/365
+min_observations = 180
+jump_mean_prior = 0.0
+jump_std_prior = 0.15
+depreciation_rate_prior = 0.20     # ASSUMPTION: prior only, never reported as a finding
+
+[relative_value]
+# ASSUMPTION: B200/H100 throughput ratio from NVIDIA spec sheets (dense FP8 and
+# BF16 tensor throughput, HBM bandwidth all near 2.3x). Workload dependent.
+perf_ratio_b200_over_h100 = 2.3
+perf_ratio_low = 1.8
+perf_ratio_high = 3.0
+perf_ratio_source = "NVIDIA H100 and B200 datasheets; see docs/relative_value.md"
+zscore_window_days = 60
+entry_z = 2.0
+exit_z = 0.5
+
+[bootstrap]
+n_boot = 2000
+block_length = 5
+confidence = 0.95
+
+# Hardware launch windows ([[launches]] entries) are appended below from
+# docs/hardware_launches.md once sourced.

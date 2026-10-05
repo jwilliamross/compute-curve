@@ -1,16 +1,57 @@
 [project]
 name = "compute-curve"
 version = "0.1.0"
-description = "Add your description here"
+description = "Research and paper-trading codebase for CME compute futures (GPU1 H100, GPU2 B200). Simulation only."
 readme = "README.md"
-authors = [
-    { name = "Claude", email = "noreply@anthropic.com" }
-]
 requires-python = ">=3.11"
 dependencies = [
+    "duckdb>=1.5.6",
+    "httpx>=0.28.1",
+    "matplotlib>=3.11.2",
     "numpy>=2.4.6",
+    "pandas>=3.0.6",
+    "pydantic>=2.13.5",
+    "scipy>=1.17.1",
+    "statsmodels>=0.15.0",
 ]
+
+[project.scripts]
+compute-curve = "compute_curve.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.8.17,<0.9.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "network: test performs real HTTP requests (deselected by default with -m 'not network')",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ANN", "N", "SIM", "RUF", "PL", "NPY", "PD", "DTZ", "S"]
+ignore = [
+    "PLR0913",  # models legitimately take many parameters
+    "PLR2004",  # magic numbers are fine in numerical code with named configs
+    "PLR0917",  # numerical functions take several positional parameters
+    "ANN401",   # Any is used for raw JSON payloads from external APIs
+    "RUF001", "RUF002", "RUF003",  # unicode in docs/comments (e.g. Greek letters)
+    "N803", "N806",  # math notation (T, F, Q) in numerical code
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "ANN", "PLR2004", "S311", "S106", "RUF059"]
+# SQL strings interpolate only file paths constructed by this code, never user input.
+"src/compute_curve/storage/*.py" = ["S608"]

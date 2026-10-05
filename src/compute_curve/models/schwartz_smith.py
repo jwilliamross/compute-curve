@@ -191,6 +191,59 @@ def spot_measurement(
     return y, d, Z
 
 
+def spot_loglik(
+    log_spot: np.ndarray,
+    p: SSParams,
+    dt: float,
+    t_years: np.ndarray | None = None,
+    jumps: Sequence[bool] | None = None,
+) -> float:
+    """Exact Gaussian log-likelihood of a spot-only series (scalar fast path).
+
+    Numerically identical to :func:`kalman_filter` with
+    :func:`spot_measurement`, written with Python floats because the 2x2
+    algebra is faster that way inside an optimizer loop.
+    """
+    y = np.asarray(log_spot, float)
+    T = y.size
+    ty = np.arange(T) * dt if t_years is None else np.asarray(t_years, float)
+    jl = list(jumps) if jumps is not None else [False] * T
+    c0, G0, W0 = transition(p, dt, False)
+    c1, _, W1 = transition(p, dt, True)
+    a = float(G0[0, 0])
+    first = y[: max(1, min(T, 5))]
+    x0 = 0.0
+    x1 = float(np.nanmean(first)) if np.isfinite(first).any() else 0.0
+    p00, p01, p11 = p.sigma_chi**2 / (2 * p.kappa), 0.0, 1.0
+    r2 = p.meas_std**2
+    ll = 0.0
+    for t in range(T):
+        if t > 0:
+            c, W = (c1, W1) if jl[t] else (c0, W0)
+            x0, x1 = a * x0 + float(c[0]), x1 + float(c[1])
+            p00, p01, p11 = (
+                a * a * p00 + float(W[0, 0]),
+                a * p01 + float(W[0, 1]),
+                p11 + float(W[1, 1]),
+            )
+        yt = y[t]
+        if not np.isfinite(yt):
+            continue
+        g = -p.delta * ty[t]
+        v = yt - (g + x0 + x1)
+        f = p00 + 2 * p01 + p11 + r2
+        if f <= 0:
+            return -np.inf
+        k0 = (p00 + p01) / f
+        k1 = (p01 + p11) / f
+        x0 += k0 * v
+        x1 += k1 * v
+        h0, h1 = p00 + p01, p01 + p11
+        p00, p01, p11 = p00 - k0 * h0, p01 - k0 * h1, p11 - k1 * h1
+        ll += -0.5 * (LOG_2PI + np.log(f) + v * v / f)
+    return float(ll)
+
+
 _SPOT_FREE = ("kappa", "sigma_chi", "sigma_xi", "rho", "mu_xi", "meas_std")
 
 
@@ -259,8 +312,8 @@ def fit_spot_only(
             p = _unpack(theta, base)
         except ValueError:
             return 1e12
-        out = kalman_filter(y, d, Z, p, dt, jumps)
-        return -out.loglik if np.isfinite(out.loglik) else 1e12
+        ll = spot_loglik(y_all, p, dt, t_years, jumps)
+        return -ll if np.isfinite(ll) else 1e12
 
     starts = [_pack(base)]
     for k0 in (0.5, 5.0):
@@ -322,3 +375,146 @@ def forecast_log_spot(
 def expected_average_level(means: np.ndarray, variances: np.ndarray) -> float:
     """E[(1/N) sum S_d] when ln S_d ~ N(m_d, v_d): (1/N) sum exp(m_d + v_d / 2)."""
     return float(np.mean(np.exp(np.asarray(means) + 0.5 * np.asarray(variances))))
+
+
+# ----------------------------------------------------------------------------
+# Futures-panel estimation (monthly average-price contracts)
+# ----------------------------------------------------------------------------
+@dataclass(frozen=True)
+class PanelDesign:
+    """Averaging-day grids for each (time, slot) cell of the measurement panel.
+
+    ``seg_t``/``seg_slot`` identify the cell of each segment; ``tau`` holds the
+    averaging-day horizons in years for all segments concatenated, with
+    ``seg_start`` the offset of each segment; ``n_jumps`` counts scheduled
+    launches in (t, t + tau] for each grid point.
+    """
+
+    T: int
+    n_slots: int
+    t_years: np.ndarray
+    seg_t: np.ndarray
+    seg_slot: np.ndarray
+    seg_start: np.ndarray
+    tau: np.ndarray
+    n_jumps: np.ndarray
+
+
+def build_panel_design(
+    t_years: np.ndarray,
+    cells: Sequence[tuple[int, int, np.ndarray, np.ndarray]],
+    n_slots: int,
+) -> PanelDesign:
+    """``cells``: (t_index, slot, tau_grid_years, n_jumps_grid) for observed contracts.
+
+    Only contracts whose averaging month has *not* started are included; the
+    current month mixes known index values with expectations and is handled by
+    the nowcast model instead (see docs/term_structure_model.md).
+    """
+    seg_t, seg_slot, seg_start, taus, jumps = [], [], [], [], []
+    off = 0
+    for t, j, grid, nj in cells:
+        if grid.size == 0 or np.any(grid <= 0):
+            raise ValueError("averaging grid must be non-empty and strictly in the future")
+        seg_t.append(t)
+        seg_slot.append(j)
+        seg_start.append(off)
+        taus.append(np.asarray(grid, float))
+        jumps.append(np.asarray(nj, float))
+        off += grid.size
+    return PanelDesign(
+        T=len(t_years),
+        n_slots=n_slots,
+        t_years=np.asarray(t_years, float),
+        seg_t=np.asarray(seg_t, int),
+        seg_slot=np.asarray(seg_slot, int),
+        seg_start=np.asarray(seg_start, int),
+        tau=np.concatenate(taus) if taus else np.zeros(0),
+        n_jumps=np.concatenate(jumps) if jumps else np.zeros(0),
+    )
+
+
+def panel_measurement(p: SSParams, des: PanelDesign) -> tuple[np.ndarray, np.ndarray]:
+    """Intercepts d (T, n) and loadings Z (T, n, 2) for log average-price futures.
+
+    ln F_avg(t, M) is approximated by the mean over averaging days of
+    ln F(t, T_d). The neglected Jensen term is half the cross-day variance of
+    ln F within one month, below 1e-4 for plausible parameters (derivation in
+    docs/term_structure_model.md).
+    """
+    d = np.full((des.T, des.n_slots), np.nan)
+    Z = np.zeros((des.T, des.n_slots, 2))
+    Z[:, :, 1] = 1.0
+    if des.tau.size == 0:
+        return d, Z
+    seg_t_rep = np.repeat(des.seg_t, np.diff(np.append(des.seg_start, des.tau.size)))
+    tT = des.t_years[seg_t_rep] + des.tau
+    inter = -p.delta * tT + a_tau(p, des.tau) + des.n_jumps * (p.jump_mean + 0.5 * p.jump_std**2)
+    load = np.exp(-p.kappa * des.tau)
+    lens = np.diff(np.append(des.seg_start, des.tau.size))
+    inter_mean = np.add.reduceat(inter, des.seg_start) / lens
+    load_mean = np.add.reduceat(load, des.seg_start) / lens
+    d[des.seg_t, des.seg_slot] = inter_mean
+    Z[des.seg_t, des.seg_slot, 0] = load_mean
+    return d, Z
+
+
+_PANEL_FREE = (
+    "kappa",
+    "sigma_chi",
+    "sigma_xi",
+    "rho",
+    "mu_xi",
+    "meas_std",
+    "mu_xi_star",
+    "lambda_chi",
+)
+
+
+def _pack_panel(p: SSParams) -> np.ndarray:
+    return np.concatenate([_pack(p), [p.mu_xi_star, p.lambda_chi]])
+
+
+def _unpack_panel(theta: np.ndarray, base: SSParams) -> SSParams:
+    return replace(_unpack(theta[:6], base), mu_xi_star=float(theta[6]), lambda_chi=float(theta[7]))
+
+
+def fit_panel(
+    y: np.ndarray,
+    des: PanelDesign,
+    dt: float,
+    base: SSParams | None = None,
+    jumps: Sequence[bool] | None = None,
+    min_observations: int = 180,
+    maxiter: int = 3000,
+) -> FitResult | None:
+    """MLE of real-world and risk-neutral parameters from a futures panel.
+
+    ``y`` is (T, n_slots) log futures prices with NaN where unobserved.
+    Returns None when fewer than ``min_observations`` time steps carry data.
+    """
+    if int(np.isfinite(y).any(axis=1).sum()) < min_observations:
+        return None
+    base = base or SSParams()
+
+    def nll(theta: np.ndarray) -> float:
+        try:
+            p = _unpack_panel(theta, base)
+        except ValueError:
+            return 1e12
+        d, Z = panel_measurement(p, des)
+        out = kalman_filter(y, np.nan_to_num(d), Z, p, dt, jumps)
+        return -out.loglik if np.isfinite(out.loglik) else 1e12
+
+    res = optimize.minimize(
+        nll,
+        _pack_panel(base),
+        method="Nelder-Mead",
+        options={"maxiter": maxiter, "xatol": 1e-5, "fatol": 1e-5, "adaptive": True},
+    )
+    p_hat = _unpack_panel(res.x, base)
+    d, Z = panel_measurement(p_hat, des)
+    out = kalman_filter(y, np.nan_to_num(d), Z, p_hat, dt, jumps)
+    return FitResult(
+        p_hat, out.loglik, out.n_obs, len(_PANEL_FREE), bool(res.success), str(res.message)
+    )

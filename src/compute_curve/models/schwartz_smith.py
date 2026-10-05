@@ -439,8 +439,9 @@ def panel_measurement(p: SSParams, des: PanelDesign) -> tuple[np.ndarray, np.nda
 
     ln F_avg(t, M) is approximated by the mean over averaging days of
     ln F(t, T_d). The neglected Jensen term is half the cross-day variance of
-    ln F within one month, below 1e-4 for plausible parameters (derivation in
-    docs/term_structure_model.md).
+    ln F within one month: for a curve slope of b per year it is about
+    (b/12)^2/24, i.e. 3e-4 even at b = 1, under a tenth of one tick
+    (derivation in docs/term_structure_model.md).
     """
     d = np.full((des.T, des.n_slots), np.nan)
     Z = np.zeros((des.T, des.n_slots, 2))

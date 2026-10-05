@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from compute_curve.backtest import variants
+from compute_curve.backtest.bootstrap import block_bootstrap_ci, paired_loss_difference_ci
 from compute_curve.backtest.tearsheet import (
     cost_assumptions_md,
     cost_sensitivity,
@@ -27,6 +28,7 @@ from compute_curve.config import Config
 from compute_curve.index.tracking import join_own_and_published, tracking_stats
 from compute_curve.models import nowcast as nc
 from compute_curve.models import relative_value as rv
+from compute_curve.models import term_structure as ts_model
 from compute_curve.models.schwartz_smith import SSParams, fit_spot_only
 from compute_curve.paper.engine import AccountState, Key, Strategy, flat_strategy
 from compute_curve.paper.market import MarketData, MarketView
@@ -58,19 +60,25 @@ def _complete_months(published: pd.DataFrame, index_name: str) -> list[date]:
     return months
 
 
+def _covered(df: pd.DataFrame, gpu_model: str) -> pd.DataFrame:
+    if df.empty:
+        return df
+    return df.loc[(df["gpu_model"] == gpu_model) & df["meets_coverage"].astype(bool)]
+
+
 def data_sufficiency(cfg: Config, inp: Inputs) -> pd.DataFrame:
     rows = []
     for product, spec in cfg.contracts.items():
-        own = inp.own_index.loc[
-            (inp.own_index["gpu_model"] == spec.gpu_model) & inp.own_index["meets_coverage"]
-        ]
+        own = _covered(inp.own_index, spec.gpu_model)
+        hist = _covered(inp.own_index_hist, spec.gpu_model)
         pub = inp.published.loc[inp.published["index_name"] == spec.underlying_index]
         st = inp.settlements.loc[inp.settlements["product"] == product]
         rows.append(
             {
                 "product": product,
-                "own_index_days": len(own),
-                "published_index_days": len(pub),
+                "own_headline_days": len(own),
+                "own_panel_days": len(hist),
+                "settlement_index_days": len(pub),
                 "settlement_trade_days": st["trade_date"].nunique() if not st.empty else 0,
                 "complete_published_months": len(
                     _complete_months(inp.published, spec.underlying_index)
@@ -181,48 +189,110 @@ def eval_term_structure(cfg: Config, inp: Inputs) -> list[str]:
                     f"mu_xi {p.mu_xi:+.3f}. Weakly identified from spot data alone "
                     "(docs/term_structure_model.md); descriptive only, not used for trading."
                 )
-        lines.append(
-            f"- {product}: model-versus-market test needs futures settlements and realized final "
-            f"settlements. Available: {n_settle_days} settlement days. "
-            + ("Not testable yet." if n_settle_days < cfg.schwartz_smith.min_observations else "")
+        if n_settle_days < cfg.schwartz_smith.min_observations:
+            lines.append(
+                f"- {product}: model-versus-market test needs futures settlements and realized "
+                f"final settlements. Available: {n_settle_days} settlement days, minimum "
+                f"{cfg.schwartz_smith.min_observations}. Not testable yet."
+            )
+            continue
+        base = SSParams(
+            delta=cfg.schwartz_smith.depreciation_rate_prior,
+            jump_mean=cfg.schwartz_smith.jump_mean_prior,
+            jump_std=cfg.schwartz_smith.jump_std_prior,
         )
+        rows = ts_model.walk_forward(
+            inp.market, spec, cfg.launches, base, cfg.schwartz_smith.min_observations
+        )
+        if rows.empty:
+            lines.append(f"- {product}: no forecast has a realized settlement yet.")
+            continue
+        for bl in ("futures", "random_walk"):
+            lm = (np.log(rows["model"]) - np.log(rows["realized"])) ** 2
+            lb = (np.log(rows[bl]) - np.log(rows["realized"])) ** 2
+            mean, ci = paired_loss_difference_ci(
+                lm.to_numpy(),
+                lb.to_numpy(),
+                cfg.bootstrap.n_boot,
+                6,
+                cfg.bootstrap.confidence,
+                cfg.project.seed,
+            )
+            lines.append(
+                f"- {product}: model vs {bl}, {len(rows)} forecasts over "
+                f"{rows['contract_month'].nunique()} realized months: mean loss difference "
+                f"{mean:+.5f} [{ci[0]:+.5f}, {ci[1]:+.5f}]."
+            )
     return lines
+
+
+def _series(df: pd.DataFrame, gpu_model: str) -> pd.Series:
+    d = _covered(df, gpu_model)
+    if d.empty:
+        return pd.Series(dtype=float)
+    return d.set_index("as_of_date")["value"].astype(float).sort_index()
+
+
+def _ratio_verdict(ratio: float, cfg: Config) -> str:
+    rc = cfg.relative_value
+    central = "cheaper" if ratio < rc.perf_ratio_b200_over_h100 else "dearer"
+    if ratio < rc.perf_ratio_low:
+        robust = "cheaper across the whole assumed range"
+    elif ratio > rc.perf_ratio_high:
+        robust = "dearer across the whole assumed range"
+    else:
+        robust = "not robust: the break-even ratio lies inside the assumed range"
+    return f"B200 is {central} per unit of compute at the central ratio; {robust}"
 
 
 def eval_relative_value(cfg: Config, inp: Inputs) -> tuple[list[str], bool]:
     rc = cfg.relative_value
-    own = inp.own_index.loc[inp.own_index["meets_coverage"]]
-    h = own.loc[own["gpu_model"] == "H100"].set_index("as_of_date")["value"]
-    b = own.loc[own["gpu_model"] == "B200"].set_index("as_of_date")["value"]
-    lines = []
-    if not h.empty and not b.empty:
+    lines = [
+        f"Assumed B200/H100 throughput ratio {rc.perf_ratio_b200_over_h100} "
+        f"(range {rc.perf_ratio_low}-{rc.perf_ratio_high}; docs/relative_value.md).",
+        "",
+    ]
+    for label, frame in (("headline", inp.own_index), ("history panel", inp.own_index_hist)):
+        h, b = _series(frame, "H100"), _series(frame, "B200")
         common = sorted(set(h.index) & set(b.index))
+        if not common:
+            lines.append(f"- {label}: no day with both series.")
+            continue
+        ratios = pd.Series([b[d] / h[d] for d in common], index=common)
+        d = common[-1]
+        lines.append(
+            f"- {label}, {d}: H100 USD {h[d]:.3f}, B200 USD {b[d]:.3f} per GPU-hour; break-even "
+            f"ratio {ratios.iloc[-1]:.2f} (min {ratios.min():.2f}, median {ratios.median():.2f}, "
+            f"max {ratios.max():.2f} over {len(ratios)} days). {_ratio_verdict(ratios.iloc[-1], cfg)}."
+        )
+    ref = inp.reference
+    for name_h, name_b, label in (
+        ("Computable GPU Index H100", "Computable GPU Index B200", "Computable GPU Index"),
+        (
+            "GetDeploying nvidia-h100 ON_DEMAND weekly median",
+            "GetDeploying nvidia-b200 ON_DEMAND weekly median",
+            "GetDeploying weekly median",
+        ),
+    ):
+        hh = _ref_daily(ref, name_h)
+        bb = _ref_daily(ref, name_b)
+        common = sorted(set(hh.index) & set(bb.index))
         if common:
-            d = common[-1]
-            ratio = rv.breakeven_ratio(float(b[d]), float(h[d]))
+            r = bb[common[-1]] / hh[common[-1]]
             lines.append(
-                f"- Latest common day {d}: our index H100 USD {h[d]:.3f}/GPU-h, B200 USD {b[d]:.3f}/GPU-h. "
-                f"Break-even throughput ratio {ratio:.2f}. Assumed ratio {rc.perf_ratio_b200_over_h100} "
-                f"(range {rc.perf_ratio_low}-{rc.perf_ratio_high}). B200 is "
-                + ("cheaper" if ratio < rc.perf_ratio_b200_over_h100 else "dearer")
-                + " per unit of compute at the central assumption; at the range ends it is "
-                + (
-                    "cheaper"
-                    if ratio < rc.perf_ratio_low
-                    else "dearer"
-                    if ratio > rc.perf_ratio_high
-                    else "ambiguous"
-                )
-                + ". This is one observation, not a finding."
+                f"- {label}, {common[-1]}: break-even ratio {r:.2f}. {_ratio_verdict(r, cfg)}."
             )
+    h, b = _series(inp.own_index_hist, "H100"), _series(inp.own_index_hist, "B200")
     spread = (
         rv.log_spread(b, h, rc.perf_ratio_b200_over_h100)
-        if not h.empty and not b.empty
+        if len(h) and len(b)
         else pd.Series(dtype=float)
     )
+    lines.append("")
     if len(spread) < MIN_RV_DAYS:
         lines.append(
-            f"- Spread forecast test: insufficient history ({len(spread)} days; minimum {MIN_RV_DAYS})."
+            f"- Spread mean-reversion test (H4): insufficient history ({len(spread)} days on the "
+            f"fixed panel; minimum {MIN_RV_DAYS}). Not run."
         )
         return lines, False
     preds = rv.walk_forward_ar1(spread, horizon=5, min_train=60)
@@ -235,10 +305,124 @@ def eval_relative_value(cfg: Config, inp: Inputs) -> tuple[list[str], bool]:
             f"- AR(1) vs random walk, 5-day spread change, {ev.n} forecasts: MSE {ev.mse_model:.6f} vs "
             f"{ev.mse_random_walk:.6f}; difference {ev.mean_diff:+.6f} [{ev.ci[0]:+.6f}, {ev.ci[1]:+.6f}]."
         )
-    lines.append(
-        "- This tests our spot index spread. Futures settlements are needed to test a tradable spread."
-    )
+    lines.append("- This tests the spot spread. A tradable test needs futures settlements.")
     return lines, ok
+
+
+def _ref_daily(ref: pd.DataFrame, index_name: str) -> pd.Series:
+    """Last value per UTC date of a reference index (latest vintage)."""
+    if ref.empty:
+        return pd.Series(dtype=float)
+    r = ref.loc[ref["index_name"] == index_name].copy()
+    if r.empty:
+        return pd.Series(dtype=float)
+    r["as_of"] = pd.to_datetime(r["as_of"], utc=True)
+    r["d"] = r["as_of"].dt.date
+    return r.sort_values("as_of").groupby("d")["value"].last().astype(float)
+
+
+def _vol_ci(
+    values: pd.Series, periods_per_year: float, cfg: Config
+) -> tuple[float, tuple[float, float], float, int]:
+    r = np.diff(np.log(values.to_numpy(float)))
+    if r.size < 10:
+        return float("nan"), (float("nan"), float("nan")), float("nan"), int(r.size)
+    scale = float(np.sqrt(periods_per_year))
+    vol = float(np.std(r, ddof=1) * scale)
+    ci = block_bootstrap_ci(
+        r,
+        lambda x: float(np.std(x, ddof=1) * scale),
+        cfg.bootstrap.n_boot,
+        cfg.bootstrap.block_length,
+        cfg.bootstrap.confidence,
+        cfg.project.seed,
+    )
+    return vol, ci, float(np.mean(r == 0)), int(r.size)
+
+
+def describe_series(cfg: Config, inp: Inputs) -> pd.DataFrame:
+    """Descriptive statistics of every real price series held (no model, no test)."""
+    rows = []
+    specs = [
+        ("own headline", _series(inp.own_index, "H100"), "H100", 365.0),
+        ("own headline", _series(inp.own_index, "B200"), "B200", 365.0),
+        ("own history panel", _series(inp.own_index_hist, "H100"), "H100", 365.0),
+        ("own history panel", _series(inp.own_index_hist, "B200"), "B200", 365.0),
+        (
+            "Computable GPU Index (daily close)",
+            _ref_daily(inp.reference, "Computable GPU Index H100"),
+            "H100",
+            365.0,
+        ),
+        (
+            "Computable GPU Index (daily close)",
+            _ref_daily(inp.reference, "Computable GPU Index B200"),
+            "B200",
+            365.0,
+        ),
+        (
+            "GetDeploying weekly median",
+            _ref_daily(inp.reference, "GetDeploying nvidia-h100 ON_DEMAND weekly median"),
+            "H100",
+            52.0,
+        ),
+        (
+            "GetDeploying weekly median",
+            _ref_daily(inp.reference, "GetDeploying nvidia-b200 ON_DEMAND weekly median"),
+            "B200",
+            52.0,
+        ),
+    ]
+    for name, ser, gpu, ppy in specs:
+        if ser.empty:
+            continue
+        vol, ci, zero, _n = _vol_ci(ser, ppy, cfg)
+        rows.append(
+            {
+                "series": name,
+                "gpu": gpu,
+                "first": str(ser.index.min()),
+                "last": str(ser.index.max()),
+                "n_obs": len(ser),
+                "last_value": float(ser.iloc[-1]),
+                "share_unchanged": zero,
+                "ann_vol": vol,
+                "ann_vol_ci_low": ci[0],
+                "ann_vol_ci_high": ci[1],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def cross_check_reference(cfg: Config, inp: Inputs) -> list[str]:
+    """Our fixed-panel index against the Computable GPU Index on overlapping days."""
+    lines = []
+    for gpu in ("H100", "B200"):
+        own = _series(inp.own_index_hist, gpu)
+        ref = _ref_daily(inp.reference, f"Computable GPU Index {gpu}")
+        joined = pd.DataFrame({"as_of_date": list(own.index), "own": own.to_numpy()}).merge(
+            pd.DataFrame({"as_of_date": list(ref.index), "published": ref.to_numpy()}),
+            on="as_of_date",
+        )
+        ts = tracking_stats(
+            joined,
+            gpu,
+            MIN_TRACKING_DAYS,
+            cfg.bootstrap.n_boot,
+            cfg.bootstrap.block_length,
+            cfg.project.seed,
+        )
+        if ts is None:
+            lines.append(
+                f"- {gpu}: {len(joined)} overlapping days; fewer than {MIN_TRACKING_DAYS}."
+            )
+            continue
+        lines.append(
+            f"- {gpu}: {ts.n_days} overlapping days. Mean log difference (ours minus CGI) "
+            f"{ts.mean_log_error:+.3f} [{ts.mean_log_error_ci[0]:+.3f}, {ts.mean_log_error_ci[1]:+.3f}]; "
+            f"RMSE {ts.rmse_log:.3f}; correlation of daily changes {fmt(ts.corr_daily_changes, 2)}."
+        )
+    return lines
 
 
 def run_evaluation(cfg: Config) -> Path:
@@ -248,6 +432,8 @@ def run_evaluation(cfg: Config) -> Path:
     now_lines, now_verdicts = eval_nowcast(cfg, inp)
     ts_lines = eval_term_structure(cfg, inp)
     rv_lines, rv_ok = eval_relative_value(cfg, inp)
+    desc = describe_series(cfg, inp)
+    xcheck = cross_check_reference(cfg, inp)
     has_futures = not inp.settlements.empty
     nowcast_ok = all(bool(v.get("validated")) for v in now_verdicts.values()) and bool(now_verdicts)
     validation = {
@@ -270,11 +456,36 @@ def run_evaluation(cfg: Config) -> Path:
         f"Generated {validation['generated']}. Variants declared project-wide: {variants.count()}.",
         "No synthetic data is used in this report.",
         "",
+        "## Bottom line",
+        "",
+        "None of the three claims can be tested on 2026-10-05. GPU1/GPU2 are not listed "
+        "(CFTC review extended to 2026-11-09), so there are no futures prices. History of the "
+        "settlement index cannot be stored without a licence. Everything below except the "
+        "data-availability table is descriptive.",
+        "",
         "## Data available",
         "",
         frame_to_md(suff),
         "",
-        "## Our index versus the published index",
+        "## Descriptive statistics of the price series held",
+        "",
+        "Annualized volatility of log changes (calendar days for daily series, weeks for "
+        "weekly), with a circular block-bootstrap 95% CI. `share_unchanged` is the share of "
+        "periods with no change. Silicon Data reports realized volatility through 2026-08-14 "
+        "of 26.2% (H100) and 30.2% (B200) for its own indices (cited, not computed here).",
+        "",
+        frame_to_md(desc, 3) if not desc.empty else "_no series_",
+        "",
+        "Computable GPU Index data: (c) 2026 Computable, CC BY-NC 4.0. GetDeploying data: "
+        "CC BY 4.0. gpurentalprices.com data: CC BY 4.0.",
+        "",
+        "## Our index versus an independent index (Computable GPU Index)",
+        "",
+        "A construction cross-check, not a tracking error against the settlement index.",
+        "",
+        *xcheck,
+        "",
+        "## Our index versus the settlement index",
         "",
         *track,
         "",
@@ -290,7 +501,7 @@ def run_evaluation(cfg: Config) -> Path:
         "",
         "Backtests on real futures history require CME settlements; see `reports/backtest_real.md`.",
         "",
-        "### Relative value (spot, descriptive)",
+        "### Relative value (descriptive)",
         "",
         *rv_lines,
         "",

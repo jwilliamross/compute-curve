@@ -14,7 +14,7 @@ from compute_curve.storage.raw_store import (
 
 
 def test_write_is_immutable(tmp_path, vast_payload, t0):
-    rows, _ = VastCollector().normalize(vast_payload, t0, "vast_x")
+    rows = VastCollector().normalize(vast_payload, t0, "vast_x").listings
     df = observations_to_frame(rows)
     p = write_snapshot(tmp_path, "vast", t0, df)
     assert p == snapshot_path(tmp_path, "vast", t0)
@@ -29,7 +29,7 @@ def test_write_is_immutable(tmp_path, vast_payload, t0):
 
 
 def test_snapshots_for_day(tmp_path, vast_payload, t0):
-    rows, _ = VastCollector().normalize(vast_payload, t0, "vast_x")
+    rows = VastCollector().normalize(vast_payload, t0, "vast_x").listings
     df = observations_to_frame(rows)
     write_snapshot(tmp_path, "vast", t0, df)
     write_snapshot(tmp_path, "vast", datetime(2026, 10, 5, 18, tzinfo=UTC), df)

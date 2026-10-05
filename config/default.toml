@@ -15,6 +15,24 @@ min_interval_s = 2.0      # minimum seconds between requests to the same host
 timeout_s = 30.0
 max_retries = 2
 
+[collectors]
+# Only sources approved in docs/data_sources.md.
+enabled = ["cgi", "getdeploying", "gpurentalprices", "lium", "nebius", "lambda", "coreweave", "hyperstack", "verda"]
+# Terms prohibit automated collection or index use (docs/data_sources.md).
+excluded_providers = ["vast", "runpod"]
+# Sources that require a data licence; add one only after a licence is held.
+licensed = []
+
+[signals]
+# A signal places paper orders only if it is listed here AND has been
+# validated out of sample (var/validation.json). Otherwise it runs in shadow
+# mode: predictions are logged for later evaluation, no orders are placed.
+trade = ["nowcast", "relative_value"]
+nowcast_size = 1
+nowcast_edge_multiple = 2.0
+rv_size_gpu2 = 1
+rv_contract_offset = 1
+
 # ---------------------------------------------------------------------------
 # Contract specifications. NOT VERIFIED against the CME rulebook: cmegroup.com
 # blocks automated access (docs/blockers.md B2). See docs/contract_specs.md.
@@ -48,13 +66,16 @@ notes = "All numeric terms pending rulebook verification."
 [index]
 method = "provider_weighted_median"   # pre-registered primary method
 trim_fraction = 0.1                   # used only by the trimmed_mean variant
-min_providers = 2
-min_listings = 3
+min_providers = 3
+min_listings = 5
 terms = ["on_demand"]
-exclude_providers = []
+exclude_providers = ["aws", "azure", "gcp", "oci"]   # hyperscalers: index is neocloud-only
+allowed_regions = ["US", "NA"]                       # contract: "Geography: United States"
+include_unknown_region = true                        # most sources state no region
+source_priority = ["lambda", "coreweave", "nebius", "hyperstack", "verda", "lium", "gpurentalprices", "gpurentalprices_hist", "cgi"]
 
 [index.variants]
-H100 = ["SXM", "PCIE", "NVL", "UNKNOWN"]
+H100 = ["SXM", "PCIE", "NVL", "NVLINK", "UNKNOWN"]
 B200 = ["SXM", "UNKNOWN"]
 
 # Conservative default trading costs for a thin, newly listed market.

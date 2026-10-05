@@ -1,4 +1,10 @@
-"""Vast.ai marketplace offers collector.
+"""Vast.ai marketplace offers collector. DISABLED: licence required.
+
+Vast.ai's terms (version dated 2026-09-01) prohibit automated retrieval and
+any use of its data to construct an index or benchmark without written
+permission (docs/data_sources.md, docs/blockers.md B5). The snapshot runner
+refuses this collector unless ``vast`` is listed in ``collectors.licensed``,
+which should happen only after a data licence from data@vast.ai is in hand.
 
 Endpoint: ``POST https://console.vast.ai/api/v0/bundles/`` (documented at
 https://docs.vast.ai/api-reference/search/search-offers). The search endpoint
@@ -19,6 +25,7 @@ import json
 from datetime import datetime
 from typing import Any
 
+from compute_curve.collectors.base import CollectedBatch
 from compute_curve.http import PoliteClient
 from compute_curve.schema import (
     Availability,
@@ -70,6 +77,7 @@ KEEP_FIELDS: tuple[str, ...] = (
 class VastCollector:
     source_id = "vast"
     terms_url = "https://vast.ai/terms"
+    attribution = "Vast.ai (licence required; not collected)"
 
     def __init__(self, limit: int = 1000) -> None:
         self.limit = limit
@@ -89,9 +97,7 @@ class VastCollector:
         resp.raise_for_status()
         return resp.json()
 
-    def normalize(
-        self, payload: Any, ts_observed: datetime, snapshot_id: str
-    ) -> tuple[list[PriceObservation], int]:
+    def normalize(self, payload: Any, ts_observed: datetime, snapshot_id: str) -> CollectedBatch:
         offers = payload.get("offers", []) if isinstance(payload, dict) else []
         rows: list[PriceObservation] = []
         dropped = 0
@@ -101,7 +107,7 @@ class VastCollector:
                 dropped += 1
             else:
                 rows.append(row)
-        return rows, dropped
+        return CollectedBatch(listings=rows, n_dropped=dropped)
 
 
 def normalize_offer(

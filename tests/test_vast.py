@@ -4,7 +4,8 @@ from compute_curve.collectors.vast import VastCollector, normalize_offer
 
 
 def test_normalize_fixture(vast_payload, t0):
-    rows, dropped = VastCollector().normalize(vast_payload, t0, "vast_20261005T170000Z")
+    batch = VastCollector().normalize(vast_payload, t0, "vast_20261005T170000Z")
+    rows, dropped = batch.listings, batch.n_dropped
     # RTX 4090, zero price and GB200 are dropped
     assert dropped == 3
     assert [r.gpu_model.value for r in rows] == ["H100", "H100", "B200"]
@@ -17,7 +18,7 @@ def test_normalize_fixture(vast_payload, t0):
 
 
 def test_sensitive_fields_never_stored(vast_payload, t0):
-    rows, _ = VastCollector().normalize(vast_payload, t0, "x")
+    rows = VastCollector().normalize(vast_payload, t0, "x").listings
     for r in rows:
         raw = json.loads(r.raw_json)
         assert "public_ipaddr" not in raw

@@ -59,9 +59,11 @@ def run_backtest(
         raise ValueError(f"run {run_id} already exists in this ledger")
     state = new_account(cfg)
     costs = CostModel.from_config(cfg, cost_multiplier)
+    buf = ledger.LedgerBuffer()
     for d in _days(start, end):
         rec = run_day(state, d, market, strategy, cfg, costs)
-        ledger.write_day(con, run_id, rec, state)
+        buf.add(run_id, rec, state)
+    buf.flush(con)
     return RunResult(
         run_id=run_id,
         account=ledger.table(con, "account_daily", run_id),

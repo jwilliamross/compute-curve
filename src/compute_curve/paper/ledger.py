@@ -104,14 +104,16 @@ def _insert(con: duckdb.DuckDBPyConnection, table: str, rows: list[dict[str, obj
         con.unregister("_tmp_rows")
 
 
-def write_day(
-    con: duckdb.DuckDBPyConnection, run_id: str, rec: DayRecord, state: AccountState
-) -> None:
+TABLES = ("account_daily", "positions", "orders", "fills", "cash_flows", "events")
+
+
+def rows_for_day(
+    run_id: str, rec: DayRecord, state: AccountState
+) -> dict[str, list[dict[str, object]]]:
+    """Ledger rows produced by one processed day, keyed by table."""
     base = {"run_id": run_id, "day": rec.day}
-    _insert(
-        con,
-        "account_daily",
-        [
+    return {
+        "account_daily": [
             {
                 **base,
                 **rec.account,
@@ -119,12 +121,36 @@ def write_day(
                 "order_seq": state.order_seq,
             }
         ],
-    )
-    _insert(con, "positions", [{**base, **p} for p in rec.positions])
-    _insert(con, "orders", [{**base, **o} for o in rec.orders])
-    _insert(con, "fills", [{**base, **f} for f in rec.fills])
-    _insert(con, "cash_flows", [{**base, **c} for c in rec.cash_flows])
-    _insert(con, "events", [{**base, **e} for e in rec.events])
+        "positions": [{**base, **p} for p in rec.positions],
+        "orders": [{**base, **o} for o in rec.orders],
+        "fills": [{**base, **f} for f in rec.fills],
+        "cash_flows": [{**base, **c} for c in rec.cash_flows],
+        "events": [{**base, **e} for e in rec.events],
+    }
+
+
+class LedgerBuffer:
+    """Accumulates rows in memory and inserts them in one batch per table."""
+
+    def __init__(self) -> None:
+        self.rows: dict[str, list[dict[str, object]]] = {t: [] for t in TABLES}
+
+    def add(self, run_id: str, rec: DayRecord, state: AccountState) -> None:
+        for table, rows in rows_for_day(run_id, rec, state).items():
+            self.rows[table].extend(rows)
+
+    def flush(self, con: duckdb.DuckDBPyConnection) -> None:
+        for table in TABLES:
+            _insert(con, table, self.rows[table])
+            self.rows[table] = []
+
+
+def write_day(
+    con: duckdb.DuckDBPyConnection, run_id: str, rec: DayRecord, state: AccountState
+) -> None:
+    buf = LedgerBuffer()
+    buf.add(run_id, rec, state)
+    buf.flush(con)
 
 
 def last_day(con: duckdb.DuckDBPyConnection, run_id: str) -> date | None:

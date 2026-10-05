@@ -2,7 +2,8 @@
 
 Inputs:
 
-* ``data/raw/**.parquet``                      collector snapshots (immutable)
+* ``data/raw/listings/**.parquet``             listing snapshots (immutable)
+* ``data/raw/indices/**.parquet``              third-party index snapshots (immutable)
 * ``data/manual/published_index/*.csv``        published index values the user
                                                downloads by hand
 * ``data/manual/cme_settlements/*.csv``        CME daily settlements the user
@@ -23,7 +24,13 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-from compute_curve.storage.raw_store import normalize_ts
+from compute_curve.storage.raw_store import (
+    INDICES,
+    LISTINGS,
+    index_observations_to_frame,
+    normalize_ts,
+    observations_to_frame,
+)
 from compute_curve.timeutil import ensure_utc
 
 PUBLISHED_INDEX_COLUMNS = ("index_name", "as_of_date", "value")
@@ -42,36 +49,50 @@ def connect(db_path: Path | None = None) -> duckdb.DuckDBPyConnection:
     return duckdb.connect()
 
 
-def register_observations(con: duckdb.DuckDBPyConnection, raw_dir: Path) -> int:
-    """(Re)create the ``observations`` view over all raw Parquet; return row count."""
-    if not _glob_has_files(raw_dir, "**/*.parquet"):
-        con.execute(
-            """
-            CREATE OR REPLACE VIEW observations AS
-            SELECT
-                CAST(NULL AS TIMESTAMPTZ) AS ts_observed, CAST(NULL AS VARCHAR) AS provider,
-                CAST(NULL AS VARCHAR) AS gpu_model, CAST(NULL AS VARCHAR) AS config,
-                CAST(NULL AS DOUBLE) AS price_usd_per_gpu_hour, CAST(NULL AS VARCHAR) AS term,
-                CAST(NULL AS VARCHAR) AS region, CAST(NULL AS VARCHAR) AS availability,
-                CAST(NULL AS VARCHAR) AS source, CAST(NULL AS VARCHAR) AS snapshot_id,
-                CAST(NULL AS VARCHAR) AS gpu_variant, CAST(NULL AS INTEGER) AS gpus_per_instance,
-                CAST(NULL AS VARCHAR) AS listing_id, CAST(NULL AS VARCHAR) AS source_url,
-                CAST(NULL AS VARCHAR) AS price_basis, CAST(NULL AS VARCHAR) AS raw_json,
-                CAST(NULL AS BOOLEAN) AS is_synthetic
-            WHERE false
-            """
-        )
+def _register_parquet_view(
+    con: duckdb.DuckDBPyConnection, name: str, folder: Path, empty: pd.DataFrame
+) -> int:
+    """(Re)create view ``name`` over all Parquet under ``folder``; return row count."""
+    if not _glob_has_files(folder, "**/*.parquet"):
+        con.register(f"_{name}_empty", empty)
+        con.execute(f"CREATE OR REPLACE VIEW {name} AS SELECT * FROM _{name}_empty")
         return 0
-    pattern = (raw_dir / "**" / "*.parquet").as_posix()
+    pattern = (folder / "**" / "*.parquet").as_posix()
     con.execute(
         f"""
-        CREATE OR REPLACE VIEW observations AS
+        CREATE OR REPLACE VIEW {name} AS
         SELECT * FROM read_parquet('{pattern}', union_by_name = true)
         WHERE NOT coalesce(is_synthetic, false)
         """
     )
-    row = con.execute("SELECT count(*) FROM observations").fetchone()
+    row = con.execute(f"SELECT count(*) FROM {name}").fetchone()
     return int(row[0]) if row else 0
+
+
+def register_observations(con: duckdb.DuckDBPyConnection, raw_dir: Path) -> int:
+    """View ``observations`` over ``<raw_dir>/listings``; return row count."""
+    return _register_parquet_view(
+        con, "observations", raw_dir / LISTINGS, observations_to_frame([])
+    )
+
+
+def register_reference_indices(con: duckdb.DuckDBPyConnection, raw_dir: Path) -> int:
+    """View ``reference_indices`` over ``<raw_dir>/indices``; return row count."""
+    return _register_parquet_view(
+        con, "reference_indices", raw_dir / INDICES, index_observations_to_frame([])
+    )
+
+
+def reference_indices_frame(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+    """Latest vintage of every third-party index value (one row per name and as_of)."""
+    df = con.execute(
+        """
+        SELECT * FROM reference_indices
+        QUALIFY row_number() OVER (PARTITION BY index_name, as_of ORDER BY ts_observed DESC) = 1
+        ORDER BY index_name, as_of
+        """
+    ).df()
+    return normalize_ts(df, "ts_observed", "as_of")
 
 
 def load_published_index_csvs(folder: Path, publication_lag_days: int) -> pd.DataFrame:
@@ -163,7 +184,7 @@ def point_in_time(df: pd.DataFrame, as_of: datetime, ts_col: str = "ts_available
 def observations_frame(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """All non-synthetic observations, with ``ts_available = ts_observed``."""
     df = con.execute("SELECT * FROM observations ORDER BY ts_observed").df()
-    df = normalize_ts(df, "ts_observed")
+    df = normalize_ts(df, "ts_observed", "ts_source")
     df["ts_available"] = df["ts_observed"]
     return df
 

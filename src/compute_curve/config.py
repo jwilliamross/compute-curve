@@ -65,11 +65,66 @@ class IndexConfig(_Strict):
     min_providers: int = Field(default=2, ge=1)
     min_listings: int = Field(default=3, ge=1)
     terms: list[str] = ["on_demand"]
-    exclude_providers: list[str] = []
+    # Hyperscalers are excluded: the settlement index tracks neoclouds.
+    exclude_providers: list[str] = ["aws", "azure", "gcp", "oci"]
     variants: dict[str, list[str]] = {
-        "H100": ["SXM", "PCIE", "NVL", "UNKNOWN"],
+        "H100": ["SXM", "PCIE", "NVL", "NVLINK", "UNKNOWN"],
         "B200": ["SXM", "UNKNOWN"],
     }
+    # GPU1/GPU2 reference "Geography: United States". Listings with an explicit
+    # region outside this list are excluded; unknown regions are kept when
+    # include_unknown_region is true (most sources do not state a region).
+    allowed_regions: list[str] = ["US", "NA"]
+    include_unknown_region: bool = True
+    # When several sources report the same provider on the same day, keep the
+    # highest-priority source only (direct pages first, aggregators last).
+    source_priority: list[str] = [
+        "lambda",
+        "coreweave",
+        "nebius",
+        "hyperstack",
+        "verda",
+        "lium",
+        "gpurentalprices",
+        "gpurentalprices_hist",
+        "cgi",
+    ]
+
+
+class CollectorsConfig(_Strict):
+    enabled: list[str] = [
+        "cgi",
+        "getdeploying",
+        "gpurentalprices",
+        "lium",
+        "nebius",
+        "lambda",
+        "coreweave",
+        "hyperstack",
+        "verda",
+    ]
+    # Providers whose own terms prohibit automated collection or index use;
+    # dropped even when they arrive via a third-party aggregator.
+    excluded_providers: list[str] = ["vast", "runpod"]
+    # Sources that need a licence; listed here only once a licence is held.
+    licensed: list[str] = []
+
+
+class SignalsConfig(_Strict):
+    """Trading signals. A signal trades only if listed here AND validated.
+
+    Validation status is written by ``compute-curve evaluate`` to
+    ``var/validation.json``; a model that has not beaten its baseline out of
+    sample runs in shadow mode (predictions logged, no orders).
+    """
+
+    trade: list[str] = ["nowcast", "relative_value"]
+    nowcast_size: int = Field(default=1, ge=0)
+    nowcast_edge_multiple: float = Field(
+        default=2.0, gt=0, description="Required edge as a multiple of round-trip cost"
+    )
+    rv_size_gpu2: int = Field(default=1, ge=0)
+    rv_contract_offset: int = Field(default=1, ge=0, description="0=front, 1=second month")
 
 
 class CostConfig(_Strict):
@@ -139,6 +194,8 @@ class BootstrapConfig(_Strict):
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
+    collectors: CollectorsConfig = CollectorsConfig()
+    signals: SignalsConfig = SignalsConfig()
     contracts: dict[str, ContractSpec]
     index: IndexConfig = IndexConfig()
     costs: CostConfig

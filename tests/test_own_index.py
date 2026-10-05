@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import numpy as np
 import pandas as pd
@@ -73,3 +73,66 @@ def test_only_latest_snapshot_per_day_and_filters(cfg):
     assert idx.iloc[0]["n_listings"] == 2
     assert idx.iloc[0]["value"] == pytest.approx(2.1)
     assert idx.iloc[0]["ts_available"] == pd.Timestamp(late)
+
+
+def _row(provider, price, ts, source, region=None, ts_source=None, model="H100"):
+    return {
+        "ts_observed": ts,
+        "ts_source": ts_source,
+        "provider": provider,
+        "gpu_model": model,
+        "gpu_variant": "SXM",
+        "price_usd_per_gpu_hour": price,
+        "term": "on_demand",
+        "availability": "unknown",
+        "region": region,
+        "source": source,
+        "snapshot_id": f"{source}_{ts:%H}",
+        "is_synthetic": False,
+    }
+
+
+def test_region_filter_and_source_priority(cfg):
+    ts = datetime(2026, 10, 5, 12, tzinfo=UTC)
+    rows = [
+        _row("lambda", 4.0, ts, "lambda"),
+        _row("lambda", 3.0, ts, "cgi"),  # same provider via aggregator: dropped by priority
+        _row("nebius", 9.0, ts, "nebius", region="EU"),  # explicit non-US region: excluded
+        _row("coreweave", 6.0, ts, "coreweave", region="NA"),
+        _row("hyperstack", 2.0, ts, "hyperstack"),
+        _row("aws", 7.0, ts, "gpurentalprices"),  # hyperscaler: excluded
+    ]
+    idx = build_daily_index(pd.DataFrame(rows), cfg.index, gpu_models=["H100"])
+    r = idx.iloc[0]
+    assert r["n_providers"] == 3 and r["n_listings"] == 3
+    assert r["value"] == pytest.approx(4.0)
+
+
+def test_backfilled_rows_dated_by_source_time(cfg):
+    fetched_today = datetime(2026, 10, 5, 12, tzinfo=UTC)
+    rows = [
+        _row(
+            "a",
+            2.0,
+            fetched_today,
+            "gpurentalprices_hist",
+            ts_source=datetime(2026, 8, 1, 23, tzinfo=UTC),
+        ),
+        _row(
+            "b",
+            3.0,
+            fetched_today,
+            "gpurentalprices_hist",
+            ts_source=datetime(2026, 8, 1, 23, tzinfo=UTC),
+        ),
+        _row(
+            "c",
+            4.0,
+            fetched_today,
+            "gpurentalprices_hist",
+            ts_source=datetime(2026, 8, 1, 23, tzinfo=UTC),
+        ),
+    ]
+    idx = build_daily_index(pd.DataFrame(rows), cfg.index, gpu_models=["H100"])
+    assert list(idx["as_of_date"]) == [date(2026, 8, 1)]
+    assert idx.iloc[0]["ts_available"] == pd.Timestamp("2026-08-01 23:00", tz="UTC")

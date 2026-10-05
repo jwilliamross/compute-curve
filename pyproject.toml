@@ -56,3 +56,10 @@ ignore = [
 "tests/**" = ["S101", "ANN", "PLR2004", "S311", "S106", "RUF059"]
 # SQL strings interpolate only file paths constructed by this code, never user input.
 "src/compute_curve/storage/*.py" = ["S608"]
+# Report builders contain long human-readable f-strings.
+"src/compute_curve/evaluation.py" = ["E501"]
+"src/compute_curve/pipeline.py" = ["E501"]
+# Lazy per-command imports keep CLI start-up fast; one return per command.
+"src/compute_curve/cli.py" = ["PLC0415", "PLR0911"]
+# Collection error handling returns early with one outcome per failure mode.
+"src/compute_curve/snapshot.py" = ["PLR0911"]

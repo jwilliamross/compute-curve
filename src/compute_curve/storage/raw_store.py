@@ -2,7 +2,11 @@
 
 Layout::
 
-    data/raw/<source>/<YYYY>/<MM>/<source>_<YYYYMMDDTHHMMSSZ>.parquet
+    data/raw/listings/<source>/<YYYY>/<MM>/<source>_<YYYYMMDDTHHMMSSZ>.parquet
+    data/raw/indices/<source>/<YYYY>/<MM>/<source>_<YYYYMMDDTHHMMSSZ>.parquet
+
+``listings`` holds :class:`PriceObservation` rows (one price per listing);
+``indices`` holds :class:`IndexObservation` rows (third-party aggregates).
 
 A snapshot file is written once, atomically (temp file then rename), and is
 never modified or deleted by this code. Writing to an existing path raises.
@@ -18,10 +22,13 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-from compute_curve.schema import PriceObservation
+from compute_curve.schema import IndexObservation, PriceObservation
 from compute_curve.timeutil import ensure_utc, snapshot_stamp
 
 OBSERVATION_COLUMNS: tuple[str, ...] = tuple(PriceObservation.model_fields.keys())
+INDEX_OBS_COLUMNS: tuple[str, ...] = tuple(IndexObservation.model_fields.keys())
+LISTINGS = "listings"
+INDICES = "indices"
 
 
 class ImmutableWriteError(FileExistsError):
@@ -37,14 +44,29 @@ def snapshot_path(raw_dir: Path, source: str, ts: datetime) -> Path:
     return raw_dir / source / f"{ts:%Y}" / f"{ts:%m}" / f"{snapshot_id(source, ts)}.parquet"
 
 
-def observations_to_frame(rows: Sequence[PriceObservation]) -> pd.DataFrame:
-    """Convert validated observations to a frame with a stable column order."""
+def _models_to_frame(
+    rows: Sequence[PriceObservation] | Sequence[IndexObservation],
+    columns: tuple[str, ...],
+    ts_cols: tuple[str, ...],
+) -> pd.DataFrame:
     records = [r.model_dump(mode="python") for r in rows]
-    df = pd.DataFrame.from_records(records, columns=list(OBSERVATION_COLUMNS))
+    df = pd.DataFrame.from_records(records, columns=list(columns))
     for col in ("gpu_model", "term", "availability"):
-        df[col] = df[col].map(lambda v: v.value if hasattr(v, "value") else v)
-    df["ts_observed"] = pd.to_datetime(df["ts_observed"], utc=True)
+        if col in df.columns:
+            df[col] = df[col].map(lambda v: v.value if hasattr(v, "value") else v)
+    for col in ts_cols:
+        df[col] = pd.to_datetime(df[col], utc=True)
     return df
+
+
+def observations_to_frame(rows: Sequence[PriceObservation]) -> pd.DataFrame:
+    """Convert validated listing observations to a frame with a stable column order."""
+    return _models_to_frame(rows, OBSERVATION_COLUMNS, ("ts_observed", "ts_source"))
+
+
+def index_observations_to_frame(rows: Sequence[IndexObservation]) -> pd.DataFrame:
+    """Convert validated index observations to a frame with a stable column order."""
+    return _models_to_frame(rows, INDEX_OBS_COLUMNS, ("ts_observed", "as_of"))
 
 
 def write_snapshot(raw_dir: Path, source: str, ts: datetime, df: pd.DataFrame) -> Path:
@@ -87,7 +109,7 @@ def read_snapshot(path: Path) -> pd.DataFrame:
         df = con.execute("SELECT * FROM read_parquet(?)", [path.as_posix()]).df()
     finally:
         con.close()
-    return normalize_ts(df, "ts_observed")
+    return normalize_ts(df, "ts_observed", "ts_source", "as_of")
 
 
 def normalize_ts(df: pd.DataFrame, *cols: str) -> pd.DataFrame:

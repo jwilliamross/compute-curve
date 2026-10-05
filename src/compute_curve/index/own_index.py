@@ -2,11 +2,17 @@
 
 Methodology (derived in ``docs/index_methodology.md``):
 
-1. For each UTC day and each source, keep only the latest snapshot that day.
+1. Date each listing by its effective observation time (the source's own
+   timestamp for aggregators, ours otherwise). For each source and date keep
+   only the latest snapshot.
 2. Keep listings with term in ``index.terms``, availability not
-   ``unavailable``, an allowed form-factor variant, and a non-excluded provider.
-3. Price unit is USD per GPU-hour.
-4. Aggregate with the pre-registered primary method,
+   ``unavailable``, an allowed form-factor variant, a non-excluded provider
+   (hyperscalers are excluded), and a region that is US/North America or
+   unknown (the contracts reference "Geography: United States").
+3. When several sources report the same provider on the same day, keep only
+   the highest-priority source (direct provider pages before aggregators).
+4. Price unit is USD per GPU-hour.
+5. Aggregate with the pre-registered primary method,
    ``provider_weighted_median``: every provider carries total weight 1, split
    equally across its listings, and the index is the weighted median. This
    stops a marketplace with hundreds of listings from outvoting a provider
@@ -94,6 +100,10 @@ def eligible_listings(obs: pd.DataFrame, cfg: IndexConfig, gpu_model: str) -> pd
     if obs.empty:
         return obs
     allowed_variants = set(cfg.variants.get(gpu_model, []))
+    region = obs["region"] if "region" in obs.columns else pd.Series(None, index=obs.index)
+    region_ok = region.isin(cfg.allowed_regions)
+    if cfg.include_unknown_region:
+        region_ok |= region.isna()
     mask = (
         (obs["gpu_model"] == gpu_model)
         & obs["term"].isin(cfg.terms)
@@ -101,21 +111,47 @@ def eligible_listings(obs: pd.DataFrame, cfg: IndexConfig, gpu_model: str) -> pd
         & obs["gpu_variant"].isin(allowed_variants)
         & ~obs["provider"].isin(cfg.exclude_providers)
         & (obs["price_usd_per_gpu_hour"] > 0)
+        & region_ok
     )
     if "is_synthetic" in obs.columns:
         mask &= ~obs["is_synthetic"].fillna(False).astype(bool)
     return obs.loc[mask]
 
 
+def effective_time(obs: pd.DataFrame) -> pd.Series:
+    """When the price was observed: the source's own time if given, else ours."""
+    ours = pd.to_datetime(obs["ts_observed"], utc=True)
+    if "ts_source" not in obs.columns:
+        return ours
+    theirs = pd.to_datetime(obs["ts_source"], utc=True)
+    return theirs.fillna(ours)
+
+
 def latest_snapshot_per_source_day(obs: pd.DataFrame) -> pd.DataFrame:
-    """Keep, for each (source, UTC date), only rows from the latest snapshot."""
+    """Keep, for each (source, observation date), only rows from the latest snapshot.
+
+    Adds ``ts_eff`` (effective observation time) and ``as_of_date`` (its UTC date).
+    """
     if obs.empty:
-        return obs.assign(as_of_date=pd.Series(dtype="object"))
+        return obs.assign(
+            as_of_date=pd.Series(dtype="object"), ts_eff=pd.Series(dtype="datetime64[ns, UTC]")
+        )
     df = obs.copy()
     df["ts_observed"] = pd.to_datetime(df["ts_observed"], utc=True)
-    df["as_of_date"] = df["ts_observed"].dt.date
+    df["ts_eff"] = effective_time(df)
+    df["as_of_date"] = df["ts_eff"].dt.date
     last = df.groupby(["source", "as_of_date"])["ts_observed"].transform("max")
     return df.loc[df["ts_observed"] == last]
+
+
+def prefer_sources(df: pd.DataFrame, priority: Sequence[str]) -> pd.DataFrame:
+    """For each (day, GPU model, provider) keep rows from the best-ranked source only."""
+    if df.empty:
+        return df
+    rank = {s: i for i, s in enumerate(priority)}
+    r = df["source"].map(lambda x: rank.get(str(x), len(rank)))
+    best = r.groupby([df["as_of_date"], df["gpu_model"], df["provider"]]).transform("min")
+    return df.loc[r == best]
 
 
 def build_daily_index(
@@ -129,7 +165,7 @@ def build_daily_index(
     daily = latest_snapshot_per_source_day(obs)
     out: list[dict[str, object]] = []
     for model in gpu_models:
-        elig = eligible_listings(daily, cfg, model)
+        elig = prefer_sources(eligible_listings(daily, cfg, model), cfg.source_priority)
         if elig.empty:
             continue
         for day, grp in elig.groupby("as_of_date", sort=True):
@@ -147,7 +183,7 @@ def build_daily_index(
                     "meets_coverage": bool(
                         n_prov >= cfg.min_providers and len(prices) >= cfg.min_listings
                     ),
-                    "ts_available": grp["ts_observed"].max(),
+                    "ts_available": grp["ts_eff"].max(),
                 }
             )
     return pd.DataFrame(out, columns=list(INDEX_COLUMNS))
@@ -156,11 +192,13 @@ def build_daily_index(
 def provider_breakdown(obs: pd.DataFrame, cfg: IndexConfig, gpu_model: str) -> pd.DataFrame:
     """Per-provider median, min, max and listing count for the latest day."""
     daily = latest_snapshot_per_source_day(obs)
-    elig = eligible_listings(daily, cfg, gpu_model)
+    elig = prefer_sources(eligible_listings(daily, cfg, gpu_model), cfg.source_priority)
     if elig.empty:
-        return pd.DataFrame(columns=["provider", "n", "median", "min", "max"])
+        return pd.DataFrame(columns=["provider", "source", "n", "median", "min", "max"])
     latest = elig["as_of_date"].max()
-    g = elig.loc[elig["as_of_date"] == latest].groupby("provider")["price_usd_per_gpu_hour"]
+    g = elig.loc[elig["as_of_date"] == latest].groupby(["provider", "source"])[
+        "price_usd_per_gpu_hour"
+    ]
     return (
         g.agg(n="count", median="median", min="min", max="max")
         .reset_index()

@@ -134,7 +134,7 @@ def evaluate(
     before the last averaging day. The realized target uses the full
     published history (it is only used for scoring, never as an input).
     """
-    full = market.view(end_of_day_utc(date(9999, 12, 30))).published_index(spec.underlying_index)
+    full = market.full_published_series(spec.underlying_index)
     rows: list[dict[str, object]] = []
     for month in months:
         target = final_settlement(full, spec, month)

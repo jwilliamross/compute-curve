@@ -70,12 +70,35 @@ def canonical_gpu_model(name: str) -> GpuModel:
 
 
 def gpu_variant(name: str) -> str:
-    """Form factor hint (``SXM``, ``PCIE``, ``NVL`` or ``UNKNOWN``) from a GPU name."""
+    """Form factor hint from a GPU name.
+
+    Returns ``SXM``, ``PCIE``, ``NVL`` (the H100/H200 NVL product),
+    ``NVLINK`` (a provider label for NVLink-connected boards whose form factor
+    the name does not state) or ``UNKNOWN``.
+    """
     upper = name.upper().replace("-", " ")
-    for token in ("NVL", "PCIE", "SXM"):
-        if token in upper:
+    if "NVLINK" in upper:
+        return "NVLINK"
+    for token in ("SXM", "PCIE", "NVL"):
+        if re.search(rf"\b{token}", upper):
             return token
     return "UNKNOWN"
+
+
+def normalize_region(text: str | None) -> str | None:
+    """Coarse region code from free text: US, NA, EU, ... or None if unknown."""
+    if not text:
+        return None
+    t = text.strip().upper()
+    if t.startswith("US") or "UNITED STATES" in t:
+        return "US"
+    if "NORTH AMERICA" in t or t == "NA":
+        return "NA"
+    if t.startswith("EU") or "EUROPE" in t or "NORDIC" in t:
+        return "EU"
+    if t.startswith("CA") or "CANADA" in t:
+        return "CA"
+    return t.split()[0][:12]
 
 
 class PriceObservation(BaseModel):
@@ -96,6 +119,11 @@ class PriceObservation(BaseModel):
     # --- provenance -------------------------------------------------------
     source: str = Field(min_length=1, description="Collector id that produced the row")
     snapshot_id: str = Field(min_length=1, description="<source>_<UTC stamp>")
+    ts_source: datetime | None = Field(
+        default=None,
+        description="Time the upstream source says it observed the price (aggregators); "
+        "None when we observed the provider directly",
+    )
     gpu_variant: str = "UNKNOWN"
     gpus_per_instance: int | None = Field(default=None, ge=1)
     listing_id: str | None = None
@@ -110,6 +138,46 @@ class PriceObservation(BaseModel):
     is_synthetic: bool = False
 
     @field_validator("ts_observed")
+    @classmethod
+    def _utc(cls, v: datetime) -> datetime:
+        return ensure_utc(v)
+
+    @field_validator("ts_source")
+    @classmethod
+    def _utc_opt(cls, v: datetime | None) -> datetime | None:
+        return None if v is None else ensure_utc(v)
+
+
+class IndexObservation(BaseModel):
+    """A value of a third-party reference index or aggregate, as we observed it.
+
+    Examples: Computable GPU Index values, GetDeploying weekly medians. These
+    are *not* the CME settlement index. ``as_of`` is the time the publisher
+    assigns to the value; ``ts_observed`` is when we fetched it. History that
+    a publisher serves today is stored with today's ``ts_observed`` so later
+    revisions remain visible (each fetch is a vintage).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    ts_observed: datetime
+    source: str = Field(min_length=1)
+    snapshot_id: str = Field(min_length=1)
+    index_name: str = Field(min_length=1)
+    gpu_model: GpuModel
+    term: Term
+    as_of: datetime
+    value: float = Field(gt=0, lt=1000)
+    band_low: float | None = None
+    band_high: float | None = None
+    n_providers: int | None = Field(default=None, ge=0)
+    n_listings: int | None = Field(default=None, ge=0)
+    methodology_id: str | None = None
+    license: str | None = None
+    raw_json: str | None = None
+    is_synthetic: bool = False
+
+    @field_validator("ts_observed", "as_of")
     @classmethod
     def _utc(cls, v: datetime) -> datetime:
         return ensure_utc(v)

@@ -30,7 +30,26 @@ def _path(start, n, seed):
 
 @pytest.fixture
 def spec(cfg):
+    """Calendar-day averaging keeps the hand calculations below simple."""
+    s = synthetic_config(cfg).contracts["GPU1"]
+    return s.model_copy(update={"settlement_days": "calendar"})
+
+
+@pytest.fixture
+def bspec(cfg):
+    """Business-day averaging, as in the filed contract rules."""
     return synthetic_config(cfg).contracts["GPU1"]
+
+
+def test_business_day_averaging(bspec):
+    pub = {date(2026, 11, d): float(d) for d in range(1, 11)}
+    md = MarketData.build(published_index=index_frame(pub))
+    view = md.view(end_of_day_utc(date(2026, 11, 10)))  # knows 1..9
+    inp = nc.gather_inputs(view, bspec, "H100", date(2026, 11, 1))
+    # Business days 2-6 and 9 of November 2026 are known; 1, 7, 8 are weekend days.
+    assert sorted(d.day for d in inp.known.index) == [2, 3, 4, 5, 6, 9]
+    assert len(inp.averaging_days) == 21
+    assert nc.predict_mtd_carry(inp) == pytest.approx((2 + 3 + 4 + 5 + 6 + 9) / 6)
 
 
 def test_baselines_by_hand(spec):

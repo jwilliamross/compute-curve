@@ -36,23 +36,47 @@ Strategy = Callable[[MarketView, "AccountState"], dict[Key, int]]
 
 @dataclass(frozen=True)
 class CostModel:
+    """Trading costs. ``multiplier`` scales every component (sensitivity runs)."""
+
     half_spread_ticks: float
     slippage_ticks: float
-    fee_per_contract: float
+    fee_per_contract: float  # per side, all-in
     multiplier: float = 1.0
+    product_fees: dict[str, float] = field(default_factory=dict)
+    settlement_fees: dict[str, float] = field(default_factory=dict)
 
     @staticmethod
     def from_config(cfg: Config, multiplier: float = 1.0) -> CostModel:
         c = cfg.costs
-        return CostModel(c.half_spread_ticks, c.slippage_ticks, c.fee_per_contract, multiplier)
+        broker = c.broker_clearing_fee_per_contract
+        return CostModel(
+            half_spread_ticks=c.half_spread_ticks,
+            slippage_ticks=c.slippage_ticks,
+            fee_per_contract=broker,
+            multiplier=multiplier,
+            product_fees={
+                k: s.exchange_fee_per_contract + broker for k, s in cfg.contracts.items()
+            },
+            settlement_fees={
+                k: s.cash_settlement_fee_per_contract for k, s in cfg.contracts.items()
+            },
+        )
 
     def fill_price(self, settle: float, qty: int, tick: float) -> float:
         """Settlement worsened by half-spread plus slippage in the trade direction."""
         adj = (self.half_spread_ticks + self.slippage_ticks) * tick * self.multiplier
         return settle + math.copysign(adj, qty)
 
-    def fees(self, qty: int) -> float:
-        return abs(qty) * self.fee_per_contract * self.multiplier
+    def fees(self, qty: int, product: str | None = None) -> float:
+        per = (
+            self.product_fees.get(product, self.fee_per_contract)
+            if product
+            else self.fee_per_contract
+        )
+        return abs(qty) * per * self.multiplier
+
+    def settlement_fee(self, qty: int, product: str) -> float:
+        return abs(qty) * self.settlement_fees.get(product, 0.0) * self.multiplier
 
 
 @dataclass
@@ -167,7 +191,7 @@ def fill_pending(
         px = costs.fill_price(settle, order.qty, spec.tick_size)
         mult = spec.gpu_hours_per_contract
         spread_cost = order.qty * (settle - px) * mult  # always <= 0
-        fee = costs.fees(order.qty)
+        fee = costs.fees(order.qty, order.product)
         state.cash += spread_cost - fee
         pos = state.positions.get(key)
         if pos is None:
@@ -205,7 +229,12 @@ def fill_pending(
 
 
 def settle_expiries(
-    state: AccountState, view: MarketView, day: date, cfg: Config, rec: DayRecord
+    state: AccountState,
+    view: MarketView,
+    day: date,
+    cfg: Config,
+    rec: DayRecord,
+    costs: CostModel | None = None,
 ) -> None:
     for key in list(state.positions):
         product, cm = key
@@ -222,6 +251,13 @@ def settle_expiries(
         rec.cash_flows.append(
             {"kind": "final_settlement", "product": product, "contract_month": cm, "amount": amt}
         )
+        if costs is not None:
+            sfee = costs.settlement_fee(pos.qty, product)
+            if sfee:
+                state.cash -= sfee
+                rec.cash_flows.append(
+                    {"kind": "fees", "product": product, "contract_month": cm, "amount": -sfee}
+                )
         rec.events.append(
             {"kind": "expired", "detail": f"{product} {cm} qty={pos.qty} final={final:.4f}"}
         )
@@ -333,7 +369,7 @@ def run_day(
     if settles:
         mark_to_market(state, settles, cfg, rec)
         fill_pending(state, settles, day, cfg, costs, rec)
-    settle_expiries(state, view, day, cfg, rec)
+    settle_expiries(state, view, day, cfg, rec, costs)
 
     day_pnl = state.equity - equity_open
     must_flatten = risk_check(state, day_pnl, day, cfg, rec)

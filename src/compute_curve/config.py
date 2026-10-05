@@ -47,10 +47,28 @@ class ContractSpec(_Strict):
     listed_months: int = Field(ge=1)
     tick_size: float = Field(gt=0, description="USD per GPU-hour")
     settlement_days: Literal["calendar", "business"]
-    exchange_fee_per_contract: float = Field(ge=0)
+    exchange_fee_per_contract: float = Field(ge=0, description="Per side, USD")
+    cash_settlement_fee_per_contract: float = Field(default=0.0, ge=0, description="At expiry")
     initial_margin_per_contract: float = Field(ge=0)
-    verified: bool = False
+    listing_status: str = "unknown"
+    verified_fields: list[str] = []
+    sources: list[str] = []
     notes: str = ""
+
+    @property
+    def verified(self) -> bool:
+        """True only if every economic term used by the engine is verified."""
+        needed = {
+            "gpu_hours_per_contract",
+            "tick_size",
+            "settlement_days",
+            "exchange_fee_per_contract",
+            "initial_margin_per_contract",
+        }
+        return needed <= set(self.verified_fields)
+
+    def is_verified(self, field_name: str) -> bool:
+        return field_name in self.verified_fields
 
     @property
     def tick_value(self) -> float:
@@ -130,7 +148,9 @@ class SignalsConfig(_Strict):
 class CostConfig(_Strict):
     half_spread_ticks: float = Field(ge=0)
     slippage_ticks: float = Field(ge=0)
-    fee_per_contract: float = Field(ge=0, description="All-in exchange + clearing + broker, USD")
+    broker_clearing_fee_per_contract: float = Field(
+        ge=0, description="Assumed broker + clearing charge per contract per side, USD"
+    )
     sensitivity_multipliers: list[float] = [0.0, 0.5, 1.0, 2.0, 4.0]
 
 

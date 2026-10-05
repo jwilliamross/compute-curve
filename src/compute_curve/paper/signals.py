@@ -46,7 +46,8 @@ def round_trip_cost_per_gpu_hour(cfg: Config, product: str) -> float:
     spec = cfg.contracts[product]
     c = cfg.costs
     per_side = (c.half_spread_ticks + c.slippage_ticks) * spec.tick_size
-    per_side += c.fee_per_contract / spec.gpu_hours_per_contract
+    fee = spec.exchange_fee_per_contract + c.broker_clearing_fee_per_contract
+    per_side += fee / spec.gpu_hours_per_contract
     return 2 * per_side
 
 

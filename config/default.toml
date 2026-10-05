@@ -34,21 +34,28 @@ rv_size_gpu2 = 1
 rv_contract_offset = 1
 
 # ---------------------------------------------------------------------------
-# Contract specifications. NOT VERIFIED against the CME rulebook: cmegroup.com
-# blocks automated access (docs/blockers.md B2). See docs/contract_specs.md.
+# Contract specifications, from NYMEX Submission 26-370 to the CFTC (filed
+# 2026-08-11) and Exhibit B. cmegroup.com itself could not be read
+# (docs/blockers.md B2). Fields listed in `verified_fields` were checked
+# against those primary documents; every other number is an assumption.
+# Status 2026-10-05: NOT trading. The CFTC extended its 40.3 review to
+# 2026-11-09 (docs/contract_specs.md).
 # ---------------------------------------------------------------------------
 [contracts.GPU1]
 product = "GPU1"
 gpu_model = "H100"
 underlying_index = "Silicon Data H100 Rental Index"
-gpu_hours_per_contract = 730.0   # from task brief; unverified
-listed_months = 36               # from task brief; unverified
-tick_size = 0.01                 # ASSUMPTION: USD 0.01 per GPU-hour = USD 7.30 per contract
-settlement_days = "calendar"     # ASSUMPTION: arithmetic average over calendar days
-exchange_fee_per_contract = 2.50 # ASSUMPTION: conservative placeholder
-initial_margin_per_contract = 400.0  # ASSUMPTION: about 25% of notional at ~USD 2.2/GPU-h
-verified = false
-notes = "All numeric terms pending rulebook verification."
+gpu_hours_per_contract = 730.0
+listed_months = 36
+tick_size = 0.01                       # USD 0.01/GPU-h = USD 7.30 per contract
+settlement_days = "business"           # average over Business Days of the month
+exchange_fee_per_contract = 5.50       # Globex non-member, per side
+cash_settlement_fee_per_contract = 1.35  # non-member
+initial_margin_per_contract = 400.0    # ASSUMPTION: not published; ~20% of notional at ~USD 2.8
+listing_status = "not listed: CFTC 40.3 review extended to 2026-11-09"
+verified_fields = ["gpu_hours_per_contract", "listed_months", "tick_size", "settlement_days", "exchange_fee_per_contract", "cash_settlement_fee_per_contract"]
+sources = ["https://www.cftc.gov/filings/ptc/ptc08112615405.pdf", "https://www.cftc.gov/filings/ptc/ptc08112615406.xlsx", "https://www.cftc.gov/filings/documents/2026/orgdcmnymexcompcontr260921.pdf"]
+notes = "NYMEX Chapter 1045. Floating price: arithmetic average of SD-H100 on-demand settlement prices for each Business Day; index configuration Geography: United States. Missing-day fallback not specified."
 
 [contracts.GPU2]
 product = "GPU2"
@@ -57,11 +64,14 @@ underlying_index = "Silicon Data B200 Rental Index"
 gpu_hours_per_contract = 730.0
 listed_months = 36
 tick_size = 0.01
-settlement_days = "calendar"
-exchange_fee_per_contract = 2.50
-initial_margin_per_contract = 1000.0 # ASSUMPTION: about 25% of notional at ~USD 5.5/GPU-h
-verified = false
-notes = "All numeric terms pending rulebook verification."
+settlement_days = "business"
+exchange_fee_per_contract = 5.50
+cash_settlement_fee_per_contract = 1.35
+initial_margin_per_contract = 900.0    # ASSUMPTION: not published; ~20% of notional at ~USD 5.9
+listing_status = "not listed: CFTC 40.3 review extended to 2026-11-09"
+verified_fields = ["gpu_hours_per_contract", "listed_months", "tick_size", "settlement_days", "exchange_fee_per_contract", "cash_settlement_fee_per_contract"]
+sources = ["https://www.cftc.gov/filings/ptc/ptc08112615405.pdf", "https://www.cftc.gov/filings/ptc/ptc08112615406.xlsx", "https://www.cftc.gov/filings/documents/2026/orgdcmnymexcompcontr260921.pdf"]
+notes = "NYMEX Chapter 1047. Same terms as GPU1 on SD-B200."
 
 [index]
 method = "provider_weighted_median"   # pre-registered primary method
@@ -82,7 +92,7 @@ B200 = ["SXM", "UNKNOWN"]
 [costs]
 half_spread_ticks = 5.0     # ASSUMPTION: USD 0.05/GPU-h each way; wide for a new contract
 slippage_ticks = 2.0        # ASSUMPTION
-fee_per_contract = 5.00     # ASSUMPTION: exchange + clearing + broker, per side
+broker_clearing_fee_per_contract = 2.50  # ASSUMPTION: added to the verified exchange fee
 sensitivity_multipliers = [0.0, 0.5, 1.0, 2.0, 4.0]
 
 [risk]

@@ -10,6 +10,7 @@ from compute_curve.paper.engine import CostModel, flat_strategy
 from compute_curve.paper.market import MarketData
 from compute_curve.paper.runner import run_backtest, run_forward
 from compute_curve.synthetic import synthetic_config
+from compute_curve.timeutil import month_days
 from tests.helpers import INDEX, flat_curve_market, index_frame, settlements, weekdays
 
 
@@ -37,7 +38,11 @@ def test_accounting_identity_and_fill_timing(scfg):
     assert fill["day"] == days[1]
     tick = scfg.contracts["GPU1"].tick_size
     assert fill["fill_price"] == pytest.approx(prices[days[1]] + 7 * tick)
-    assert fill["fees"] == pytest.approx(3 * scfg.costs.fee_per_contract)
+    per_side = (
+        scfg.contracts["GPU1"].exchange_fee_per_contract
+        + scfg.costs.broker_clearing_fee_per_contract
+    )
+    assert fill["fees"] == pytest.approx(3 * per_side)
 
 
 def test_strategy_never_sees_future(scfg):
@@ -124,7 +129,8 @@ def test_expiry_cash_settles_at_month_average(scfg):
         md, const_target(("GPU1", "2026-11"), 1), date(2026, 11, 2), date(2026, 12, 3), scfg, "t"
     )
     assert "expired" in set(r.events["kind"])
-    final = sum(idx.values()) / 30
+    bdays = month_days(date(2026, 11, 1), business_days_only=True)  # verified: Business Days
+    final = sum(idx[d] for d in bdays) / len(bdays)
     fs = r.cash_flows.loc[r.cash_flows["kind"] == "final_settlement", "amount"].iloc[0]
     assert fs == pytest.approx(1 * (final - 2.1) * 730)
     assert r.account["gross_contracts"].iloc[-1] == 0

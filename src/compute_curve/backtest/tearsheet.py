@@ -17,7 +17,7 @@ import pandas as pd
 
 from compute_curve.backtest import variants
 from compute_curve.backtest.bootstrap import block_bootstrap_ci
-from compute_curve.config import Config
+from compute_curve.config import Config, ContractSpec
 from compute_curve.paper.runner import RunResult
 from compute_curve.reporting import frame_to_md
 
@@ -122,17 +122,27 @@ def cost_assumptions_md(cfg: Config) -> str:
         "|---|---|---|",
         f"| Half-spread | {c.half_spread_ticks} ticks per side | assumption |",
         f"| Slippage | {c.slippage_ticks} ticks per side | assumption |",
-        f"| All-in fee | USD {c.fee_per_contract:.2f} per contract per side | assumption |",
+        f"| Broker + clearing | USD {c.broker_clearing_fee_per_contract:.2f} per contract per side "
+        "| assumption |",
     ]
-    for k, s in cfg.contracts.items():
-        lines.append(
-            f"| {k} tick | USD {s.tick_size}/GPU-h = USD {s.tick_value:.2f}/contract | "
-            f"{'verified' if s.verified else 'unverified'} |"
-        )
-        lines.append(
-            f"| {k} contract size | {s.gpu_hours_per_contract:g} GPU-hours | "
-            f"{'verified' if s.verified else 'unverified'} |"
-        )
+
+    def tag(spec: ContractSpec, name: str) -> str:
+        return "verified (CFTC filing)" if spec.is_verified(name) else "assumption"
+
+    for k, spec in cfg.contracts.items():
+        lines += [
+            f"| {k} exchange fee | USD {spec.exchange_fee_per_contract:.2f} per contract per side "
+            f"(non-member Globex) | {tag(spec, 'exchange_fee_per_contract')} |",
+            f"| {k} cash-settlement fee | USD {spec.cash_settlement_fee_per_contract:.2f} per "
+            f"contract | {tag(spec, 'cash_settlement_fee_per_contract')} |",
+            f"| {k} tick | USD {spec.tick_size}/GPU-h = USD {spec.tick_value:.2f}/contract | "
+            f"{tag(spec, 'tick_size')} |",
+            f"| {k} contract size | {spec.gpu_hours_per_contract:g} GPU-hours | "
+            f"{tag(spec, 'gpu_hours_per_contract')} |",
+            f"| {k} initial margin | USD {spec.initial_margin_per_contract:,.0f} per contract | "
+            f"{tag(spec, 'initial_margin_per_contract')} |",
+            f"| {k} listing status | {spec.listing_status} | as of 2026-10-05 |",
+        ]
     return "\n".join(lines)
 
 

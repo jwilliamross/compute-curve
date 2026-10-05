@@ -188,7 +188,7 @@ def write_daily_report(
         lines.append(
             frame_to_md(
                 pd.DataFrame([o.__dict__ for o in outcomes])[
-                    ["source", "status", "n_rows", "n_dropped", "detail"]
+                    ["source", "status", "n_listings", "n_indices", "n_dropped", "detail"]
                 ]
             )
         )

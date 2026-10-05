@@ -16,7 +16,10 @@ api.financialdatasets.ai all respond.
 1. **No network allowlist is active.** `example.com` returned HTTP 200. The
    agent proxy reports `"selective": false`, meaning outbound traffic is not
    restricted to a domain list. If you intended a restricted allowlist, the
-   environment's network policy is set to unrestricted.
+   environment's network policy is set to unrestricted. Later in the session
+   two narrower restrictions appeared: `data.ornn.com` is blocked by the
+   egress policy, and github.com serves only this repository (other repos and
+   `api.github.com` return 403). `raw.githubusercontent.com` works.
 2. **CME Group website blocks automated access.** `www.cmegroup.com` returned
    HTTP 403 from Akamai with a message that automated access is "strictly
    prohibited by CME Group's website Data Terms of Use". This is a terms
@@ -37,10 +40,12 @@ api.financialdatasets.ai all respond.
    the web environment settings
    (<https://code.claude.com/docs/en/claude-code-on-the-web>). The minimum
    list this project needs is:
-   `pypi.org`, `files.pythonhosted.org`, `github.com`, `console.vast.ai`,
-   `docs.vast.ai`, `cloud.vast.ai`, `www.runpod.io`, `runpod.io`,
-   `www.silicondata.com`, `arxiv.org`, `export.arxiv.org`, plus any provider
-   pricing pages approved in `docs/data_sources.md`.
+   `pypi.org`, `files.pythonhosted.org`, `github.com`,
+   `raw.githubusercontent.com`, `api.getcomputable.com`, `getdeploying.com`,
+   `gpurentalprices.com`, `lium.io`, `docs.nebius.com`, `lambda.ai`,
+   `www.coreweave.com`, `www.hyperstack.cloud`, `verda.com` and `arxiv.org`.
+   Vast.ai and RunPod are no longer needed: their terms prohibit collection
+   (docs/blockers.md B5, B6).
 2. Provide CME settlement data by hand. Download GPU1 and GPU2 daily
    settlements from CME in a browser and save them as CSV under
    `data/manual/cme_settlements/` using the format in `README.md`. Do not
@@ -49,9 +54,9 @@ api.financialdatasets.ai all respond.
    Keep the PDFs in the git-ignored `references/` folder, or paste the key
    equations into `docs/references_notes.md`, so a later session can use
    them.
-4. Optional: the Vast.ai search endpoint works without a key, so the
-   collector does not use `VAST_API_KEY`. You may remove that secret from
-   the environment if nothing else needs it.
+4. Optional: `VAST_API_KEY` is not used. The Vast.ai collector is disabled
+   because its terms prohibit automated collection (docs/blockers.md B5). You
+   may remove the secret from the environment if nothing else needs it.
 
 ## Results
 

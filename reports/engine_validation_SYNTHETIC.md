@@ -21,13 +21,13 @@ Cost multiplier: 1.0. Variants tried project-wide: 9.
 | Metric | Value | 95% CI |
 |---|---|---|
 | Days processed (trading) | 730 (522) | |
-| Total PnL (USD) | -6,148 | |
-| Mean daily PnL (USD) | | [-25.4, 1.7] |
-| Sharpe (annualized) | -1.16 | [-2.52, 0.16] |
-| Max drawdown (USD) | 7,925 | |
-| Contracts traded | 196 | |
-| Turnover (contracts/trading day) | 0.38 | |
-| Total costs (USD) | 10,996 | |
+| Total PnL (USD) | -5,511 | |
+| Mean daily PnL (USD) | | [-22.8, 1.0] |
+| Sharpe (annualized) | -1.20 | [-2.54, 0.10] |
+| Max drawdown (USD) | 7,554 | |
+| Contracts traded | 144 | |
+| Turnover (contracts/trading day) | 0.28 | |
+| Total costs (USD) | 8,510 | |
 | Capacity estimate | unknown (no volume data) | |
 
 ## Cost assumptions
@@ -36,21 +36,29 @@ Cost multiplier: 1.0. Variants tried project-wide: 9.
 |---|---|---|
 | Half-spread | 5.0 ticks per side | assumption |
 | Slippage | 2.0 ticks per side | assumption |
-| All-in fee | USD 5.00 per contract per side | assumption |
-| GPU1 tick | USD 0.01/GPU-h = USD 7.30/contract | unverified |
-| GPU1 contract size | 730 GPU-hours | unverified |
-| GPU2 tick | USD 0.01/GPU-h = USD 7.30/contract | unverified |
-| GPU2 contract size | 730 GPU-hours | unverified |
+| Broker + clearing | USD 2.50 per contract per side | assumption |
+| GPU1 exchange fee | USD 5.50 per contract per side (non-member Globex) | verified (CFTC filing) |
+| GPU1 cash-settlement fee | USD 1.35 per contract | verified (CFTC filing) |
+| GPU1 tick | USD 0.01/GPU-h = USD 7.30/contract | verified (CFTC filing) |
+| GPU1 contract size | 730 GPU-hours | verified (CFTC filing) |
+| GPU1 initial margin | USD 400 per contract | assumption |
+| GPU1 listing status | not listed: CFTC 40.3 review extended to 2026-11-09 | as of 2026-10-05 |
+| GPU2 exchange fee | USD 5.50 per contract per side (non-member Globex) | verified (CFTC filing) |
+| GPU2 cash-settlement fee | USD 1.35 per contract | verified (CFTC filing) |
+| GPU2 tick | USD 0.01/GPU-h = USD 7.30/contract | verified (CFTC filing) |
+| GPU2 contract size | 730 GPU-hours | verified (CFTC filing) |
+| GPU2 initial margin | USD 900 per contract | assumption |
+| GPU2 listing status | not listed: CFTC 40.3 review extended to 2026-11-09 | as of 2026-10-05 |
 
 ## Sensitivity to costs
 
 | cost_multiplier | total_pnl | sharpe | sharpe_ci_low | sharpe_ci_high | total_costs |
 |---|---|---|---|---|---|
 | 0.00 | 7,539.00 | 0.91 | -0.36 | 2.14 | -0.00 |
-| 0.50 | -6,137.64 | -0.92 | -2.14 | 0.24 | 14,473.80 |
-| 1.00 | -6,147.96 | -1.16 | -2.52 | 0.16 | 10,995.60 |
-| 2.00 | -5,959.94 | -1.39 | -2.81 | 0.13 | 8,078.40 |
-| 4.00 | -7,500.66 | -1.51 | -2.87 | 0.38 | 9,873.60 |
+| 0.50 | -6,016.36 | -0.92 | -2.13 | 0.23 | 13,829.40 |
+| 1.00 | -5,511.41 | -1.20 | -2.54 | 0.10 | 8,510.40 |
+| 2.00 | -6,391.94 | -1.46 | -2.88 | 0.09 | 8,510.40 |
+| 4.00 | -8,028.66 | -1.55 | -2.87 | 0.35 | 10,401.60 |
 
 
 With loss stops and margin active, the trade path changes with costs, because a stop fires or margin runs out at different times. The sensitivity table above therefore need not be monotone. With stops and margin made non-binding, trades are identical across rows:
@@ -58,11 +66,11 @@ With loss stops and margin active, the trade path changes with costs, because a 
 | cost_multiplier | total_pnl | sharpe | sharpe_ci_low | sharpe_ci_high | total_costs |
 |---|---|---|---|---|---|
 | 0.00 | 7,539.00 | 0.91 | -0.36 | 2.14 | -0.00 |
-| 0.50 | -19,949.99 | -2.33 | -3.75 | -1.01 | 27,489.00 |
-| 1.00 | -47,439.00 | -5.02 | -6.53 | -3.58 | 54,978.00 |
-| 2.00 | -102,417.01 | -8.21 | -9.64 | -6.76 | 109,956.00 |
-| 4.00 | -212,373.00 | -10.29 | -11.50 | -9.01 | 219,912.00 |
+| 0.50 | -21,419.99 | -2.49 | -3.91 | -1.17 | 28,959.00 |
+| 1.00 | -50,379.00 | -5.26 | -6.77 | -3.81 | 57,918.00 |
+| 2.00 | -108,297.01 | -8.42 | -9.84 | -6.97 | 115,836.00 |
+| 4.00 | -224,133.00 | -10.38 | -11.59 | -9.11 | 231,672.00 |
 
 ## Signals strategy on synthetic inputs
 
-Shadow predictions logged: 1176. Fills: 72. The synthetic market has no own-index series, so the nowcast model cannot form a prediction and only the relative-value rule can act.
+Shadow predictions logged: 1173. Fills: 72. The synthetic market has no own-index series, so the nowcast model cannot form a prediction and only the relative-value rule can act.

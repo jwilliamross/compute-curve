@@ -22,12 +22,13 @@ instead, and what would unblock it. Newest entries at the bottom.
   the message: "Use of scripts, software, spiders, robots, avatars, agents,
   tools or other scraping mechanisms is strictly prohibited by CME Group's
   website Data Terms of Use."
-- **Impact:** This session cannot verify the GPU1 and GPU2 contract specs
-  against the CME rulebook, cannot confirm whether trading started on
-  2026-10-05, and cannot fetch tick size, fees, margin or daily settlements.
+- **Impact:** CME's own rulebook pages, margins and settlements cannot be
+  read. Contract terms, fees and the listing status were verified instead from
+  NYMEX's filing with the CFTC (docs/contract_specs.md). Margins remain
+  unconfirmed.
 - **Workaround:** The paper trading engine reads CME settlements from a
-  manual CSV drop folder. Contract parameters live in config and are marked
-  unverified. No settlement data exists in the repo.
+  manual CSV drop folder. Each contract field in config records whether it
+  is verified. No settlement data exists in the repo.
 - **Unblock:** Download settlements by hand in a browser, or license CME
   DataMine or a vendor feed. Do not scrape cmegroup.com.
 
@@ -49,3 +50,66 @@ instead, and what would unblock it. Newest entries at the bottom.
 - **Impact:** FLOPS Index data is not collected.
 - **Unblock:** Create an account yourself if its terms allow research use,
   then decide whether to add a collector. No account was created here.
+
+## B5. Vast.ai terms prohibit collection and index use
+
+- **Found:** data-source audit, 2026-10-05.
+- **Evidence:** Terms of Use (version dated 2026-09-01) ban "any robot, spider,
+  crawler, scraper, script ... or any other automated method" and use of its
+  data "to construct, publish, or maintain any index, benchmark, pricing-
+  comparison service, market-data product". The public price feed's licence
+  requires a data licence for bulk collection or index use.
+- **Impact:** the largest GPU marketplace is absent from our index.
+- **Workaround:** none. Vast rows are dropped even when aggregators carry them.
+- **Unblock:** a research data licence from data@vast.ai; then add `vast` to
+  `collectors.licensed`.
+
+## B6. RunPod terms prohibit automated access
+
+- **Evidence:** Terms of Service (2026-03-24) §6 and §9 ban access "through
+  automated or non-human means" and systematic retrieval to build a database.
+- **Impact and workaround:** as B5; RunPod rows are dropped everywhere.
+- **Unblock:** written permission from RunPod.
+
+## B7. Settlement index history is paid and may not be stored
+
+- **Evidence:** Silicon Data terms forbid storing site content in a database
+  without written consent. Full history needs the Pro plan (USD 998/month) or
+  a free Basic account (30 days, sign-up required). Redistribution or use to
+  settle a product needs a separate index licence.
+- **Impact:** blocks the tracking-error test, claim 1 (nowcast) and the
+  random-walk baseline for claim 2. **This is the most important blocker.**
+- **Unblock (your choice):** research access from Silicon Data, a Bloomberg
+  export of `SDH100RT Index` / `SDB200RT Index`, or a paid plan whose licence
+  permits storing the data. Then add CSVs under
+  `data/manual/published_index/` (format in README). Ask specifically for the
+  US-geography, business-day configuration that settles the contracts.
+
+## B8. GPU1/GPU2 are not listed
+
+- **Evidence:** CFTC extended its 40.3 review to 2026-11-09; product records
+  read "Approval Pending" on 2026-10-05 (docs/contract_specs.md).
+- **Impact:** no futures prices exist, so claims 2 and 3 cannot be tested and
+  the paper account has nothing to trade.
+- **Unblock:** wait for approval and listing; then download daily settlements
+  by hand (README).
+
+## B9. FLOPS Index terms are not public
+
+- **Evidence:** `https://app.flopsindex.com/terms` returns 401; the README
+  calls the data proprietary.
+- **Unblock:** written confirmation from team@flopsindex.com.
+
+## B10. Ornn Compute Price Index is unreachable here
+
+- **Evidence:** `data.ornn.com` is blocked by this environment's egress
+  policy.
+- **Unblock:** review it manually; add the host to the allowlist only if its
+  terms permit collection.
+
+## B11. github.com is restricted to this repository
+
+- **Evidence:** the session proxy returns 403 for other repositories on
+  github.com and api.github.com. raw.githubusercontent.com works.
+- **Impact:** small. Archived snapshots were fetched from
+  raw.githubusercontent.com instead.

@@ -17,7 +17,11 @@ import duckdb
 import pandas as pd
 
 from compute_curve.config import Config
-from compute_curve.index.own_index import build_daily_index, provider_breakdown
+from compute_curve.index.own_index import (
+    build_daily_index,
+    build_history_index,
+    provider_breakdown,
+)
 from compute_curve.paper import ledger
 from compute_curve.paper.market import MarketData
 from compute_curve.paper.runner import FORWARD_RUN_ID, run_forward
@@ -30,7 +34,9 @@ from compute_curve.storage import warehouse as wh
 @dataclass(frozen=True)
 class Inputs:
     observations: pd.DataFrame
-    own_index: pd.DataFrame
+    own_index: pd.DataFrame  # headline multi-source index
+    own_index_hist: pd.DataFrame  # fixed-panel single-publisher series used by models
+    reference: pd.DataFrame  # third-party index values (CGI, GetDeploying)
     published: pd.DataFrame
     settlements: pd.DataFrame
     market: MarketData
@@ -54,33 +60,57 @@ def load_inputs(cfg: Config) -> Inputs:
     con = wh.connect(None)
     try:
         wh.register_observations(con, p["raw"])
+        wh.register_reference_indices(con, p["raw"])
         obs = wh.observations_frame(con)
+        ref = wh.reference_indices_frame(con)
     finally:
         con.close()
-    own = (
-        build_daily_index(obs, cfg.index)
-        if not obs.empty
-        else build_daily_index(pd.DataFrame(), cfg.index)
-    )
+    own = build_daily_index(obs, cfg.index)
+    own_hist = build_history_index(obs, cfg.index) if not obs.empty else own.iloc[0:0]
     pub = wh.load_published_index_csvs(p["manual_index"], cfg.nowcast.publication_lag_days)
     st = wh.load_settlement_csvs(p["manual_settle"])
-    market = MarketData.build(settlements=st, published_index=pub, own_index=own)
-    return Inputs(obs, own, pub, st, market)
+    # Models read the fixed-panel series: its composition is stable over time.
+    market = MarketData.build(settlements=st, published_index=pub, own_index=own_hist)
+    return Inputs(obs, own, own_hist, ref, pub, st, market)
 
 
 def write_own_index_outputs(cfg: Config, inp: Inputs) -> Path:
     rep = paths(cfg)["reports"]
     rep.mkdir(parents=True, exist_ok=True)
-    inp.own_index.to_csv(rep / "own_index.csv", index=False)
+    both = pd.concat(
+        [
+            inp.own_index.assign(series="headline"),
+            inp.own_index_hist.assign(series="history_panel"),
+        ],
+        ignore_index=True,
+    )
+    both.to_csv(rep / "own_index.csv", index=False)
+    latest = inp.own_index.sort_values("as_of_date").groupby("gpu_model").tail(1)
+    hist_tail = inp.own_index_hist.sort_values("as_of_date").groupby("gpu_model").tail(10)
     lines = [
         "# Our H100 / B200 on-demand index",
         "",
-        "Built from collected listings only (no published index values are used).",
-        f"Method: `{cfg.index.method}`; methodology in `docs/index_methodology.md`.",
-        "A value is used by models only if `meets_coverage` is true "
+        "Built from collected listings only; no Silicon Data values are used.",
+        f"Method: `{cfg.index.method}`. Methodology and caveats: `docs/index_methodology.md`.",
+        "A value is used only if `meets_coverage` is true "
         f"(at least {cfg.index.min_providers} providers and {cfg.index.min_listings} listings).",
         "",
-        frame_to_md(inp.own_index.drop(columns=["ts_available"]), 3),
+        "Two series are kept (full history in `reports/own_index.csv`):",
+        "",
+        "- **headline**: every approved source, one source per provider per day. Its "
+        "composition changes when sources are added, so it is not used for time-series models.",
+        "- **history_panel**: the gpurentalprices.com archive and live feed only, restricted to a "
+        "provider panel fixed from the first 30 days. Models and evaluations use this series.",
+        "",
+        "## Headline, latest day",
+        "",
+        frame_to_md(latest.drop(columns=["ts_available"]), 3) if not latest.empty else "_none_",
+        "",
+        "## History panel, last 10 days",
+        "",
+        frame_to_md(hist_tail.drop(columns=["ts_available"]), 3)
+        if not hist_tail.empty
+        else "_none_",
     ]
     for model in ("H100", "B200"):
         lines += ["", f"## {model} by provider, latest day", ""]

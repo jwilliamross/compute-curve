@@ -82,6 +82,8 @@ terms = ["on_demand"]
 exclude_providers = ["aws", "azure", "gcp", "oci"]   # hyperscalers: index is neocloud-only
 allowed_regions = ["US", "NA"]                       # contract: "Geography: United States"
 include_unknown_region = true                        # most sources state no region
+history_sources = ["gpurentalprices_hist", "gpurentalprices"]  # balanced-panel history series
+history_min_presence = 0.9
 source_priority = ["lambda", "coreweave", "nebius", "hyperstack", "verda", "lium", "gpurentalprices", "gpurentalprices_hist", "cgi"]
 
 [index.variants]

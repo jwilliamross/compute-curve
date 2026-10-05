@@ -136,3 +136,25 @@ def test_backfilled_rows_dated_by_source_time(cfg):
     idx = build_daily_index(pd.DataFrame(rows), cfg.index, gpu_models=["H100"])
     assert list(idx["as_of_date"]) == [date(2026, 8, 1)]
     assert idx.iloc[0]["ts_available"] == pd.Timestamp("2026-08-01 23:00", tz="UTC")
+
+
+def test_stale_rows_in_later_snapshot_do_not_replace_earlier_day(cfg):
+    fetched = datetime(2026, 10, 5, 12, tzinfo=UTC)
+    d1 = datetime(2026, 9, 8, 23, tzinfo=UTC)
+    d3 = datetime(2026, 9, 10, 23, tzinfo=UTC)
+    rows = []
+    for p, price in (("a", 2.0), ("b", 3.0), ("c", 4.0)):
+        r = _row(p, price, fetched, "hist", ts_source=d1)
+        r["snapshot_id"] = "hist_0908"
+        rows.append(r)
+    for p, price, ts in (("a", 2.5, d3), ("b", 3.5, d3), ("c", 9.9, d1)):  # c is stale
+        r = _row(p, price, fetched, "hist", ts_source=ts)
+        r["snapshot_id"] = "hist_0910"
+        rows.append(r)
+    idx = build_daily_index(pd.DataFrame(rows), cfg.index, gpu_models=["H100"]).set_index(
+        "as_of_date"
+    )
+    assert idx.loc[date(2026, 9, 8), "value"] == pytest.approx(3.0)
+    assert idx.loc[date(2026, 9, 8), "n_listings"] == 3
+    # The stale row counts on the day the publisher showed it.
+    assert idx.loc[date(2026, 9, 10), "n_listings"] == 3

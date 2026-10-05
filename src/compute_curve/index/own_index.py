@@ -128,20 +128,29 @@ def effective_time(obs: pd.DataFrame) -> pd.Series:
 
 
 def latest_snapshot_per_source_day(obs: pd.DataFrame) -> pd.DataFrame:
-    """Keep, for each (source, observation date), only rows from the latest snapshot.
+    """Keep, for each (source, snapshot date), only rows from the latest snapshot.
 
-    Adds ``ts_eff`` (effective observation time) and ``as_of_date`` (its UTC date).
+    A snapshot is dated by its own time: the latest effective observation time
+    among its rows (for our own fetches that is when we received it; for an
+    aggregator's archived daily file it is when the publisher last refreshed
+    it). Every row of a snapshot takes that date, including stale rows the
+    publisher carried forward, because that is what a reader saw that day.
+
+    Adds ``ts_eff`` (row observation time), ``ts_snapshot`` and ``as_of_date``.
     """
     if obs.empty:
         return obs.assign(
-            as_of_date=pd.Series(dtype="object"), ts_eff=pd.Series(dtype="datetime64[ns, UTC]")
+            as_of_date=pd.Series(dtype="object"),
+            ts_eff=pd.Series(dtype="datetime64[ns, UTC]"),
+            ts_snapshot=pd.Series(dtype="datetime64[ns, UTC]"),
         )
     df = obs.copy()
     df["ts_observed"] = pd.to_datetime(df["ts_observed"], utc=True)
     df["ts_eff"] = effective_time(df)
-    df["as_of_date"] = df["ts_eff"].dt.date
-    last = df.groupby(["source", "as_of_date"])["ts_observed"].transform("max")
-    return df.loc[df["ts_observed"] == last]
+    df["ts_snapshot"] = df.groupby("snapshot_id")["ts_eff"].transform("max")
+    df["as_of_date"] = df["ts_snapshot"].dt.date
+    last = df.groupby(["source", "as_of_date"])["ts_snapshot"].transform("max")
+    return df.loc[df["ts_snapshot"] == last]
 
 
 def prefer_sources(df: pd.DataFrame, priority: Sequence[str]) -> pd.DataFrame:
@@ -154,18 +163,74 @@ def prefer_sources(df: pd.DataFrame, priority: Sequence[str]) -> pd.DataFrame:
     return df.loc[r == best]
 
 
+def balanced_panel(
+    obs: pd.DataFrame,
+    cfg: IndexConfig,
+    gpu_model: str,
+    min_presence: float = 0.9,
+    formation_days: int = 30,
+) -> tuple[list[str], object]:
+    """Fixed provider panel chosen from the first ``formation_days`` days only.
+
+    Returns (providers, last formation date). Providers present on at least
+    ``min_presence`` of the formation days form the panel. Using only the
+    formation window avoids survivorship look-ahead; index values on or before
+    the formation end are in-sample for the panel choice and must be dropped
+    by the caller.
+    """
+    daily = latest_snapshot_per_source_day(obs)
+    elig = eligible_listings(daily, cfg, gpu_model)
+    if elig.empty:
+        return [], None
+    days = sorted(elig["as_of_date"].unique())
+    window = set(days[:formation_days])
+    form = elig.loc[elig["as_of_date"].isin(window)]
+    share = form.groupby("provider")["as_of_date"].nunique() / len(window)
+    return sorted(share.index[share >= min_presence].astype(str)), max(window)
+
+
+def build_history_index(
+    obs: pd.DataFrame,
+    cfg: IndexConfig,
+    gpu_models: Sequence[str] = ("H100", "B200"),
+    formation_days: int = 30,
+) -> pd.DataFrame:
+    """Single-publisher, fixed-panel daily index (consistent composition over time)."""
+    hist = obs.loc[obs["source"].isin(cfg.history_sources)] if not obs.empty else obs
+    frames = []
+    for model in gpu_models:
+        panel, form_end = balanced_panel(hist, cfg, model, cfg.history_min_presence, formation_days)
+        if not panel:
+            continue
+        idx = build_daily_index(hist, cfg, [model], panel={model: panel})
+        idx = idx.loc[idx["as_of_date"] > form_end]
+        frames.append(
+            idx.assign(method=f"{idx['method'].iloc[0]}|panel{len(panel)}" if len(idx) else "")
+        )
+    if not frames:
+        return pd.DataFrame(columns=list(INDEX_COLUMNS))
+    return pd.concat(frames, ignore_index=True)
+
+
 def build_daily_index(
     obs: pd.DataFrame,
     cfg: IndexConfig,
     gpu_models: Sequence[str] = ("H100", "B200"),
     method: str | None = None,
+    panel: dict[str, list[str]] | None = None,
 ) -> pd.DataFrame:
-    """Daily index values per GPU model. Days with no eligible listings are absent."""
+    """Daily index values per GPU model. Days with no eligible listings are absent.
+
+    ``panel`` optionally restricts each GPU model to a fixed provider panel
+    (used for the balanced-panel history series).
+    """
     method = method or cfg.method
     daily = latest_snapshot_per_source_day(obs)
     out: list[dict[str, object]] = []
     for model in gpu_models:
         elig = prefer_sources(eligible_listings(daily, cfg, model), cfg.source_priority)
+        if panel is not None:
+            elig = elig.loc[elig["provider"].isin(panel.get(model, []))]
         if elig.empty:
             continue
         for day, grp in elig.groupby("as_of_date", sort=True):
@@ -183,7 +248,7 @@ def build_daily_index(
                     "meets_coverage": bool(
                         n_prov >= cfg.min_providers and len(prices) >= cfg.min_listings
                     ),
-                    "ts_available": grp["ts_eff"].max(),
+                    "ts_available": grp["ts_snapshot"].max(),
                 }
             )
     return pd.DataFrame(out, columns=list(INDEX_COLUMNS))

@@ -151,3 +151,77 @@ def _receipt(
             sort_keys=True,
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# History backfill (index values only; the API serves the last 90 days)
+# ---------------------------------------------------------------------------
+HISTORY_LIMIT = 2976  # documented maximum page size (31 days of 15-minute values)
+
+
+def fetch_history(
+    client: PoliteClient, sku: str, start: datetime, end: datetime
+) -> list[dict[str, Any]]:
+    """All published values for ``sku`` in [start, end], following ``next_cursor``."""
+    values: list[dict[str, Any]] = []
+    params: dict[str, Any] = {
+        "from": start.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "to": end.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "limit": HISTORY_LIMIT,
+    }
+    for _ in range(100):  # hard stop against a cursor loop
+        resp = client.get(f"{BASE}/{sku}/history", params=params)
+        resp.raise_for_status()
+        data = resp.json().get("data") or {}
+        values.extend(data.get("values") or [])
+        cursor = data.get("next_cursor")
+        if not cursor:
+            break
+        params["cursor"] = cursor
+    return values
+
+
+def normalize_history(
+    sku: str, values: list[dict[str, Any]], ts_observed: datetime, snapshot_id: str
+) -> CollectedBatch:
+    model = canonical_gpu_model(sku)
+    rows: list[IndexObservation] = []
+    dropped = 0
+    seen: set[str] = set()
+    for v in values:
+        val = v.get("value_usd_gpu_hr")
+        at = v.get("observed_at")
+        if (
+            not at
+            or at in seen
+            or v.get("status") != "ok"
+            or not isinstance(val, int | float)
+            or val <= 0
+        ):
+            dropped += 1
+            continue
+        seen.add(at)
+        cov = v.get("coverage") or {}
+        rows.append(
+            IndexObservation(
+                ts_observed=ts_observed,
+                source="cgi_hist",
+                snapshot_id=snapshot_id,
+                index_name=f"Computable GPU Index {sku}",
+                gpu_model=model,
+                term=Term.ON_DEMAND,
+                as_of=datetime.fromisoformat(str(at).replace("Z", "+00:00")),
+                value=float(val),
+                n_providers=cov.get("n_passing"),
+                methodology_id=v.get("methodology_id"),
+                license=LICENSE,
+                raw_json=json.dumps(
+                    {
+                        "stability_band_usd_gpu_hr": v.get("stability_band_usd_gpu_hr"),
+                        "generated_at": v.get("generated_at"),
+                    },
+                    sort_keys=True,
+                ),
+            )
+        )
+    return CollectedBatch(indices=rows, n_dropped=dropped)

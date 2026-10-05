@@ -19,7 +19,8 @@ from pathlib import Path
 import httpx
 
 from compute_curve.collectors.base import CollectedBatch, Collector
-from compute_curve.collectors.cgi import CgiCollector
+from compute_curve.collectors.cgi import SKUS as CGI_SKUS
+from compute_curve.collectors.cgi import CgiCollector, fetch_history, normalize_history
 from compute_curve.collectors.getdeploying import GetDeployingCollector
 from compute_curve.collectors.gpurentalprices import (
     GpuRentalPricesCollector,
@@ -291,3 +292,48 @@ def _backfill_day(
     return SnapshotOutcome(
         src, "written", (str(path),), len(batch.listings), 0, batch.n_dropped, str(d)
     )
+
+
+def backfill_cgi(
+    cfg: Config, start: datetime, end: datetime, client: PoliteClient | None = None
+) -> list[SnapshotOutcome]:
+    """Import Computable GPU Index history (15-minute values) as one vintage per SKU."""
+    raw_dir = cfg.path("data") / "raw"
+    reg = registry(cfg)
+    own_client = client is None
+    client = client or make_client(cfg)
+    outcomes: list[SnapshotOutcome] = []
+    try:
+        for sku in CGI_SKUS:
+            src = "cgi_hist"
+            try:
+                values = fetch_history(client, sku, ensure_utc(start), ensure_utc(end))
+            except (httpx.HTTPError, ValueError, RobotsDisallowedError) as exc:
+                outcomes.append(
+                    SnapshotOutcome(src, "error", (), 0, 0, 0, f"{sku}: {type(exc).__name__}")
+                )
+                continue
+            ts_obs = utc_now()
+            batch = normalize_history(
+                sku, values, ts_obs, snapshot_id(f"{src}_{sku.lower()}", ts_obs)
+            )
+            if not batch.indices:
+                outcomes.append(SnapshotOutcome(src, "empty", (), 0, 0, batch.n_dropped, sku))
+                continue
+            paths = write_batch(raw_dir, f"{src}_{sku.lower()}", ts_obs, batch)
+            outcomes.append(
+                SnapshotOutcome(
+                    src,
+                    "written",
+                    tuple(map(str, paths)),
+                    0,
+                    len(batch.indices),
+                    batch.n_dropped,
+                    sku,
+                )
+            )
+            _log_outcome(cfg, reg, outcomes[-1], ts_obs)
+    finally:
+        if own_client:
+            client.close()
+    return outcomes

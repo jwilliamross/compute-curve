@@ -96,6 +96,10 @@ class IndexConfig(_Strict):
     include_unknown_region: bool = True
     # When several sources report the same provider on the same day, keep the
     # highest-priority source only (direct pages first, aggregators last).
+    # Consistent single-publisher panel used for the historical series (the
+    # live multi-source panel only starts on 2026-10-05).
+    history_sources: list[str] = ["gpurentalprices_hist", "gpurentalprices"]
+    history_min_presence: float = Field(default=0.9, gt=0, le=1)
     source_priority: list[str] = [
         "lambda",
         "coreweave",

@@ -1,6 +1,6 @@
 # Evaluation of the three claims (real data only)
 
-Generated 2026-10-05T18:50:48.428356+00:00. Variants declared project-wide: 9.
+Data through 2026-10-05. Variants declared project-wide: 9.
 No synthetic data is used in this report.
 
 ## Bottom line

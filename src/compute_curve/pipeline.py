@@ -27,7 +27,7 @@ from compute_curve.paper.market import MarketData
 from compute_curve.paper.runner import FORWARD_RUN_ID, run_forward
 from compute_curve.paper.signals import SignalBook, load_validated, make_strategy
 from compute_curve.reporting import fmt, frame_to_md
-from compute_curve.snapshot import SnapshotOutcome, run_snapshot
+from compute_curve.snapshot import run_snapshot
 from compute_curve.storage import warehouse as wh
 
 
@@ -138,7 +138,14 @@ def _write_predictions(con: duckdb.DuckDBPyConnection, book: SignalBook) -> None
 
 
 def daily(cfg: Config, today: date, do_snapshot: bool = True) -> Path:
-    outcomes: list[SnapshotOutcome] = run_snapshot(cfg) if do_snapshot else []
+    """Run the daily cycle for ``today`` and write its report.
+
+    Idempotent: every output is a function of stored state (raw data, the
+    collection log and the paper ledger), so a same-day re-run rewrites the
+    report with identical content.
+    """
+    if do_snapshot:
+        run_snapshot(cfg)
     inp = load_inputs(cfg)
     write_own_index_outputs(cfg, inp)
     p = paths(cfg)
@@ -147,29 +154,67 @@ def daily(cfg: Config, today: date, do_snapshot: bool = True) -> Path:
     strategy = make_strategy(cfg, validated, book)
     con = ledger.open_ledger(p["paper"])
     try:
-        processed = run_forward(
+        run_forward(
             inp.market, strategy, today, cfg, con, start_if_new=today, strategy_name="signals"
         )
         _write_predictions(con, book)
         state = ledger.load_state(con, FORWARD_RUN_ID, cfg)
+        acct = ledger.table(con, "account_daily", FORWARD_RUN_ID)
         events = ledger.table(con, "events", FORWARD_RUN_ID)
         fills = ledger.table(con, "fills", FORWARD_RUN_ID)
+        preds = _predictions_for(con, today)
     finally:
         con.close()
+    log_rows = collection_log_for(cfg, today)
     return write_daily_report(
-        cfg, today, outcomes, inp, processed, state, validated, book, events, fills
+        cfg, today, log_rows, inp, state, acct, validated, preds, events, fills
     )
+
+
+def collection_log_for(cfg: Config, day: date) -> pd.DataFrame:
+    """Collection attempts logged on UTC date ``day``."""
+    path = cfg.path("data") / "collection_log.jsonl"
+    cols = ["source", "status", "n_listings", "n_indices", "n_dropped", "detail"]
+    if not path.exists():
+        return pd.DataFrame(columns=cols)
+    rows = [json.loads(x) for x in path.read_text().splitlines() if x.strip()]
+    # Skips made no request; older runs logged them, so filter them here.
+    rows = [
+        r
+        for r in rows
+        if str(r.get("ts", ""))[:10] == day.isoformat() and r.get("status") != "skipped_exists"
+    ]
+    if not rows:
+        return pd.DataFrame(columns=cols)
+    df = pd.DataFrame(rows)
+    for c in cols:
+        if c not in df.columns:
+            df[c] = None
+    return df[cols]
+
+
+def _predictions_for(con: duckdb.DuckDBPyConnection, day: date) -> pd.DataFrame:
+    exists = con.execute(
+        "SELECT count(*) FROM information_schema.tables WHERE table_name = 'predictions'"
+    ).fetchone()
+    if not exists or not exists[0]:
+        return pd.DataFrame()
+    rows = con.execute(
+        "SELECT payload FROM predictions WHERE run_id = ? AND day = ? ORDER BY signal, payload",
+        [FORWARD_RUN_ID, day],
+    ).fetchall()
+    return pd.DataFrame([json.loads(r[0]) for r in rows]) if rows else pd.DataFrame()
 
 
 def write_daily_report(
     cfg: Config,
     today: date,
-    outcomes: list[SnapshotOutcome],
+    log_rows: pd.DataFrame,
     inp: Inputs,
-    processed: list[date],
     state: ledger.AccountState,
+    acct: pd.DataFrame,
     validated: set[str],
-    book: SignalBook,
+    preds: pd.DataFrame,
     events: pd.DataFrame,
     fills: pd.DataFrame,
 ) -> Path:
@@ -181,20 +226,9 @@ def write_daily_report(
         "",
         "Simulation only. No orders leave this machine.",
         "",
-        "## Ingestion",
+        "## Ingestion (collection log for this UTC date)",
         "",
-    ]
-    if outcomes:
-        lines.append(
-            frame_to_md(
-                pd.DataFrame([o.__dict__ for o in outcomes])[
-                    ["source", "status", "n_listings", "n_indices", "n_dropped", "detail"]
-                ]
-            )
-        )
-    else:
-        lines.append("Snapshot skipped by flag.")
-    lines += [
+        frame_to_md(log_rows) if not log_rows.empty else "No collection attempts logged today.",
         "",
         "## Inputs available",
         "",
@@ -212,18 +246,19 @@ def write_daily_report(
         "Unvalidated signals run in shadow mode and place no orders.",
         "",
     ]
-    if book.rows:
-        lines.append(frame_to_md(pd.DataFrame(book.rows).astype(str)))
+    if not preds.empty:
+        lines.append(frame_to_md(preds.astype(str)))
     else:
         lines.append(
             "No signal evaluations today: no CME settlements are available, so the paper "
             "account has nothing to trade or mark."
         )
+    first = acct["day"].min() if not acct.empty else None
     lines += [
         "",
         "## Paper account (forward run)",
         "",
-        f"- Days processed this run: {[d.isoformat() for d in processed] or 'none (already up to date)'}",
+        f"- Days processed: {len(acct)} (first {first or 'n/a'}, last {state.last_date or 'n/a'})",
         f"- Equity: USD {fmt(state.equity, 2)}; peak USD {fmt(state.peak_equity, 2)}",
         f"- Positions: {dict(state.positions) or 'flat'}",
         f"- Pending orders: {len(state.pending)}",

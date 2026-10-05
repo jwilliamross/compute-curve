@@ -425,6 +425,20 @@ def cross_check_reference(cfg: Config, inp: Inputs) -> list[str]:
     return lines
 
 
+def data_through(inp: Inputs) -> str:
+    """Latest date covered by stored real data. Used instead of wall-clock time
+    so that re-running on unchanged data writes an identical report."""
+    dates = []
+    for df, col in (
+        (inp.own_index, "as_of_date"),
+        (inp.published, "as_of_date"),
+        (inp.settlements, "trade_date"),
+    ):
+        if not df.empty:
+            dates.append(max(df[col]))
+    return str(max(dates)) if dates else "n/a (no data)"
+
+
 def run_evaluation(cfg: Config) -> Path:
     inp = load_inputs(cfg)
     suff = data_sufficiency(cfg, inp)
@@ -453,7 +467,7 @@ def run_evaluation(cfg: Config) -> Path:
     lines = [
         "# Evaluation of the three claims (real data only)",
         "",
-        f"Generated {validation['generated']}. Variants declared project-wide: {variants.count()}.",
+        f"Data through {data_through(inp)}. Variants declared project-wide: {variants.count()}.",
         "No synthetic data is used in this report.",
         "",
         "## Bottom line",

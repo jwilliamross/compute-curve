@@ -194,3 +194,22 @@ both versions.
 
 These are built-in tools, not MCP connectors, so the no-connector instruction
 did not exclude them. No MCP tool was called.
+
+## D29. Daily runs are idempotent by construction
+
+A same-day re-run must not create a commit. Skipped collections are no longer
+written to the collection log, the daily report is built from stored state
+(the collection log for that UTC date and the paper ledger) rather than from
+what the current run did, and the evaluation report is stamped with the date
+the data runs through instead of the wall clock. A test checks that a second
+run leaves the log and both reports byte-identical.
+
+## D30. GitHub Actions schedule; the paper ledger rides in the Actions cache
+
+The workflow runs at 23:30 UTC with `contents: write` only, serializes runs
+per branch, and pushes to the branch it started from. The paper ledger is
+git-ignored (D1), so the workflow restores and saves `var/` through the
+Actions cache. Committing a binary ledger was rejected (D1). The cost is that
+an evicted cache restarts the paper account; the daily report shows the first
+processed day, so a restart is visible. Before GPU1/GPU2 list, a restart loses
+nothing because the account has no positions.

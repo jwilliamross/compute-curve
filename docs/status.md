@@ -84,9 +84,10 @@ Descriptive observations follow. None of them is a test result.
 
 ### Actions you need to take, in priority order
 
-1. **Schedule the daily cycle** with `scripts/daily.sh` (cron at 23:30 UTC;
-   see README). Live listings that are not collected on the day are lost for
-   good.
+1. **Switch on the daily cycle.** Merge this branch into the default branch;
+   the GitHub Actions workflow then runs at 23:30 UTC (README, option A). If
+   you prefer cron on your own machine, use option B instead, not both. Live
+   listings that are not collected on the day are lost for good.
 2. **Get licensed settlement-index history** (docs/blockers.md B7). Ask
    Silicon Data for research access to the US-geography, business-day
    SD-H100/SD-B200 series, or export `SDH100RT Index` / `SDB200RT Index` from

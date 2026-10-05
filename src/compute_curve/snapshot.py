@@ -3,9 +3,10 @@
 For each enabled collector: if a snapshot for today's UTC date already
 exists, skip it (unless ``force``, which appends another immutable
 snapshot). Listings go to ``data/raw/listings/<source>/`` and index values to
-``data/raw/indices/<source>/``. Every attempt is appended to
-``data/collection_log.jsonl``; errors record the exception type and HTTP
-status only, never headers or secrets.
+``data/raw/indices/<source>/``. Every attempt that makes a request is
+appended to ``data/collection_log.jsonl``; errors record the exception type
+and HTTP status only, never headers or secrets. Skips are not logged, so a
+same-day re-run changes nothing on disk.
 """
 
 from __future__ import annotations
@@ -171,6 +172,13 @@ def collect_one(
 def _log_outcome(
     cfg: Config, reg: dict[str, Collector], out: SnapshotOutcome, now: datetime
 ) -> None:
+    """Append one log line per collection attempt.
+
+    Skips (data already stored for the day) make no request and are not
+    logged, so re-running the daily cycle leaves the log unchanged.
+    """
+    if out.status == "skipped_exists":
+        return
     root = cfg.path("data").parent
     append_log(
         cfg.path("data") / "collection_log.jsonl",

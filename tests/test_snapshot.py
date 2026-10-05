@@ -76,7 +76,7 @@ def test_snapshot_is_idempotent_and_logged(tmp_path):
     log = [
         json.loads(x) for x in (tmp_path / "data" / "collection_log.jsonl").read_text().splitlines()
     ]
-    assert [x["status"] for x in log] == ["written", "skipped_exists"]
+    assert [x["status"] for x in log] == ["written"]  # skips make no request; not logged
     assert not any("authorization" in json.dumps(x).lower() for x in log)
 
 

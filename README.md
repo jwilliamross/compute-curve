@@ -37,21 +37,44 @@ Python 3.11+, uv. No secrets are needed: every approved source is keyless.
 
 ## Scheduling the daily cycle
 
-This session cannot schedule anything. Run `scripts/daily.sh` once a day on a
-machine with this repository checked out. It pulls, runs the daily cycle and
-the evaluation, then commits the new raw data and reports and pushes them.
+`scripts/daily.sh` runs the whole day: collect, rebuild the index, run the
+paper account, evaluate, then commit new raw data and reports and push them.
+It is idempotent: a second run on the same UTC day collects nothing, rewrites
+identical reports and makes no commit. Pick **one** scheduler below, not both,
+so two runs never race on the same branch.
 
-**cron (Linux or macOS).** 23:30 UTC is after gpurentalprices.com's daily
-refresh (around 22:00 to 23:00 UTC) and before the UTC date changes:
+### Option A: GitHub Actions (recommended)
+
+`.github/workflows/daily.yml` runs the script at 23:30 UTC every day and has a
+manual "Run workflow" button. It needs nothing else: it uses the built-in
+`GITHUB_TOKEN` with `contents: write`, and the approved sources need no keys.
+
+- Scheduled runs fire only from the repository's **default branch**, and the
+  manual button appears only once the file is on that branch. Merge this
+  branch into the default branch to switch it on.
+- New commits are pushed to the branch the run started from.
+- The paper ledger in `var/` is git-ignored, so the workflow carries it
+  between runs in the Actions cache. If GitHub evicts the cache (7 days
+  unused), the paper account restarts; the daily report shows the first
+  processed day, so a restart is visible.
+- GitHub can start scheduled runs late under load. A run that starts after
+  00:00 UTC is filed under the new UTC date.
+- In a public repository GitHub disables a schedule after 60 days without
+  repository activity. The daily data commits normally keep it active; if the
+  schedule is ever disabled, re-enable it on the Actions tab.
+
+### Option B: cron on your own machine
+
+23:30 UTC is after gpurentalprices.com's daily refresh (around 22:00 to
+23:00 UTC) and before the UTC date changes:
 
 ```cron
 CRON_TZ=UTC
 30 23 * * * /path/to/compute-curve/scripts/daily.sh >> $HOME/compute-curve-daily.log 2>&1
 ```
 
-If your cron does not support `CRON_TZ`, convert 23:30 UTC to local time.
-
-**systemd timer (alternative):**
+If your cron does not support `CRON_TZ`, convert 23:30 UTC to local time. A
+systemd user timer works too:
 
 ```ini
 # ~/.config/systemd/user/compute-curve.service
@@ -68,12 +91,13 @@ Persistent=true
 WantedBy=timers.target
 ```
 
-Then run `systemctl --user enable --now compute-curve.timer`.
+Then run `systemctl --user enable --now compute-curve.timer`. The machine
+needs `uv` on its `PATH`, push access to this repository, and outbound HTTPS
+to the hosts in docs/data_sources.md. Set `COMPUTE_CURVE_PUSH=0` to commit
+without pushing.
 
-The machine needs `uv` on its `PATH`, push access to this repository, and
-outbound HTTPS to the hosts in docs/data_sources.md. Set
-`COMPUTE_CURVE_PUSH=0` to commit without pushing. Missing a day loses that
-day's live listings for good, because most sources publish no history.
+Either way, a missed day loses that day's live listings for good, because
+most sources publish no history.
 
 ## Files you add by hand
 

@@ -24,6 +24,7 @@ uv run compute-curve status               # paper account status
 uv run compute-curve daily                # daily cycle: ingest, signal, fill, report
 uv run compute-curve evaluate             # claim tests on real data + validation gate
 uv run compute-curve backtest --synthetic-engine-check
+bash scripts/daily.sh                     # what the daily GitHub Actions workflow runs
 ```
 
 ## Standards (non-negotiable)
@@ -84,6 +85,8 @@ data/manual/            files the user downloads by hand (CME settlements,
 var/                    git-ignored local state (DuckDB warehouse, paper ledger)
 reports/                generated reports (daily, tearsheets)
 docs/                   research plan, derivations, decisions, blockers, status
+scripts/daily.sh        idempotent daily run: collect, index, paper, evaluate, commit, push
+.github/workflows/      daily.yml schedules scripts/daily.sh at 23:30 UTC
 src/compute_curve/
   schema.py             normalized observation schema (pydantic)
   config.py             typed config loading

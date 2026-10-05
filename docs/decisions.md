@@ -194,3 +194,40 @@ both versions.
 
 These are built-in tools, not MCP connectors, so the no-connector instruction
 did not exclude them. No MCP tool was called.
+
+## D29. Alpaca market data is cached in `var/` only and never committed
+
+Claim 4 uses daily bars from Alpaca's market data API. Alpaca's Terms and
+Conditions limit Content (market data, and account positions, balances and
+orders) to personal, non-commercial use, and forbid copying or uploading it to
+another server "for publication or distribution". Alpaca's support pages
+also say its API data may not be redistributed (docs/env_check_claim4.md).
+This repository may become public. So bars are fetched at run time into the
+git-ignored `var/market_data/` and never written under `data/raw/`. The
+GitHub Actions workflow keeps them on the ephemeral runner, with no artifact
+or cache. What is committed: a fetch manifest (symbols, dates, feed, row
+counts, a content hash), our own signals and predictions, and aggregate test
+statistics. Reports give no prices, no per-stock return series, no dollar
+balances and no fill prices. This is a deliberate exception to the
+immutable-raw-Parquet rule, the same exception as Silicon Data (D14).
+Reproducibility rests on re-fetching. The manifest hash shows whether a
+re-fetch returned identical data.
+
+## D30. Alpaca paper adapter: a scoped exception to "no brokerage connectivity"
+
+CLAUDE.md's scope said "no brokerage connectivity, no order routing". On
+2026-10-05 the owner explicitly asked for an Alpaca paper adapter beside the
+local engine, with simulation only, no real money and no live endpoint. The
+conservative reading that satisfies both:
+
+- The adapter lives in `compute_curve.claim4`, not in the local futures
+  engine `compute_curve.paper`. The local engine still contains no
+  broker code.
+- Only Alpaca's paper endpoint is reachable. Every client hard-fails at
+  construction unless `APCA_API_BASE_URL` is exactly the paper endpoint.
+  Every request is re-checked against the allowed host, and redirects are
+  not followed. Request URLs come from constants, not from the environment.
+- Orders are sent only when the claim-4 validation gate passes and every
+  risk limit holds. Otherwise the run is shadow mode and sends no order.
+- CLAUDE.md's scope section is amended to record this single exception, so
+  a later session does not remove the adapter as a violation.

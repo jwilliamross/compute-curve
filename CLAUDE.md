@@ -9,6 +9,13 @@ compute futures: GPU1 (Silicon Data H100 Rental Index) and GPU2 (B200).
   no real money, no account sign-ups, no purchases.
 - The paper trading engine is a local simulation. It must never contain code
   that talks to an exchange, broker or payment system.
+- Single exception (owner request, 2026-10-05; docs/decisions.md D30): the
+  claim-4 adapter in `compute_curve.claim4` may call Alpaca's **paper**
+  trading API (`https://paper-api.alpaca.markets`) and its market data API.
+  Every Alpaca client must hard-fail unless `APCA_API_BASE_URL` is exactly
+  the paper endpoint. Paper orders only when the claim-4 validation gate
+  passes; otherwise shadow mode. Never a live endpoint or real money.
+- Alpaca market data is never committed (D29); it is cached under `var/`.
 
 ## Commands
 

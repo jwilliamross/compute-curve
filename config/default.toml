@@ -1,0 +1,180 @@
+# compute-curve default configuration.
+#
+# Any value marked `verified = false` or annotated ASSUMPTION is not a
+# finding. Reports print these assumptions next to every result.
+
+[project]
+seed = 20261005
+data_dir = "data"
+var_dir = "var"
+reports_dir = "reports"
+
+[http]
+user_agent = "compute-curve-research/0.1 (non-commercial research)"
+min_interval_s = 2.0      # minimum seconds between requests to the same host
+timeout_s = 30.0
+max_retries = 2
+
+[collectors]
+# Only sources approved in docs/data_sources.md.
+enabled = ["cgi", "getdeploying", "gpurentalprices", "lium", "nebius", "lambda", "coreweave", "hyperstack", "verda"]
+# Terms prohibit automated collection or index use (docs/data_sources.md).
+excluded_providers = ["vast", "runpod"]
+# Sources that require a data licence; add one only after a licence is held.
+licensed = []
+
+[signals]
+# A signal places paper orders only if it is listed here AND has been
+# validated out of sample (var/validation.json). Otherwise it runs in shadow
+# mode: predictions are logged for later evaluation, no orders are placed.
+trade = ["nowcast", "relative_value"]
+nowcast_size = 1
+nowcast_edge_multiple = 2.0
+rv_size_gpu2 = 1
+rv_contract_offset = 1
+
+# ---------------------------------------------------------------------------
+# Contract specifications, from NYMEX Submission 26-370 to the CFTC (filed
+# 2026-08-11) and Exhibit B. cmegroup.com itself could not be read
+# (docs/blockers.md B2). Fields listed in `verified_fields` were checked
+# against those primary documents; every other number is an assumption.
+# Status 2026-10-05: NOT trading. The CFTC extended its 40.3 review to
+# 2026-11-09 (docs/contract_specs.md).
+# ---------------------------------------------------------------------------
+[contracts.GPU1]
+product = "GPU1"
+gpu_model = "H100"
+underlying_index = "Silicon Data H100 Rental Index"
+gpu_hours_per_contract = 730.0
+listed_months = 36
+tick_size = 0.01                       # USD 0.01/GPU-h = USD 7.30 per contract
+settlement_days = "business"           # average over Business Days of the month
+exchange_fee_per_contract = 5.50       # Globex non-member, per side
+cash_settlement_fee_per_contract = 1.35  # non-member
+initial_margin_per_contract = 400.0    # ASSUMPTION: not published; ~20% of notional at ~USD 2.8
+listing_status = "not listed: CFTC 40.3 review extended to 2026-11-09"
+verified_fields = ["gpu_hours_per_contract", "listed_months", "tick_size", "settlement_days", "exchange_fee_per_contract", "cash_settlement_fee_per_contract"]
+sources = ["https://www.cftc.gov/filings/ptc/ptc08112615405.pdf", "https://www.cftc.gov/filings/ptc/ptc08112615406.xlsx", "https://www.cftc.gov/filings/documents/2026/orgdcmnymexcompcontr260921.pdf"]
+notes = "NYMEX Chapter 1045. Floating price: arithmetic average of SD-H100 on-demand settlement prices for each Business Day; index configuration Geography: United States. Missing-day fallback not specified."
+
+[contracts.GPU2]
+product = "GPU2"
+gpu_model = "B200"
+underlying_index = "Silicon Data B200 Rental Index"
+gpu_hours_per_contract = 730.0
+listed_months = 36
+tick_size = 0.01
+settlement_days = "business"
+exchange_fee_per_contract = 5.50
+cash_settlement_fee_per_contract = 1.35
+initial_margin_per_contract = 900.0    # ASSUMPTION: not published; ~20% of notional at ~USD 5.9
+listing_status = "not listed: CFTC 40.3 review extended to 2026-11-09"
+verified_fields = ["gpu_hours_per_contract", "listed_months", "tick_size", "settlement_days", "exchange_fee_per_contract", "cash_settlement_fee_per_contract"]
+sources = ["https://www.cftc.gov/filings/ptc/ptc08112615405.pdf", "https://www.cftc.gov/filings/ptc/ptc08112615406.xlsx", "https://www.cftc.gov/filings/documents/2026/orgdcmnymexcompcontr260921.pdf"]
+notes = "NYMEX Chapter 1047. Same terms as GPU1 on SD-B200."
+
+[index]
+method = "provider_weighted_median"   # pre-registered primary method
+trim_fraction = 0.1                   # used only by the trimmed_mean variant
+min_providers = 3
+min_listings = 5
+terms = ["on_demand"]
+exclude_providers = ["aws", "azure", "gcp", "oci"]   # hyperscalers: index is neocloud-only
+allowed_regions = ["US", "NA"]                       # contract: "Geography: United States"
+include_unknown_region = true                        # most sources state no region
+history_sources = ["gpurentalprices_hist", "gpurentalprices"]  # balanced-panel history series
+history_min_presence = 0.9
+source_priority = ["lambda", "coreweave", "nebius", "hyperstack", "verda", "lium", "gpurentalprices", "gpurentalprices_hist", "cgi"]
+
+[index.variants]
+H100 = ["SXM", "PCIE", "NVL", "NVLINK", "UNKNOWN"]
+B200 = ["SXM", "UNKNOWN"]
+
+# Conservative default trading costs for a thin, newly listed market.
+[costs]
+half_spread_ticks = 5.0     # ASSUMPTION: USD 0.05/GPU-h each way; wide for a new contract
+slippage_ticks = 2.0        # ASSUMPTION
+broker_clearing_fee_per_contract = 2.50  # ASSUMPTION: added to the verified exchange fee
+sensitivity_multipliers = [0.0, 0.5, 1.0, 2.0, 4.0]
+
+[risk]
+starting_cash = 100000.0
+max_contracts_per_month = 5
+max_gross_contracts = 10
+daily_loss_limit = 2000.0
+max_drawdown = 7500.0
+halt_days_after_daily_breach = 1
+
+[nowcast]
+min_training_months = 6
+min_days_observed = 1
+publication_lag_days = 1    # ASSUMPTION: index value for day d usable from d+1
+
+[schwartz_smith]
+dt_years = 0.0027397260273972603   # 1/365
+min_observations = 180
+# Priors, not findings. The jump prior is the abstract-level figure in
+# SSRN 6926798 (about -0.22 log per generational transition; full text not
+# read). Depreciation of 15-20% a year is from the same abstract.
+jump_mean_prior = -0.22
+jump_std_prior = 0.10
+depreciation_rate_prior = 0.175
+
+[relative_value]
+# ASSUMPTION: B200/H100 throughput ratio. Bandi & Su (arXiv 2607.12156,
+# Table 2) use peak dense 8-bit throughput 5.000 vs 1.979 POPS = 2.53.
+# HGX B200 dense FP8 (4.5 PF) gives about 2.27; HBM bandwidth (8 vs 3.35
+# TB/s) about 2.39. Workload dependent; conclusions must hold over the range.
+perf_ratio_b200_over_h100 = 2.5
+perf_ratio_low = 1.8
+perf_ratio_high = 3.0
+perf_ratio_source = "Bandi & Su (2026) Table 2; NVIDIA datasheets; docs/relative_value.md"
+zscore_window_days = 60
+entry_z = 2.0
+exit_z = 0.5
+
+[bootstrap]
+n_boot = 2000
+block_length = 5
+confidence = 0.95
+
+# Hardware launch windows ([[launches]] entries) are appended below from
+# docs/hardware_launches.md once sourced.
+
+# Launch windows: a scheduled jump in the long-run factor on `window_start`
+# (docs/hardware_launches.md). Only dates verified against NVIDIA or partner
+# primary sources are listed; snippet-only dates are kept out of the model.
+[[launches]]
+name = "H200 availability from partners (announced for Q2 2024)"
+window_start = 2024-04-01
+affects = ["H100"]
+kind = "announced"
+source = "https://nvidianews.nvidia.com/news/nvidia-supercharges-hopper-the-worlds-leading-ai-computing-platform"
+
+[[launches]]
+name = "Blackwell GB200 NVL72 generally available at CoreWeave"
+window_start = 2025-02-04
+affects = ["H100"]
+kind = "cloud_ga"
+source = "https://blogs.nvidia.com/blog/blackwell-coreweave-gb200-nvl72-instances-cloud/"
+
+[[launches]]
+name = "Blackwell Ultra GB300 NVL72 first cloud deployment (CoreWeave)"
+window_start = 2025-07-03
+affects = ["H100", "B200"]
+kind = "cloud_ga"
+source = "https://www.prnewswire.com/news-releases/coreweave-becomes-first-hyperscaler-to-deploy-nvidia-gb300-nvl72-platform-302497802.html"
+
+[[launches]]
+name = "Vera Rubin racks running at partners (Q2 FY27 results)"
+window_start = 2026-08-26
+affects = ["H100", "B200"]
+kind = "volume_shipments"
+source = "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-second-quarter-fiscal-2027"
+
+[[launches]]
+name = "Rubin Ultra systems (announced for second half of 2027)"
+window_start = 2027-07-01
+affects = ["H100", "B200"]
+kind = "announced"
+source = "https://blogs.nvidia.com/blog/nvidia-keynote-at-gtc-2025-ai-news-live-updates/"

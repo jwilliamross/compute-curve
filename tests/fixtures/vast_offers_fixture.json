@@ -1,0 +1,20 @@
+{
+  "_comment": "TEST FIXTURE. Hand-written, values are invented for unit tests and are not market data.",
+  "offers": [
+    {"id": 1, "ask_contract_id": 1, "machine_id": 10, "gpu_name": "H100 SXM", "num_gpus": 8, "gpu_ram": 81559,
+     "dph_base": 16.0, "dph_total": 16.2, "geolocation": "Texas, US", "verification": "verified",
+     "rentable": true, "rented": false, "is_bid": false, "public_ipaddr": "203.0.113.7", "hostname": "host-a"},
+    {"id": 2, "ask_contract_id": 2, "machine_id": 11, "gpu_name": "H100 PCIE", "num_gpus": 1, "gpu_ram": 81559,
+     "dph_base": 1.5, "dph_total": 1.55, "geolocation": "Germany, DE", "verification": "unverified",
+     "rentable": true, "rented": false, "is_bid": false},
+    {"id": 3, "ask_contract_id": 3, "machine_id": 12, "gpu_name": "B200", "num_gpus": 4, "gpu_ram": 183359,
+     "dph_base": 20.0, "dph_total": 20.4, "geolocation": "Norway, NO", "verification": "verified",
+     "rentable": true, "rented": false, "is_bid": false},
+    {"id": 4, "ask_contract_id": 4, "machine_id": 13, "gpu_name": "RTX 4090", "num_gpus": 2,
+     "dph_base": 0.8, "geolocation": "Canada, CA", "rentable": true, "is_bid": false},
+    {"id": 5, "ask_contract_id": 5, "machine_id": 14, "gpu_name": "H100 SXM", "num_gpus": 1,
+     "dph_base": 0.0, "geolocation": "Texas, US", "rentable": true, "is_bid": false},
+    {"id": 6, "ask_contract_id": 6, "machine_id": 15, "gpu_name": "GB200", "num_gpus": 4,
+     "dph_base": 30.0, "geolocation": "Texas, US", "rentable": true, "is_bid": false}
+  ]
+}

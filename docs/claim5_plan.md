@@ -1,11 +1,8 @@
 # Claim 5 pre-registration: do AWS GPU spot prices lead compute-linked equities?
 
-> **DRAFT.** The signal-side numbers marked `{{...}}` are filled in once the
-> spot download finishes. The plan is final only in the commit that removes
-> this note, and that commit precedes any stock-return fetch for claim 5.
-
 **Pre-registered on 2026-10-06, before any stock return for the claim-5
-window was fetched.** The commit that adds this file timestamps the plan.
+window was fetched.** A draft was committed first (6e39b04). The commit that
+finalizes this text timestamps the plan.
 Only signal-side data had been examined: the AWS spot series, its timing
 and coverage, and the trading calendar.
 
@@ -22,7 +19,21 @@ benchmark, horizons, tests, costs, risk limits and the gate.
 
 ## 0. What is known before any return is seen
 
-{{BOTTOM_LINE}}
+- **Sample.** 491 trading sessions from 2024-10-21 to 2026-10-06. 402 have
+  a signal (2024-10-21 to 2026-10-01). The other 89 fall in the dataset's
+  2026-03 to 06 gap or after its end.
+- **Dense signals.** Unlike claim 4's sticky index, these signals move
+  almost every session. A100 level is non-zero on 99% of sessions, H100
+  level on 81%, and both dispersion signals on all of them.
+- **Power.** The smallest correlation detectable with 80% power is about
+  0.14, or 0.18 after the Holm correction over 12 tests. Realistic
+  predictive correlations for daily returns are 0.1 or less, and 0.10 would
+  need about 1,370 sessions after Holm. A pass here would therefore imply a
+  large effect, or be one of the false positives the 5% family-wise error
+  rate allows.
+- **Data sufficiency can be met.** There are about 380 out-of-sample
+  forecasts at the 1-session horizon, against the 120 that G4 requires. So
+  the gate can genuinely pass or fail on this data, unlike claim 4's.
 
 ## 1. Signal data
 
@@ -103,7 +114,30 @@ Claim 4 had 6 signals; claim 5 has 4.
 
 ### Signal-side facts at registration
 
-{{SIGNAL_FACTS}}
+Sessions 2024-10-21 to 2026-10-01 (402 with a signal):
+
+| Signal | Non-zero | Mean absolute non-zero value | 95th percentile of absolute value | Largest absolute value |
+|---|---|---|---|---|
+| level_a100 | 397 (99%) | 0.011 | 0.037 | 0.105 |
+| level_h100 | 324 (81%) | 0.014 | 0.044 | 0.145 |
+| disp_a100 | 402 (100%) | 0.026 | 0.071 | 0.165 |
+| disp_h100 | 402 (100%) | 0.026 | 0.077 | **1.044** |
+
+- **Large moves.** Sessions with a level move of 2% or more: 58 for A100 (13
+  of 5% or more) and 64 for H100 (17 of 5% or more). The event study
+  therefore has more than its minimum of 10 events at the 1-session
+  horizon.
+- **An outlier.** `disp_h100` has one extreme value, a change of 1.04 log
+  points. It comes from a day when only a few H100 pools were matched. It
+  is not trimmed, because claim 4's battery runs unchanged. The permutation
+  p-value and the 10-value rule are the safeguards; the results must say if
+  this one value drives anything.
+- **Pools.** H100 spot pools grew from 4 in October 2024 to 25 in September
+  2026, and A100 pools from 8 to 16. H200, B200 and B300 pools appear from
+  December 2024, July 2025 and November 2025.
+- **Median prices** in USD per GPU-hour (descriptive):
+  - A100: 1.36 in October 2024, 0.95 in May 2025, 2.31 in September 2026;
+  - H100: 3.84, then 2.11 in June 2025, then 2.63 in September 2026.
 
 ## 4. Outcome
 
@@ -181,7 +215,40 @@ predictions, never orders. Two limits apply even then:
 
 ## 10. Statistical power for the actual sample
 
-{{POWER}}
+Fisher z, two-sided, 80% power:
+`n = ((z_{1-alpha/2} + z_{0.8}) / atanh(rho))^2 + 3`.
+
+| Horizon | Windows | Smallest detectable correlation at alpha = 0.05 | Same, after Holm (alpha = 0.05/12) |
+|---|---|---|---|
+| 1 session | about 402 | 0.14 | 0.18 |
+| 5 sessions | about 398 (overlapping) | 0.14 | 0.18 |
+| 20 sessions | about 383 (overlapping; about 19 independent) | 0.14 nominal | 0.19 nominal |
+
+Sessions needed for a dense signal:
+
+| True correlation | At alpha = 0.05 | After Holm (alpha = 0.05/12) |
+|---|---|---|
+| 0.05 | 3,138 | 5,491 |
+| 0.10 | 783 | 1,368 |
+| 0.15 | 347 | 605 |
+| 0.20 | 194 | 338 |
+
+Notes:
+
+- **20 sessions.** At this horizon the windows overlap heavily, so the
+  nominal figure overstates power. The Newey-West lag of 20 and the block
+  bootstrap correct the inference, not the power.
+- **Event study.** The basket's daily excess-return volatility over XLK has
+  not been measured for this window. Claim 4 measured 1.86% for late 2026,
+  which is an assumption here. On that basis, about 60 events per class at
+  the 1-session horizon could reveal an average move of about 0.7%.
+- **Walk-forward.** About 380 out-of-sample forecasts at the 1-session
+  horizon after 20 training windows, which meets G4's 120.
+
+**Conclusion, written before any result:** this window can detect
+moderate effects (correlations of about 0.18 or more after correction) but
+not small ones. Failing to pass would not show that no effect exists, only
+that none this large does.
 
 ## 11. Changes after registration
 

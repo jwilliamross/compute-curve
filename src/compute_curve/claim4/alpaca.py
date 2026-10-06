@@ -238,8 +238,10 @@ class AlpacaPaperClient(_BaseClient):
         """Submit one paper order. Callers must pass the claim-4 gate and risk checks first."""
         return self.request("POST", "/v2/orders", json_body=order)
 
-    def cancel_all_orders(self) -> Any:
-        return self.request("DELETE", "/v2/orders")
+    def cancel_order(self, order_id: str) -> Any:
+        if not order_id.replace("-", "").isalnum():
+            raise ValueError("unexpected order id format")
+        return self.request("DELETE", f"/v2/orders/{order_id}")
 
 
 class AlpacaDataClient(_BaseClient):

@@ -10,17 +10,21 @@ daily      daily cycle: snapshot, index, signals, simulated fills, report
 evaluate   test the three claims on real data; write reports/evaluation.md
 backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
+claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
+           paper endpoint only; the daily step sends paper orders only when
+           the pre-registered gate passes (docs/claim4_plan.md)
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from datetime import date
 from pathlib import Path
 
-from compute_curve.config import load_config
+from compute_curve.config import Config, load_config
 from compute_curve.timeutil import utc_now
 
 
@@ -54,7 +58,34 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="run the labelled synthetic engine validation",
     )
+    c4 = sub.add_parser("claim4", help="claim 4: GPU index vs compute-linked equities")
+    c4.add_argument("action", choices=["check", "evaluate", "daily"])
     return p
+
+
+def _claim4(cfg: Config, action: str) -> int:
+    from compute_curve.claim4 import pipeline as c4p
+    from compute_curve.claim4.alpaca import (
+        AlpacaDataClient,
+        AlpacaPaperClient,
+        env_status,
+        require_paper_base_url,
+    )
+
+    if action == "check":
+        for name, ok in env_status().items():
+            print(f"{name}: {'set' if ok else 'NOT SET'}")
+        require_paper_base_url(os.environ.get("APCA_API_BASE_URL"))
+        print("APCA_API_BASE_URL: the Alpaca paper endpoint")
+        with AlpacaPaperClient() as paper, AlpacaDataClient() as data:
+            for line in c4p.env_check(paper, data):
+                print(line)
+        return 0
+    if action == "evaluate":
+        print(f"wrote {c4p.run_evaluation(cfg)}")
+        return 0
+    print(f"wrote {c4p.run_daily(cfg)}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -112,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"wrote {run_evaluation(cfg)}")
         return 0
+    if args.command == "claim4":
+        return _claim4(cfg, args.action)
     if args.command == "backtest":
         from compute_curve.evaluation import run_backtests
 

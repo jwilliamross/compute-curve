@@ -235,3 +235,26 @@ daily_loss_limit_usd = 1000.0
 max_drawdown_usd = 3000.0
 halt_sessions_after_daily_breach = 1
 kill_switch = false                 # true closes all claim-4 positions and blocks orders
+
+# ---------------------------------------------------------------------------
+# Claim 5: do AWS GPU spot prices lead compute-linked equities?
+# Pre-registered in docs/claim5_plan.md. Signal data: Zenodo "AWS Spot Price
+# History" (Eric Pauley, UW-Madison), record 23082767, CC BY 4.0. Universe,
+# benchmark, costs, risk limits and gate thresholds are claim 4's ([claim4]).
+# ---------------------------------------------------------------------------
+[claim5]
+zenodo_record = 23082767
+# Months the pre-registered sample needs (2026-03 to 2026-06 are absent from the dataset).
+months = ["2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-07", "2026-08", "2026-09"]
+gpu_classes = ["A100", "H100"]      # classes that become signals
+cutoff_utc = "23:30"                # price in effect at this time is the day's value (D31)
+availability_margin_minutes = 60
+max_age_days = 1                    # data cover every calendar day; an older day means a gap -> no signal
+min_pools = 3                       # matched pools needed for a signal value
+first_session = 2024-10-21          # first session the category-balanced basket can exist (NBIS resumes)
+signals = ["level_a100", "level_h100", "disp_a100", "disp_h100"]
+bars_start = 2024-09-01
+
+[claim5.member_start]
+# A member's returns are used only from this date (business before it differs).
+NBIS = 2024-10-21                   # Yandex N.V. until 2024; Nasdaq trading resumed 2024-10-21

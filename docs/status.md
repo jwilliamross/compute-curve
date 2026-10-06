@@ -1,7 +1,67 @@
 # Status
 
-_Last updated: 2026-10-06, end of the claim-4 autonomous run. Branch
+_Last updated: 2026-10-06, end of the claim-5 run. Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## Final summary: claim 5 (do AWS GPU spot prices lead compute-linked equities?)
+
+**Bottom line.** The gate does not pass, and claim 5 is not supported. The
+gate was not loosened.
+
+- **Nothing passed.** None of the 12 primary tests, 6 event tests, 12
+  walk-forward forecasts or 36 secondary tests passes.
+- **Correlations are near zero.** Every correlation between an AWS spot
+  signal and the basket's later excess return over XLK is between −0.16 and
+  0.11, and every 95% interval includes zero.
+- **Forecasts lose to naive guesses.** Every walk-forward forecast does
+  worse than both naive baselines.
+- **This sample had power.** Unlike claim 4's, it had 402 sessions with
+  dense signals, so correlations of about 0.18 or more after correction
+  would most likely have been found. Smaller effects are not ruled out.
+
+Details are in `docs/claim5_results.md`. The plan was committed before any
+stock data was fetched (`docs/claim5_plan.md`, `35d5317`).
+
+### What was done
+
+- **Audit.** Zenodo "AWS Spot Price History" (Eric Pauley, UW-Madison):
+  - licence CC BY 4.0;
+  - current version 2026-09 (DOI 10.5281/zenodo.23082767);
+  - 31 files, 5.16 GB;
+  - 2026-03 to 2026-06 missing from the dataset;
+  - robots.txt disallows `/api`, so the landing page was used instead.
+
+  Recorded in `docs/data_sources.md`.
+- **Data.** Only the 20 needed monthly files (3.5 GB):
+  - MD5-verified and read-only, in git-ignored `var/aws_spot/raw/` (D36);
+  - filtered to A100, H100, H200, B200 and B300 types in US zones on Linux
+    (90,915 rows);
+  - daily per-GPU-hour series in `reports/claim5/aws_spot_daily.csv`, with
+    a checksum manifest.
+- **Signals** (D37): A100 and H100 matched-pool level change and dispersion
+  change, with claim 4's timing. No availability signal, and no signal
+  across data gaps.
+- **Stocks without full history** (D38): NBIS used from 2024-10-21; CRWV,
+  WYFI and CBRS from their first bars. Claim 4's coverage rule kept the
+  basket defined from 2024-10-21.
+- **Battery.** Claim 4's battery and gate ran unchanged, through the same
+  code. The only change to claim-4 code is an optional GPU list for the
+  event study. 78 tests and evaluations were declared before the run, plus
+  2 logged post-hoc descriptive checks.
+- **Workflow.** Because the gate failed, **no claim-5 step was added to the
+  daily workflow**.
+- **Commands.** `uv run compute-curve claim5 fetch` and
+  `uv run compute-curve claim5 evaluate`.
+
+### Actions for you (claim 5)
+
+- **None required.** The claim-4 actions below still stand.
+- **Optional.** When Zenodo has published about 250 new sessions (about the
+  2027-09 version), add those months to `[claim5].months` and re-run the
+  two commands. That is the pre-registered confirmation test (K2).
+- **Clean-up.** The 3.5 GB of raw spot files in `var/aws_spot/raw/` can be
+  deleted to free disk. They can be re-downloaded and verified from the
+  manifest.
 
 ## Final summary: claim 4 (does our GPU index lead compute-linked equities?)
 
@@ -148,9 +208,12 @@ is `docs/summary.md`.
 - Previous run (2026-10-05): environment check, data layer, nine
   collectors, our index, the local paper engine, models, tearsheets and
   evaluations for claims 1 to 3 (merged as pull request 1).
-- This run: claim 4 Step 0, pre-registration, implementation, the first
+- Claim-4 run: Step 0, pre-registration, implementation, the first
   real-data evaluation, the first shadow prediction, the daily workflow,
   the results and the plain-language summary.
+- Claim-5 run (2026-10-06): the AWS spot archive audit and download,
+  pre-registration, evaluation with claim 4's battery (gate not passed),
+  and the results.
 
 ## In progress
 
@@ -162,10 +225,13 @@ is `docs/summary.md`.
 - Claim 4: nothing blocks it; only time does. The gate needs at least 120
   out-of-sample forecasts. The earliest a frequently moving signal could
   pass is about March 2027.
+- Claim 5: nothing blocks it. The test ran and the gate failed. A re-test
+  waits for about 250 new sessions in the Zenodo archive.
 - Claims 1 to 3: B7 (settlement-index licence) and B8 (contracts not
   listed). B2, B3, B5, B6, B9 and B10 as before. Details in
   docs/blockers.md.
 
 ## Needs you
 
-- Claim-4 actions 1 to 7 above, then the still-open items.
+- Claim-4 actions 1 to 7 above, then the still-open items. Claim 5 needs
+  nothing.

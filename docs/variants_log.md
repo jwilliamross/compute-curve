@@ -23,6 +23,14 @@ never deleted.
 | claim4.strategy_pair (18 evaluations) | claim 4 | Gate G3: long-short basket against XLK on each walk-forward forecast, net of costs | 2026-10-06 | no | see docs/claim4_results.md |
 | claim4.crosscorr (descriptive) | claim 4 | Cross-correlogram, leads and lags −5 to +5; not a test | 2026-10-06 | no | see docs/claim4_results.md |
 | claim4.posthoc_drop_large_moves (descriptive, post hoc) | claim 4 | Correlation without the two sessions with level moves of 2% or more, for neocloud vs level_b200 and basket vs level_h100 at h = 1. Run after seeing results, to check whether two days drove them; not a test | 2026-10-06 | no | yes: −0.42 to −0.12 and −0.41 to −0.06 |
+| claim5.leadlag (12 tests) | claim 5 | Family P: AWS spot signals (A100 and H100 level and dispersion) × horizons 1, 5, 20; claim 4's basket minus XLK; HAC t and circular-shift permutation; Holm | 2026-10-06 | yes | see docs/claim5_results.md |
+| claim5.event (6 tests) | claim 5 | Family E: signed CAR after a spot level move of 2% or more; A100 and H100 × 3 horizons; sign-flip test; Holm | 2026-10-06 | no | see docs/claim5_results.md |
+| claim5.walkforward (12 tests) | claim 5 | Family W: expanding-window OLS against zero and mean baselines; Clark-West; Holm | 2026-10-06 | yes | see docs/claim5_results.md |
+| claim5.buckets (36 tests) | claim 5 | Family S: lead-lag per bucket basket; Benjamini-Hochberg at 10%; cannot open the gate | 2026-10-06 | no | see docs/claim5_results.md |
+| claim5.strategy_pair (12 evaluations) | claim 5 | Gate G3: long-short basket against XLK on each walk-forward forecast, claim 4's costs | 2026-10-06 | no | see docs/claim5_results.md |
+| claim5.crosscorr (descriptive) | claim 5 | Cross-correlogram for the two level signals; not a test | 2026-10-06 | no | see docs/claim5_results.md |
+| claim5.posthoc_outlier (descriptive, post hoc) | claim 5 | disp_h100 correlations without the 2026-07-06 session, as the plan required; not a test | 2026-10-06 | no | yes: correlations move slightly away from zero; nothing would pass |
+| claim5.posthoc_mean_only (descriptive, post hoc) | claim 5 | 20-session strategy run on the running-mean forecast alone, to explain the G3 table; not a test | 2026-10-06 | no | yes: 3.6% per window, the same as with the spot signals |
 
 ## Design changes made before any result existed
 
@@ -39,6 +47,9 @@ run on real data, so they are not post-hoc tuning:
 - Throughput ratio central value moved from 2.3 to 2.5 after Bandi and Su's
   Table 2 was read (range unchanged).
 - Fixed-panel history series added to remove composition breaks.
+
+Claim 5 declares 78 more: 66 hypothesis tests plus 12 strategy
+evaluations, with the same battery and gate as claim 4.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

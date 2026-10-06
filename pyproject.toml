@@ -65,3 +65,4 @@ ignore = [
 "src/compute_curve/snapshot.py" = ["PLR0911"]
 # Claim-4 report builders contain long human-readable f-strings.
 "src/compute_curve/claim4/pipeline.py" = ["E501"]
+"src/compute_curve/claim5/pipeline.py" = ["E501"]

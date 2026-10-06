@@ -41,6 +41,22 @@ docs/env_check_claim4.md.
 | Alpaca market data API (`data.alpaca.markets`) | Daily OHLCV bars for US stocks and ETFs; consolidated (SIP) history except the latest 15 minutes on the free plan | API key from the owner's paper account, read from the environment | Personal, non-commercial use; no copying or uploading for publication or distribution; no redistribution | **Fetched at run time into git-ignored `var/market_data/`; never committed** (D29). Only a manifest with counts and a hash is committed |
 | Alpaca paper trading API (`paper-api.alpaca.markets`) | Simulated account, orders, positions, trading calendar | Same key; paper endpoint only | Same terms | **Paper adapter** `compute_curve.claim4.alpaca`, hard-fails off the paper endpoint (D30) |
 
+## AWS GPU spot price history for claim 5 (Zenodo)
+
+Audited 2026-10-06 for claim 5 (docs/claim5_plan.md).
+
+| Item | Finding |
+|---|---|
+| Dataset | "AWS Spot Price History", Eric Pauley, University of Wisconsin-Madison. Zenodo concept record 14254112; current version **2026-09**, record 23082767, DOI 10.5281/zenodo.23082767, published 2026-10-01. Updated on the 1st of each month with the previous month |
+| Licence | **Creative Commons Attribution 4.0** (`cc-by-4.0` on the record). Reuse, adaptation and redistribution are allowed with attribution and an indication of changes. Research use is permitted |
+| Attribution to show | "Eric Pauley (University of Wisconsin-Madison), "AWS Spot Price History", Zenodo, version 2026-09, https://doi.org/10.5281/zenodo.23082767, CC BY 4.0", plus "filtered and aggregated by compute-curve" |
+| Format | One zstd-compressed TSV per month in the format of AWS `describe-spot-price-history`: availability zone ID, instance type, product description, USD per instance-hour, timestamp. Each month starts with the price in effect at 00:00 UTC on the 1st |
+| Coverage | `2022.tsv.zst` (110 MB) and `2023.tsv.zst` (511 MB) cover default regions only; monthly files 2024-01 to 2026-02 and 2026-07 to 2026-09. **2026-03 to 2026-06 are missing** from the current version. 31 files, 5.16 GB in total; monthly files are 81 to 267 MB |
+| Access | Zenodo robots.txt disallows `/api` except `/api/records/*/files` and sets `Crawl-delay: 10`. Metadata was read from the record's landing page; files come from `/records/<id>/files/<name>`. Both are allowed |
+| Used here | 20 monthly files, 2024-10 to 2026-09 (3.7 GB), the months the pre-registered sample needs. MD5-verified, read-only, kept in git-ignored `var/aws_spot/raw/` (D36). Filtered to A100/H100/H200/B200/B300 instance types in US availability zones (`use1`, `use2`, `usw1`, `usw2`) on Linux/UNIX |
+| Committed | `reports/claim5/aws_spot_daily.csv` (per day and GPU class: pools, median USD per GPU-hour, IQR of log price) and `reports/claim5/aws_spot_manifest.json` (files, checksums, rows kept, coverage) |
+| Caveat | The timestamps are when AWS changed the price; the archive was collected monthly. Backtests assume AWS published each price in real time, through its API, and never revised it. This is plausible but not verified |
+
 ## Rules applied to every collector
 
 - robots.txt is fetched and obeyed before any request; a host whose robots.txt

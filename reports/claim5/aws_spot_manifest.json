@@ -1,0 +1,411 @@
+{
+  "source": "Eric Pauley (University of Wisconsin-Madison), \"AWS Spot Price History\", Zenodo, version 2026-09, https://doi.org/10.5281/zenodo.23082767, CC BY 4.0",
+  "zenodo_record": 23082767,
+  "doi": "10.5281/zenodo.23082767",
+  "version": "2026-09",
+  "licence": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+  "changes": "Filtered to GPU instance types in US availability zones on Linux/UNIX; daily price in effect at the cutoff, divided by GPUs per instance.",
+  "filters": {
+    "instance_types": {
+      "p4d.24xlarge": [
+        "A100",
+        8
+      ],
+      "p4de.24xlarge": [
+        "A100",
+        8
+      ],
+      "p5.48xlarge": [
+        "H100",
+        8
+      ],
+      "p5.4xlarge": [
+        "H100",
+        1
+      ],
+      "p5e.48xlarge": [
+        "H200",
+        8
+      ],
+      "p5en.48xlarge": [
+        "H200",
+        8
+      ],
+      "p6-b200.48xlarge": [
+        "B200",
+        8
+      ],
+      "p6-b300.48xlarge": [
+        "B300",
+        8
+      ]
+    },
+    "az_prefixes": [
+      "use1-",
+      "use2-",
+      "usw1-",
+      "usw2-"
+    ],
+    "product": "Linux/UNIX",
+    "cutoff_utc": "23:30"
+  },
+  "files": {
+    "2024-10.tsv.zst": {
+      "md5": "598dd828a0df79e43cabf62f86a66d12",
+      "bytes": 125421970,
+      "rows_kept": 1310
+    },
+    "2024-11.tsv.zst": {
+      "md5": "5983e7a1f3510d0358943de6f8f0b058",
+      "bytes": 152413768,
+      "rows_kept": 1235
+    },
+    "2024-12.tsv.zst": {
+      "md5": "e0f97d23fa53402ac1ebe2503dd91caf",
+      "bytes": 164609707,
+      "rows_kept": 1780
+    },
+    "2025-01.tsv.zst": {
+      "md5": "d763724350584924e1a2aab5d6527ba8",
+      "bytes": 170826096,
+      "rows_kept": 2222
+    },
+    "2025-02.tsv.zst": {
+      "md5": "2a5866bc86181f56afe8e07dec7ef554",
+      "bytes": 152550515,
+      "rows_kept": 2886
+    },
+    "2025-03.tsv.zst": {
+      "md5": "afec0f26cfcf8145ea73f489f3bcbf1a",
+      "bytes": 167905005,
+      "rows_kept": 3263
+    },
+    "2025-04.tsv.zst": {
+      "md5": "55d955b13863e60a78a80ab24530a700",
+      "bytes": 164906651,
+      "rows_kept": 3216
+    },
+    "2025-05.tsv.zst": {
+      "md5": "c7e29d6598f3a22e61d37fdf4a3b3f76",
+      "bytes": 173000765,
+      "rows_kept": 4305
+    },
+    "2025-06.tsv.zst": {
+      "md5": "3025fab72d86b6bde368514c8d1ac2ec",
+      "bytes": 174744635,
+      "rows_kept": 4394
+    },
+    "2025-07.tsv.zst": {
+      "md5": "b1ca4fb49eae076d0fe25946c648e5bb",
+      "bytes": 184109056,
+      "rows_kept": 4684
+    },
+    "2025-08.tsv.zst": {
+      "md5": "0485510fa57641bd25c661504683e252",
+      "bytes": 190942900,
+      "rows_kept": 5370
+    },
+    "2025-09.tsv.zst": {
+      "md5": "abae8bac2a2fa2942693631b286b8f80",
+      "bytes": 189813112,
+      "rows_kept": 5055
+    },
+    "2025-10.tsv.zst": {
+      "md5": "de4c915f9484ebfb8ce9ace376afe224",
+      "bytes": 199217671,
+      "rows_kept": 5372
+    },
+    "2025-11.tsv.zst": {
+      "md5": "e523e2e217950590fb7e0b5cce5919e4",
+      "bytes": 182726965,
+      "rows_kept": 5522
+    },
+    "2025-12.tsv.zst": {
+      "md5": "9fd092622892e64a139715280dc64845",
+      "bytes": 185436394,
+      "rows_kept": 5682
+    },
+    "2026-01.tsv.zst": {
+      "md5": "4019e436e8ed0cc562f651be76104688",
+      "bytes": 190343846,
+      "rows_kept": 5674
+    },
+    "2026-02.tsv.zst": {
+      "md5": "1dbb9ac0a93164d09eb0971a9402f832",
+      "bytes": 174956060,
+      "rows_kept": 5664
+    },
+    "2026-07.tsv.zst": {
+      "md5": "29a172eb2ec02c2860ab634d42b140fc",
+      "bytes": 267445864,
+      "rows_kept": 7900
+    },
+    "2026-08.tsv.zst": {
+      "md5": "e45475d16af7e68f81335162f1dd65fd",
+      "bytes": 256656312,
+      "rows_kept": 7666
+    },
+    "2026-09.tsv.zst": {
+      "md5": "0c7b9bc02224a6fb12f3f544c4f53950",
+      "bytes": 251753453,
+      "rows_kept": 7715
+    }
+  },
+  "coverage": [
+    {
+      "month": "2024-10",
+      "rows_kept": 1310,
+      "pools": 12,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge"
+      ]
+    },
+    {
+      "month": "2024-11",
+      "rows_kept": 1235,
+      "pools": 13,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge"
+      ]
+    },
+    {
+      "month": "2024-12",
+      "rows_kept": 1780,
+      "pools": 17,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-01",
+      "rows_kept": 2222,
+      "pools": 26,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-02",
+      "rows_kept": 2886,
+      "pools": 27,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-03",
+      "rows_kept": 3263,
+      "pools": 28,
+      "types": [
+        "p4d.24xlarge",
+        "p5.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-04",
+      "rows_kept": 3216,
+      "pools": 37,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-05",
+      "rows_kept": 4305,
+      "pools": 37,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-06",
+      "rows_kept": 4394,
+      "pools": 39,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-07",
+      "rows_kept": 4684,
+      "pools": 44,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-08",
+      "rows_kept": 5370,
+      "pools": 44,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-09",
+      "rows_kept": 5055,
+      "pools": 44,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-10",
+      "rows_kept": 5372,
+      "pools": 48,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-11",
+      "rows_kept": 5522,
+      "pools": 49,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2025-12",
+      "rows_kept": 5682,
+      "pools": 50,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2026-01",
+      "rows_kept": 5674,
+      "pools": 55,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5.4xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2026-02",
+      "rows_kept": 5664,
+      "pools": 56,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5.4xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2026-07",
+      "rows_kept": 7900,
+      "pools": 59,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5.4xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2026-08",
+      "rows_kept": 7666,
+      "pools": 64,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5.4xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    },
+    {
+      "month": "2026-09",
+      "rows_kept": 7715,
+      "pools": 65,
+      "types": [
+        "p4d.24xlarge",
+        "p4de.24xlarge",
+        "p5.48xlarge",
+        "p5.4xlarge",
+        "p5e.48xlarge",
+        "p5en.48xlarge",
+        "p6-b200.48xlarge",
+        "p6-b300.48xlarge"
+      ]
+    }
+  ],
+  "missing_months_in_dataset": [
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06"
+  ]
+}

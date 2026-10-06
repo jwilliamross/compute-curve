@@ -48,6 +48,8 @@ They are read from the environment only.
 | `uv run compute-curve claim4 check` | Alpaca check: variable names, paper endpoint, account status, one bar request. Prints no value |
 | `uv run compute-curve claim4 evaluate` | Claim-4 tests and validation gate; writes `reports/claim4/evaluation.md`, the bar manifest and `var/claim4_validation.json` |
 | `uv run compute-curve claim4 daily` | In the window before each session: log the shadow prediction, or send gated **paper** orders within the hard limits; writes `reports/claim4/daily/<date>.md` |
+| `uv run compute-curve claim5 fetch` | Download the needed months of the Zenodo "AWS Spot Price History" archive (CC BY 4.0) into git-ignored `var/aws_spot/`, MD5-verified, and build the daily per-GPU-hour series (`reports/claim5/aws_spot_daily.csv`) |
+| `uv run compute-curve claim5 evaluate` | Claim 4's test battery and gate on the AWS spot signals; writes `reports/claim5/evaluation.md` |
 
 ## Scheduling the daily cycle
 

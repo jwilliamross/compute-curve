@@ -498,3 +498,17 @@ Anything that changes a definition, threshold, universe member, weighting,
 cost or test above, after results exist, is a new variant. It gets a dated
 entry with its reason in `docs/variants_log.md`. A bug fix that does not
 change a definition is recorded in `docs/decisions.md` instead.
+
+## Clarifications after registration (dated; the text above is unchanged)
+
+- **2026-10-06, decision window.** Section 9 says a run decides for the next
+  session when that session's open is less than 24 hours away. The code
+  implements a stricter version of that rule. The window opens at the
+  23:30 UTC cutoff (D31) on the UTC day before the session's open and
+  closes 5 minutes before the open (`claim4.pipeline.decision_window`). So
+  a run during the US trading day never decides for the next session; only
+  the evening run after the cutoff does. No signal, test or threshold is
+  affected.
+- **2026-10-06, statistical guards.** Five guards against small-sample
+  artifacts were added after the first run (docs/decisions.md D34). Each
+  can only make a test stricter.

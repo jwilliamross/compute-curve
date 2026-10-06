@@ -22,6 +22,7 @@ never deleted.
 | claim4.buckets (54 tests) | claim 4 | Family S: lead-lag per bucket basket; Benjamini-Hochberg at 10%; cannot open the gate | 2026-10-06 | no | see docs/claim4_results.md |
 | claim4.strategy_pair (18 evaluations) | claim 4 | Gate G3: long-short basket against XLK on each walk-forward forecast, net of costs | 2026-10-06 | no | see docs/claim4_results.md |
 | claim4.crosscorr (descriptive) | claim 4 | Cross-correlogram, leads and lags −5 to +5; not a test | 2026-10-06 | no | see docs/claim4_results.md |
+| claim4.posthoc_drop_large_moves (descriptive, post hoc) | claim 4 | Correlation without the two sessions with level moves of 2% or more, for neocloud vs level_b200 and basket vs level_h100 at h = 1. Run after seeing results, to check whether two days drove them; not a test | 2026-10-06 | no | yes: −0.42 to −0.12 and −0.41 to −0.06 |
 
 ## Design changes made before any result existed
 

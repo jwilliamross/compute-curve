@@ -296,3 +296,13 @@ only make a test harder to pass, never easier:
 
 No definition, threshold, signal, universe member or cost changed. The plan
 treats bug fixes like these as decisions, not new variants (section 13).
+
+## D35. A claim-4 gate file older than 36 hours is ignored
+
+`var/claim4_validation.json` lives on whichever machine ran the evaluation.
+On a local machine it outlives the run. If an evaluation failed and someone
+then ran `claim4 daily` by hand, an old file could still select a pair and
+send paper orders. The daily step therefore ignores a gate decision whose
+`generated` time is more than 36 hours old, and records why. CI is not
+affected: `var/` starts empty on every run, and the daily step runs only
+after a successful evaluation.

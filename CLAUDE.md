@@ -31,6 +31,9 @@ uv run compute-curve status               # paper account status
 uv run compute-curve daily                # daily cycle: ingest, signal, fill, report
 uv run compute-curve evaluate             # claim tests on real data + validation gate
 uv run compute-curve backtest --synthetic-engine-check
+uv run compute-curve claim4 check         # Alpaca paper endpoint + data check (names only)
+uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_plan.md)
+uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
 ```
 
 ## Standards (non-negotiable)
@@ -107,7 +110,10 @@ src/compute_curve/
   models/               nowcast (+ baselines), Schwartz-Smith Kalman, term-structure
                         walk-forward, relative value
   backtest/             walk-forward runner, bootstrap, tearsheet
+  claim4/               claim 4: Alpaca paper/data clients (paper-only guard),
+                        index signals, tests, gate, paper strategy, risk, daily cycle
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/
+.github/workflows/daily.yml   daily cycle after the US close (default branch only)
 ```

@@ -54,6 +54,10 @@ from compute_curve.timeutil import utc_now
 
 log = logging.getLogger(__name__)
 
+# A gate decision older than this is ignored, so a stale local file can never
+# send orders after a failed evaluation.
+MAX_VALIDATION_AGE = pd.Timedelta(hours=36)
+
 PRED_FIELDS = (
     "decided_at_utc",
     "target_session",
@@ -765,7 +769,14 @@ def _decide(
     target, t_open, w_start, w_end = decision_window(ctx.sessions, ctx.now, c4)
     dec = Decision(ctx.now, target, t_open, w_start, w_end, w_start <= ctx.now <= w_end)
     _fill_inputs(dec, ctx.dataset, ctx.now, c4)
-    dec.selected = _load_validation(p["validation"]).get("selected")
+    validation = _load_validation(p["validation"])
+    dec.selected = validation.get("selected")
+    generated = pd.Timestamp(validation["generated"]) if validation.get("generated") else None
+    if dec.selected and (generated is None or ctx.now - generated > MAX_VALIDATION_AGE):
+        dec.gate_reasons.append(
+            f"validation file older than {MAX_VALIDATION_AGE}; ignored until re-evaluated"
+        )
+        dec.selected = None
     if not dec.selected:
         dec.gate_reasons.append("no signal validated (var/claim4_validation.json)")
     acct = paper.account()

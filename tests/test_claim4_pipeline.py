@@ -238,3 +238,19 @@ def test_evaluation_report_is_aggregate_only(cfg, tmp_path, monkeypatch):
     assert not {"open", "close", "price"} & set(sig.columns)
     assert not list((tmp_path / "reports").rglob("*.parquet"))  # bars stay under var/
     assert list((tmp_path / "var" / "market_data").glob("*.parquet"))
+
+
+def test_a_stale_gate_file_never_sends_orders(cfg, tmp_path, monkeypatch):
+    cfg, fake = make_world(cfg, tmp_path, monkeypatch, effect=1.0)
+    paper, data = fake.clients()
+    c4p.run_evaluation(cfg, now=SUNDAY_EVENING, paper=paper, data=data, observations=pd.DataFrame())
+    path = c4p.paths(cfg)["validation"]
+    stale = json.loads(path.read_text())
+    stale["selected"] = "level_h100|h1"
+    stale["generated"] = (SUNDAY_EVENING - pd.Timedelta(days=3)).isoformat()
+    path.write_text(json.dumps(stale))
+    report = c4p.run_daily(
+        cfg, now=SUNDAY_EVENING, paper=paper, data=data, observations=pd.DataFrame(), env={}
+    )
+    assert fake.posted == []
+    assert "older than" in report.read_text()

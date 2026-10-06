@@ -5,10 +5,9 @@ _As of 6 October 2026. Simulation only: no real money is involved._
 ## What this project is
 
 CME has filed futures on GPU rental prices: GPU1 for NVIDIA's H100 chip and
-GPU2 for the newer B200. They are not trading yet, because the US regulator
-extended its review to 9 November 2026. Until they list, this project builds
-its own measure of GPU rental prices and tests trading ideas with simulated
-money only.
+GPU2 for the newer B200. The US regulator extended its review to 9 November
+2026, so they are not trading yet. Until they list, this project measures
+GPU rental prices itself and tests trading ideas with simulated money.
 
 ## The dataset
 
@@ -22,16 +21,12 @@ money only.
 - **History.** A consistent series exists only from 18 August 2026. That is
   32 trading days so far.
 - **Stocks.** Daily prices for 21 US-listed companies whose business depends
-  on GPU computing:
-  - GPU cloud providers: CoreWeave, Nebius, IREN, WhiteFiber;
-  - chip makers: NVIDIA, AMD, Broadcom, TSMC, Micron, Marvell, Super Micro,
-    Cerebras;
-  - data-center power and capacity: Vistra, Constellation, Talen, Vertiv,
-    Bloom Energy, Applied Digital, Core Scientific, Cipher, TeraWulf.
-
-  Each is compared with XLK, a broad technology fund. The prices come from
-  Alpaca, a broker's data service. Its terms bar redistribution, so they
-  are not stored with the project.
+  on GPU computing: GPU cloud providers such as CoreWeave and Nebius, chip
+  makers such as NVIDIA, AMD and TSMC, and data-center power and capacity
+  firms such as Vistra and Vertiv (full list in `docs/claim4_plan.md`). They
+  are compared with XLK, a broad technology fund. The prices come from
+  Alpaca, a broker's data service, whose terms bar storing them with the
+  project.
 
 ## The question
 
@@ -47,31 +42,41 @@ do, our index could become a trading signal.
 - **No hindsight.** A price change counts only from the time our system
   would actually have seen it. Trades are assumed at the next day's opening
   price.
-- **Three checks.**
-  1. Do index changes line up with the stocks' later performance against
-     the technology fund?
-  2. What happened after large index moves?
-  3. Would a simple forecast, refitted each day using only past data, have
-     beaten two naive guesses: "no difference" and "the average difference
-     so far"?
+- **Three checks.** Do index changes line up with the stocks' later
+  performance against the technology fund? What happened after large
+  moves? Would a forecast refitted each day on past data alone have beaten
+  the naive guesses "no difference" and "the average difference so far"?
 - **A higher bar for many tests.** Because many tests are run, each one
   must clear a stricter threshold.
 - **Costs included.** Trading costs are set conservatively, at about 0.4%
   for a round trip.
 
-## The result so far
+## The result of the first test
 
 - **No test passed.** The evidence neither supports nor rejects the idea.
 - **The cause is too little data.** With 32 trading days only a very strong
   relationship could show up, much stronger than the ones usually found in
   stock returns. And our index rarely changes: the H100 price moved on only
   5 of the 32 days, so most days add no information.
-- **One pattern to watch, not a finding.** Cloud-provider stocks did worse
-  than the technology fund after B200 prices rose. The whole pattern comes
-  from two days, and one of them reflects a change in which listings were
-  recorded rather than in prices.
-- **Costs set a high bar.** At about 0.4% a round trip, a useful signal
-  would have to predict daily moves of at least that size.
+- **One pattern to watch, not a finding.** Cloud-provider stocks lagged the
+  technology fund after B200 prices rose, but the pattern comes from two
+  days, one of them a change in which listings were recorded.
+
+## A second test: Amazon's GPU spot prices
+
+- **The data.** A public research archive from the University of
+  Wisconsin-Madison records every change in the price of renting spare
+  ("spot") GPU capacity on Amazon Web Services. We used its US prices for
+  NVIDIA's A100 and H100 chips from October 2024 to September 2026: 402
+  trading days, with prices that change almost daily.
+- **The test.** The same stocks, the same three checks and the same
+  pass-or-fail rules, all written down before any stock return was looked
+  at.
+- **The result.** No test passed. Amazon's spot price moves did not
+  foretell how these stocks did against the technology fund. Here, unlike
+  the first test, there was enough data to spot a moderately strong
+  relationship, and none appeared. A weak one cannot be ruled out. Nothing
+  was added to the daily routine.
 
 ## What happens now
 
@@ -80,16 +85,16 @@ do, our index could become a trading signal.
   would have predicted. This is called "shadow mode".
 - **No orders yet.** Orders are placed only if the pre-agreed rules pass,
   which needs at least six more months of data. Even then they go only to
-  Alpaca's simulated paper account, within strict limits:
-  - USD 10,000 per stock and USD 20,000 in total;
-  - a USD 1,000 daily loss limit;
-  - a USD 3,000 maximum drawdown, after which everything is closed and an
-    emergency stop stays on.
-- **When an answer is possible.** A modest relationship would take roughly
-  one to six years of daily data to detect reliably. If nothing has passed
-  by August 2027, the idea is reported as not supported. If nothing has
-  passed by August 2028, it is rejected.
+  Alpaca's simulated paper account, within strict limits: USD 10,000 per
+  stock, USD 20,000 in total, a USD 1,000 daily loss limit, and a USD 3,000
+  maximum drawdown that closes everything and leaves an emergency stop on.
+- **When an answer is possible.** For our own index, a modest relationship
+  would take roughly one to six years of daily data to detect. If nothing
+  has passed by August 2027 the idea is reported as not supported, and by
+  August 2028 it is rejected. The Amazon test is repeated once about a year
+  of new data exists.
 
 All cost and size figures are assumptions, not measurements. The details
 are in `docs/claim4_plan.md` (the rules) and `docs/claim4_results.md` (the
-results).
+results); for the Amazon test, `docs/claim5_plan.md` and
+`docs/claim5_results.md`.

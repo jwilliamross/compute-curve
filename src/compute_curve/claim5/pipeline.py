@@ -228,9 +228,10 @@ def evaluate(ctx: Context5, cfg: Config) -> Evaluation:
         [an.cross_correlogram(df, s, now, n_boot=nb, seed=seed) for s in levels], ignore_index=True
     )
     sample = {}
+    has_signal = df[list(bc.signals)].notna().any(axis=1)
     for h in bc.horizons:
         known = pd.to_datetime(df[f"known_h{h}"], utc=True) <= now
-        m = df["in_sample"] & known & df[f"R_basket_h{h}"].notna()
+        m = df["in_sample"] & known & df[f"R_basket_h{h}"].notna() & has_signal
         sess = df.loc[m, "session"]
         sample[h] = {
             "n": int(m.sum()),

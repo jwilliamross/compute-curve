@@ -29,6 +29,8 @@ never deleted.
 | claim5.buckets (36 tests) | claim 5 | Family S: lead-lag per bucket basket; Benjamini-Hochberg at 10%; cannot open the gate | 2026-10-06 | no | see docs/claim5_results.md |
 | claim5.strategy_pair (12 evaluations) | claim 5 | Gate G3: long-short basket against XLK on each walk-forward forecast, claim 4's costs | 2026-10-06 | no | see docs/claim5_results.md |
 | claim5.crosscorr (descriptive) | claim 5 | Cross-correlogram for the two level signals; not a test | 2026-10-06 | no | see docs/claim5_results.md |
+| claim5.posthoc_outlier (descriptive, post hoc) | claim 5 | disp_h100 correlations without the 2026-07-06 session, as the plan required; not a test | 2026-10-06 | no | yes: correlations move slightly away from zero; nothing would pass |
+| claim5.posthoc_mean_only (descriptive, post hoc) | claim 5 | 20-session strategy run on the running-mean forecast alone, to explain the G3 table; not a test | 2026-10-06 | no | yes: 3.6% per window, the same as with the spot signals |
 
 ## Design changes made before any result existed
 

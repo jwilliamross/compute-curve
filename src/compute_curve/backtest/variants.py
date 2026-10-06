@@ -248,6 +248,14 @@ REGISTERED: tuple[Variant, ...] = (
         True,
         3,
     ),
+    Variant(
+        "explore1.forward.H05",
+        "explore1",
+        "Forward test of candidate H05 in shadow mode: 60 sessions, C1 and C2 on forward data",
+        "2026-10-06",
+        True,
+        1,
+    ),
 )
 
 

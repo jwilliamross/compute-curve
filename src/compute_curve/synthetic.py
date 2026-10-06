@@ -12,6 +12,7 @@ Kalman filter can be checked against a known data-generating process.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
@@ -408,3 +409,31 @@ def synthetic_round1(
         "aws": _synthetic_aws(rng, plant),
         "bars": bars[["symbol", "session", "open", "close", "is_synthetic"]],
     }
+
+
+def synthetic_cgi_vintages(
+    start: str, end: str, seed: int, transient: float = 0.0, observed: str | None = None
+) -> pd.DataFrame:
+    """SYNTHETIC CGI H100 15-minute vintage rows (``as_of``, ``value``, ``ts_observed``,
+    ``raw_json`` with ``generated_at``), flagged ``is_synthetic``.
+
+    The log value is a random walk plus independent transient noise with
+    standard deviation ``transient``; transient noise makes 6-hour changes
+    revert. Every value is generated 3 minutes after its stamp.
+    """
+    rng = np.random.default_rng(seed)
+    stamps = pd.date_range(start, end, freq="15min", tz="UTC")
+    n = len(stamps)
+    lv = np.log(3.5) + np.cumsum(rng.normal(0.0, 0.001, n)) + rng.normal(0.0, transient, n)
+    gen = stamps + pd.Timedelta(minutes=3)
+    obs = pd.Timestamp(observed, tz="UTC") if observed else stamps[-1] + pd.Timedelta(hours=1)
+    return pd.DataFrame(
+        {
+            "as_of": stamps,
+            "gpu_model": "H100",
+            "value": np.exp(lv),
+            "ts_observed": obs,
+            "raw_json": [json.dumps({"generated_at": g.isoformat()}) for g in gen],
+            "is_synthetic": True,
+        }
+    )

@@ -302,3 +302,13 @@ confirm = [[2025-12-01, 2026-02-28], [2026-07-01, 2026-09-30]]
 [exploration.splits.equities]
 explore = [2024-09-03, 2026-02-19]
 confirm = [[2026-02-20, 2026-10-05]]
+
+# Forward test of round-1 candidates, shadow mode only (docs/exploration_plan.md
+# section 9). H05 passed confirmation on 2026-10-06. Its 60 future US equity
+# sessions run from 2026-10-07 to 2026-12-31 (NYSE closed 2026-11-26 and
+# 2026-12-25); every hourly decision point in that window counts.
+[exploration.forward.H05]
+start = 2026-10-07T00:00:00Z
+end = 2026-12-31T23:59:59Z
+sessions = 60
+max_publish_lag_minutes = 15    # a value published later than this is not point-in-time

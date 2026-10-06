@@ -426,3 +426,25 @@ Only then is the existing gate evaluated, unchanged:
 - **Rental-price target:** the same statistical conditions, but D26 still
   applies. Nothing trades before GPU1 or GPU2 lists, so it stays in shadow
   mode.
+
+## D42. The H05 forward test fetches recent CGI history daily
+
+Candidate H05 needs CGI's 15-minute values, and the daily cycle stores only
+one live CGI value. So the shadow step re-imports recent history through the
+existing, approved CGI backfill. It is keyless, rate-limited and
+robots-aware. Each run fetches from one day before the last stored value,
+and each import is a new immutable vintage.
+
+Four guards keep the test point-in-time:
+
+- A stamp's value comes from the first vintage that contained it. Later
+  revisions are counted, not used.
+- Values that CGI generated more than 15 minutes after their stamp are
+  excluded. In the exploration and confirmation data the largest lag was
+  8.2 minutes, and the median 3.1.
+- A logged forecast is never rewritten.
+- The test runs once, after the last outcome is known. No interim
+  performance is reported, to avoid stopping early on a lucky run.
+
+The window is the 60 US equity sessions after the candidate was added,
+2026-10-07 to 2026-12-31, as the plan required.

@@ -46,6 +46,7 @@ never deleted.
 | explore1.echo (filter, not a test) | exploration 1 | Partial slope after removing the target's own past change; survival filter for 9 hypotheses | 2026-10-06 | no | see docs/exploration_round1.md |
 | explore1.posthoc_stability (descriptive, post hoc) | exploration 1 | Survivors' correlation in each half of the exploration sample and without the 1% largest signal values. Added after seeing which hypotheses survived, on the exploration set only; changes nothing in the frozen specifications; not a test | 2026-10-06 | no | see reports/exploration/round1_descriptive.md |
 | explore1.confirm (up to 3 tests) | exploration 1 | One shot per survivor on the confirmation set: one-sided Newey-West (Holm) and out-of-sample R² above 0 against both naive baselines | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.forward.H05 (1 test) | exploration 1 | Forward test of the confirmed candidate H05 (CGI H100 6-hour reversal) in shadow mode: every hourly decision point in the 60 US equity sessions from 2026-10-07 to 2026-12-31, then C1 and C2 once on forward data only. Declared when the candidate was added | 2026-10-06 | yes | runs daily; result in reports/exploration/round1_forward_H05.json after 2027-01-01 |
 
 ## Design changes made before any result existed
 
@@ -66,10 +67,10 @@ run on real data, so they are not post-hoc tuning:
 Claim 5 declares 78 more: 66 hypothesis tests plus 12 strategy
 evaluations, with the same battery and gate as claim 4.
 
-Exploration round 1 (docs/exploration_plan.md) declares 15 more: 12
-exploratory tests, one per hypothesis, and at most 3 one-shot confirmation
-tests. Forward tests of any candidate will be declared when added. The
-project total is now 216.
+Exploration round 1 (docs/exploration_plan.md) declares 16 more: 12
+exploratory tests, one per hypothesis, at most 3 one-shot confirmation
+tests (2 were run), and the forward test of the one candidate, H05. The
+project total is now 217.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

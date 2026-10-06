@@ -330,6 +330,15 @@ class SplitConfig(_Strict):
         return self
 
 
+class ForwardConfig(_Strict):
+    """A candidate's shadow forward test: its window of future sessions (inclusive)."""
+
+    start: datetime
+    end: datetime
+    sessions: int = Field(ge=1)
+    max_publish_lag_minutes: int = Field(default=15, ge=0)
+
+
 class ExplorationConfig(_Strict):
     """Exploration round settings (docs/exploration_plan.md)."""
 
@@ -351,6 +360,7 @@ class ExplorationConfig(_Strict):
     min_pools: int = Field(default=3, ge=1)
     cgi_max_age_minutes: int = Field(default=30, ge=0)
     splits: dict[str, SplitConfig]
+    forward: dict[str, ForwardConfig] = {}
 
 
 class Config(_Strict):

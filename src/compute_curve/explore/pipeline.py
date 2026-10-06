@@ -294,3 +294,127 @@ def run_confirmation(cfg: Config) -> Path:  # pragma: no cover - reads local dat
 
 def set_label(which: Which) -> str:
     return "exploration set" if which == "explore" else "confirmation set"
+
+
+# ---------------------------------------------------------------------------
+# Forward test of confirmed candidates (shadow mode only, no orders)
+# ---------------------------------------------------------------------------
+def _cgi_vintages(cfg: Config) -> pd.DataFrame:  # pragma: no cover - reads local data
+    from compute_curve.pipeline import paths as main_paths  # noqa: PLC0415
+    from compute_curve.storage import warehouse as wh  # noqa: PLC0415
+
+    con = wh.connect(None)
+    try:
+        wh.register_reference_indices(con, main_paths(cfg)["raw"])
+        ref = wh.reference_indices_frame(con)
+    finally:
+        con.close()
+    return ref.loc[ref["source"] == "cgi_hist"].reset_index(drop=True)
+
+
+def _fetch_cgi(
+    cfg: Config, start: pd.Timestamp, now: pd.Timestamp
+) -> list[str]:  # pragma: no cover
+    """Import recent CGI 15-minute history (approved source, rate-limited client)."""
+    from compute_curve.snapshot import backfill_cgi  # noqa: PLC0415
+
+    if start >= now:
+        return []
+    outs = backfill_cgi(cfg, start.to_pydatetime(), now.to_pydatetime())
+    return [f"{o.detail}: {o.status}" for o in outs if o.status == "error"]
+
+
+def render_shadow(
+    hid: str,
+    log: pd.DataFrame,
+    fz: dict[str, Any],
+    fwd: Any,
+    counts: dict[str, int],
+    result: dict[str, Any] | None,
+    errors: list[str],
+) -> list[str]:
+    from compute_curve.explore.forward import decision_points  # noqa: PLC0415
+
+    expected = len(decision_points(fwd))
+    known = int(log["y"].notna().sum()) if not log.empty else 0
+    lines = [
+        f"## {hid}: {SPECS[hid].signal} → {SPECS[hid].target}",
+        "",
+        f"- Frozen rule: forecast = {fz['intercept']:.6f} + ({fz['slope']:.4f}) × signal "
+        "(`round1_frozen.json`). Shadow only: no order is sent anywhere.",
+        f"- Forward window: {pd.Timestamp(fwd.start):%Y-%m-%d %H:%M} to "
+        f"{pd.Timestamp(fwd.end):%Y-%m-%d %H:%M} UTC, the next {fwd.sessions} US equity "
+        f"sessions after the candidate was added; {expected} hourly decision points.",
+        f"- Logged so far: {len(log)} forecasts, {known} with a known outcome.",
+        f"- Point-in-time guards: {counts.get('revised', 0)} CGI stamps revised after first "
+        f"observation (first value kept); {counts.get('late', 0)} values published more than "
+        f"{fwd.max_publish_lag_minutes} minutes late (excluded).",
+        "- No interim performance is shown: the test is evaluated once, after the last "
+        "outcome is known (docs/exploration_plan.md section 9).",
+    ]
+    if errors:
+        lines.append(f"- Fetch errors this run: {'; '.join(errors)}.")
+    if result is not None:
+        verdict = (
+            "passed: the existing gate is evaluated next (rental-price target: no instrument "
+            "trades before GPU1 or GPU2 lists, so it stays in shadow mode, D26)"
+            if result["passed"]
+            else "failed: the candidate is dropped"
+        )
+        lines.append(
+            f"- **Forward test complete.** n = {result['n']}, slope {_f(result['slope'], 4)}, "
+            f"one-sided p {_p(result['p_one_sided'])} (Holm {_p(result['p_holm'])}), "
+            f"out-of-sample R² {_f(result['oos_r2_zero'])} against zero and "
+            f"{_f(result['oos_r2_mean'])} against the exploration mean. Verdict: {verdict}."
+        )
+    return [*lines, ""]
+
+
+def run_shadow(cfg: Config, now: pd.Timestamp | None = None) -> Path:  # pragma: no cover
+    """Daily: log the frozen forecasts of every confirmed candidate; evaluate once at the end."""
+    from compute_curve.explore import forward as fw  # noqa: PLC0415
+
+    ecfg, _ = _cfgs(cfg)
+    p = paths(cfg)
+    now = now or pd.Timestamp.now(tz="UTC")
+    conf = json.loads(p["confirm_json"].read_text())
+    frozen = {f["hid"]: f for f in json.loads(p["frozen"].read_text())["frozen"]}
+    candidates = [r["hid"] for r in conf["rows"] if r["confirmed"]]
+    lines = [
+        f"# Exploration round {ecfg.round}: candidates in shadow mode",
+        "",
+        f"Updated {now:%Y-%m-%d %H:%M} UTC. A candidate is not a finding. It logs forecasts",
+        "only, and the existing gate is evaluated only if it passes its forward test.",
+        "",
+    ]
+    errors: list[str] = []
+    for hid in candidates:
+        if hid not in ecfg.forward or SPECS[hid].data != "C":
+            raise RuntimeError(f"no forward-test rule for candidate {hid}")
+        fwd = ecfg.forward[hid]
+        rows = _cgi_vintages(cfg)
+        h100 = rows.loc[rows["gpu_model"] == "H100", "as_of"]
+        last = pd.to_datetime(h100, utc=True).max() if not h100.empty else None
+        start = pd.Timestamp(fwd.start).tz_convert("UTC")
+        if last is not None:
+            start = max(start, last - pd.Timedelta(days=1))
+        errors = _fetch_cgi(cfg, start, now)
+        values, counts = fw.point_in_time(_cgi_vintages(cfg), "H100", fwd.max_publish_lag_minutes)
+        new = fw.shadow_rows(values, frozen[hid], fwd, now, ecfg.cgi_max_age_minutes)
+        log_path = p["dir"] / f"round{ecfg.round}_shadow_{hid}.csv"
+        old = pd.read_csv(log_path) if log_path.exists() else None
+        log = fw.merge_log(old, new)
+        log.to_csv(log_path, index=False)
+        res_path = p["dir"] / f"round{ecfg.round}_forward_{hid}.json"
+        result = json.loads(res_path.read_text()) if res_path.exists() else None
+        if result is None and fw.window_complete(log, fwd, now):
+            result = fw.evaluate_forward(log, frozen[hid], ecfg, len(candidates))
+            res_path.write_text(json.dumps(_clean(result), indent=2, default=str))
+        lines += render_shadow(hid, log, frozen[hid], fwd, counts, result, errors)
+    if not candidates:
+        lines.append("No candidate passed confirmation, so nothing runs in shadow mode.")
+    out = p["dir"] / f"round{ecfg.round}_shadow.md"
+    out.write_text("\n".join(lines) + "\n")
+    if errors:
+        raise RuntimeError(f"CGI fetch failed: {'; '.join(errors)} (log updated from stored data)")
+    return out

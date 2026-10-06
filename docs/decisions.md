@@ -370,3 +370,59 @@ neoclouds are included partly because they later became AI companies. This
 mainly biases mean excess returns, which the walk-forward's mean baseline
 absorbs, less so the predictive slope. It is disclosed as a limitation, not
 corrected.
+
+## D39. Exploration round 1: per-dataset 70/30 time splits, whole windows only
+
+Each dataset is split on its own observations (docs/exploration_plan.md
+section 2). Three rules make the split hard to break by accident:
+
+- An observation belongs to a set only if its signal window and its outcome
+  window both lie inside that set. Windows that straddle a split date are
+  in neither set.
+- A hypothesis that joins two datasets uses only observations whose inputs
+  lie in the same set of both datasets.
+- The exploration code truncates each dataset to its exploration set
+  before computing anything.
+
+This makes three ideas untestable this round: AWS spot leading our index,
+compute stocks leading our index, and CGI leading our index. The
+conservative choice was to say so rather than borrow confirmation-set data
+as signals.
+
+## D40. Exploration targets on our listings: matched listings, provider means
+
+The H100 history-panel index is unchanged on 88% of days. A test on the
+index itself would have almost no non-zero outcomes in 56 days. The round
+therefore uses components:
+
+- **Matched-listing changes.** Each provider's median log change over
+  listings priced on both days. A listing appearing or disappearing cannot
+  move the change.
+- **Equal-weighted means across providers.** One provider, one vote, as in
+  the index.
+
+Only the history sources are used. The direct collectors start on
+2026-10-05, and mixing them in would create artificial changes when the
+source switches.
+
+## D41. Exploration survivors: one-shot confirmation, then a 60-session forward test
+
+**Selection and freezing.** At most three survivors are confirmed. Each has
+its exact specification and exploration-fitted coefficients frozen and
+committed first.
+
+**Confirmation.** It passes only if both hold:
+
+- a one-sided Newey-West test passes at 5%, Holm-adjusted;
+- the frozen forecast beats both naive baselines out of sample.
+
+The command refuses a second run.
+
+**Forward test.** A confirmed candidate runs in shadow mode for 60 future US
+equity sessions and must pass the same two conditions on forward data only.
+Only then is the existing gate evaluated, unchanged:
+
+- **Equity target:** claim 4's gate.
+- **Rental-price target:** the same statistical conditions, but D26 still
+  applies. Nothing trades before GPU1 or GPU2 lists, so it stays in shadow
+  mode.

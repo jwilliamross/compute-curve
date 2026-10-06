@@ -266,3 +266,33 @@ the claim-4 panels are frozen in `config/default.toml`. As in D21, the 30
 formation days are in-sample for the panel choice, so claim-4 signals start
 at the first session whose index days are both after 2026-08-17, which is
 2026-08-20.
+
+## D34. Statistical guards added after the first claim-4 run (bug fixes, all stricter)
+
+The first real run, on 2026-10-06, printed numbers that were artifacts of a
+tiny sample. They were fixed before any result was written up. Each fix can
+only make a test harder to pass, never easier:
+
+1. **Block bootstrap with fewer than two blocks.** At `h = 20` there were 13
+   windows against a block length of 20. Every resample was then a rotation
+   of the whole sample, so the interval collapsed to a point, for example
+   `[0.16, 0.16]`. Intervals now need at least two blocks; otherwise "n/a".
+2. **Newey-West and Clark-West with the lag close to `n`.** A lag of 20 on
+   13 windows, or 5 on 4, gave spurious p-values near 0. Both now need
+   `n >= 3 × lag`; otherwise "too few windows".
+3. **Sharpe interval for sparse strategies.** Resamples with no trade have
+   zero variance. They were dropped as undefined. That kept only resamples
+   containing the one or two profitable trades, and let two strategies with
+   1 or 2 trades out of 12 windows "pass" G3. A strategy that never trades
+   now scores a Sharpe of 0. Neither strategy passes G3 any more, and
+   neither could have opened the gate, because G1, G2 and G4 failed.
+4. **Holm and Benjamini-Hochberg family size.** Tests that could not be
+   computed were left out of the adjustment, which shrinks the family. They
+   now count as `p = 1`, so the family keeps its pre-registered size of 18,
+   or 54 for family S.
+5. **Event-study intervals** are shown only when there are at least 10
+   events, the plan's minimum for inference. The sign-flip p-value is still
+   shown.
+
+No definition, threshold, signal, universe member or cost changed. The plan
+treats bug fixes like these as decisions, not new variants (section 13).

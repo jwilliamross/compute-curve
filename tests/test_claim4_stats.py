@@ -10,13 +10,17 @@ from statsmodels.stats.multitest import multipletests
 from compute_curve.claim4 import stats as cs
 
 
-def test_holm_and_bh_match_statsmodels_and_keep_nan():
+def test_holm_and_bh_count_uncomputable_tests_as_p_one():
     p = [0.01, 0.04, float("nan"), 0.03]
-    clean = [0.01, 0.04, 0.03]
+    as_one = [0.01, 0.04, 1.0, 0.03]
     h, q = cs.holm(p), cs.benjamini_hochberg(p)
     assert np.isnan(h[2]) and np.isnan(q[2])
-    assert [h[0], h[1], h[3]] == pytest.approx(list(multipletests(clean, method="holm")[1]))
-    assert [q[0], q[1], q[3]] == pytest.approx(list(multipletests(clean, method="fdr_bh")[1]))
+    exp_h = multipletests(as_one, method="holm")[1]
+    exp_q = multipletests(as_one, method="fdr_bh")[1]
+    assert [h[0], h[1], h[3]] == pytest.approx([exp_h[0], exp_h[1], exp_h[3]])
+    assert [q[0], q[1], q[3]] == pytest.approx([exp_q[0], exp_q[1], exp_q[3]])
+    # dropping the NaN would have been less conservative
+    assert h[0] > multipletests([0.01, 0.04, 0.03], method="holm")[1][0]
 
 
 def test_ols_hac_matches_statsmodels():
@@ -75,3 +79,30 @@ def test_power_formulas_are_consistent():
 def test_hac_mean_se_reduces_to_iid_without_lags():
     x = np.random.default_rng(4).normal(size=400)
     assert cs.hac_mean_se(x, 0) == pytest.approx(np.std(x) / np.sqrt(x.size))
+
+
+def test_hac_and_clark_west_need_enough_windows_for_the_lag():
+    rng = np.random.default_rng(5)
+    x = rng.normal(size=13)
+    y = x + rng.normal(size=13)
+    assert cs.ols_hac(x, y, lag=20) is None
+    assert cs.ols_hac(x, y, lag=1) is not None
+    assert cs.clark_west(y, x, np.zeros(13), lag=20) is None
+
+
+def test_block_interval_needs_two_blocks():
+    rng = np.random.default_rng(6)
+    x = rng.normal(size=13)
+    lo, hi = cs.block_bootstrap_corr_ci(x, x + rng.normal(size=13), block_length=20, n_boot=50)
+    assert np.isnan(lo) and np.isnan(hi)
+
+
+def test_permutation_without_any_shift_is_unavailable():
+    x = np.arange(13.0)
+    p, k = cs.circular_shift_pvalue(x, x[::-1].copy(), 20)
+    assert k == 0 and np.isnan(p)
+
+
+def test_a_strategy_that_never_trades_has_zero_sharpe():
+    assert cs.annualized_sharpe(np.zeros(10), 1) == 0.0
+    assert np.isnan(cs.annualized_sharpe(np.full(10, 0.01), 1))

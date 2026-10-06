@@ -121,12 +121,20 @@ def fetch_bars_cached(
     feed: str = "sip",
     adjustment: str = "all",
     refresh: bool = False,
+    end_param: str | None = None,
 ) -> pd.DataFrame:
-    """Daily bars from the local ``var`` cache, or from Alpaca (then cached locally)."""
+    """Daily bars from the local ``var`` cache, or from Alpaca (then cached locally).
+
+    ``end`` (a date) keys the cache; ``end_param`` is what Alpaca receives. A
+    date-only end is read by Alpaca as the end of that day, which the free
+    plan refuses while it is less than 15 minutes old, so callers pass an
+    explicit timestamp after the last final close.
+    """
     path = cache_path(cache_dir, symbols, start, end, feed)
     if path.exists() and not refresh:
         return _read_duckdb(path)
-    raw = client.daily_bars(list(symbols), start, end, feed=feed, adjustment=adjustment)
+    req_end = end_param or end
+    raw = client.daily_bars(list(symbols), start, req_end, feed=feed, adjustment=adjustment)
     df = bars_frame(raw)
     cache_dir.mkdir(parents=True, exist_ok=True)
     _write_duckdb(df, path)

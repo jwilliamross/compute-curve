@@ -137,8 +137,18 @@ def build_context(
         raise RuntimeError("no completed session to fetch bars for")
     symbols = [*c4.universe.members(), c4.benchmark]
     start = c4.bars_start.isoformat()
+    end_close = sessions.loc[sessions["session"] == end, "close_utc"].iloc[0]
+    end_param = (pd.Timestamp(end_close) + BAR_DELAY).strftime("%Y-%m-%dT%H:%M:%SZ")
     bars = fetch_bars_cached(
-        data, symbols, start, end.isoformat(), paths(cfg)["cache"], c4.feed, c4.adjustment, refresh
+        data,
+        symbols,
+        start,
+        end.isoformat(),
+        paths(cfg)["cache"],
+        c4.feed,
+        c4.adjustment,
+        refresh,
+        end_param=end_param,
     )
     bars = bars.loc[bars["session"] <= end]
     dataset = an.build_dataset(signals, bars, sessions, c4)

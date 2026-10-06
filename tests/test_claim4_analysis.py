@@ -197,3 +197,20 @@ def test_manifest_holds_no_prices(cfg):
     for col in ("open", "close", "high", "low", "vwap"):
         assert f"'{col}'" not in text
     assert m["rows"] == len(bars) and len(m["sha256"]) == 64
+
+
+def test_sparse_strategy_cannot_pass_g3(cfg):
+    c4 = cfg.claim4
+    fc = pd.DataFrame(
+        {
+            "session": range(12),
+            "forecast": [0.0] * 10 + [0.02, 0.02],
+            "actual": [0.001] * 10 + [0.03, 0.03],
+            "x": [0.0] * 12,
+            "b0": [0.0] * 12,
+            "b1": [0.0] * 12,
+        }
+    )
+    r = an.evaluate_strategy(fc, "level_h100", 1, c4, 500, 0)
+    assert r.n_trades == 2
+    assert not r.passes  # flat resamples count as Sharpe 0, so the lower bound is not above 0

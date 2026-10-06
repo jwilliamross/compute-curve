@@ -120,7 +120,11 @@ def lead_lag(
     res = LeadLag(family, target, signal, h, len(d), nz)
     fit = cs.ols_hac(x, y, lag=h)
     if fit is None:
-        res.note = "no variation in signal" if len(d) >= 4 else "too few observations"
+        if not cs.enough_for_hac(len(d), h):
+            res.note = f"too few windows for HAC at h={h} (n < {cs.MIN_N_PER_LAG}h)"
+        else:
+            res.note = "no variation in signal"
+        res.rho = cs.pearson(x, y)
         return res
     res.slope, res.slope_se, res.p_hac = fit.slope, fit.slope_se, fit.p_value
     res.rho = cs.pearson(x, y)
@@ -232,10 +236,11 @@ def event_study(
         res.note = "no events"
         return res
     res.mean_signed_car = float(car.mean())
-    res.ci_lo, res.ci_hi = cs.iid_bootstrap_ci(car, n_boot=n_boot, seed=seed)
     res.p_sign_flip = cs.sign_flip_pvalue(car, seed=seed)
     if len(ev) < cfg.min_events:
         res.note = f"insufficient events ({len(ev)} < {cfg.min_events}); descriptive only"
+        return res  # no interval: a bootstrap over a handful of events is not informative
+    res.ci_lo, res.ci_hi = cs.iid_bootstrap_ci(car, n_boot=n_boot, seed=seed)
     return res
 
 
@@ -426,15 +431,17 @@ def evaluate_strategy(
         return res
     res.mean_net = float(base.mean())
     res.sharpe = cs.annualized_sharpe(base, h)
+    res.mean_net_2x = float(strategy_returns(fc, h, cfg, 2.0).mean())
+    for m in cfg.costs.sensitivity_multipliers:
+        res.by_multiplier[f"{m:g}x"] = float(strategy_returns(fc, h, cfg, m).mean())
+    if base.size < 2 * max(5, h):
+        return res  # too few windows for a block bootstrap; G3 cannot pass
     dist = bootstrap_distribution(
         base, lambda r: cs.annualized_sharpe(r, h), n_boot=n_boot, block_length=max(5, h), seed=seed
     )
     dist = dist[np.isfinite(dist)]
     if dist.size:
         res.sharpe_lo, res.sharpe_hi = (float(v) for v in np.quantile(dist, [0.025, 0.975]))
-    res.mean_net_2x = float(strategy_returns(fc, h, cfg, 2.0).mean())
-    for m in cfg.costs.sensitivity_multipliers:
-        res.by_multiplier[f"{m:g}x"] = float(strategy_returns(fc, h, cfg, m).mean())
     res.passes = bool(np.isfinite(res.sharpe_lo) and res.sharpe_lo > 0 and res.mean_net_2x > 0)
     return res
 

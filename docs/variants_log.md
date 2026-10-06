@@ -44,4 +44,12 @@ is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside
 gate G3. Per-stock tests were deliberately not declared (docs/claim4_plan.md
 6.6).
 
+## Changes after the first claim-4 run
+
+On 2026-10-06, after the first real-data run, five computational guards were
+added (docs/decisions.md D34). They stop degenerate intervals and p-values
+from appearing on tiny samples. Each can only make a test stricter. The only
+outcomes that changed were two G3 "passes" that were artifacts, both now
+fails. No definition or threshold changed, so no new variant was declared.
+
 Engine-validation runs on synthetic data are not variants and are not counted.

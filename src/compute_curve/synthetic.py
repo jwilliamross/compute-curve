@@ -257,3 +257,154 @@ def synthetic_spot_pools(
     df = pd.DataFrame(rows, columns=["day", "az_id", "instance_type", "gpu", "price_per_gpu_hour"])
     df["is_synthetic"] = True
     return df
+
+
+def _sticky_path(
+    rng: np.random.Generator, n: int, start: float, p_move: float, jump: float
+) -> np.ndarray:
+    """Log price that changes only on random days (list prices are sticky). SYNTHETIC."""
+    moves = (rng.random(n) < p_move) * rng.normal(0.0, jump, n)
+    moves[0] = 0.0
+    return start + np.cumsum(moves)
+
+
+def _synthetic_listings(rng: np.random.Generator, plant: frozenset[str]) -> pd.DataFrame:
+    """SYNTHETIC listings for round 1: one listing per provider, sticky prices."""
+    days = pd.date_range("2026-07-19", "2026-10-06", freq="D")
+    n = len(days)
+    leaders = ["coreweave", "lambda", "nebius", "crusoe", "together"]
+    followers = [f"synth{k:02d}" for k in range(10)]
+    p_lead = 0.2 if "H02" in plant else 0.08
+    paths = {
+        p: _sticky_path(rng, n, np.log(2.5) + rng.normal(0, 0.1), p_lead, 0.05) for p in leaders
+    }
+    lead_chg = np.diff(np.mean(list(paths.values()), axis=0), prepend=0.0)
+    copy = np.roll(lead_chg, 2) if "H02" in plant else np.zeros(n)
+    copy[:3] = 0.0
+    for prov in followers:
+        base = _sticky_path(rng, n, np.log(2.5) + rng.normal(0, 0.15), 0.08, 0.05)
+        paths[prov] = base + np.cumsum(copy)
+    if "H01" in plant:
+        mat = np.vstack(list(paths.values()))
+        for t in range(1, n):
+            mat[:, t] = mat[:, t - 1]
+            prem = mat[:, t] - np.median(mat[:, t])
+            move = rng.random(mat.shape[0]) < 0.25
+            mat[move, t] -= 0.5 * prem[move] + rng.normal(0, 0.005, int(move.sum()))
+        paths = {p: mat[i] for i, p in enumerate(paths)}
+    specs = [("H100", "on_demand", prov, lp) for prov, lp in paths.items()]
+    for prov in (leaders + followers)[:6]:
+        lp = _sticky_path(rng, n, np.log(6.0) + rng.normal(0, 0.1), 0.1, 0.05)
+        specs.append(("B200", "on_demand", prov, lp))
+    for prov in followers[:4]:
+        specs.append(("H100", "spot", prov, _sticky_path(rng, n, np.log(1.8), 0.3, 0.05)))
+    frames = [
+        pd.DataFrame(
+            {
+                "as_of_date": days.date,
+                "gpu_model": gpu,
+                "term": term,
+                "provider": prov,
+                "listing_id": f"{prov}:{gpu.lower()}:{term}:",
+                "price": np.exp(lp),
+            }
+        )
+        for gpu, term, prov, lp in specs
+    ]
+    return pd.concat(frames, ignore_index=True).assign(is_synthetic=True)
+
+
+def _synthetic_cgi(rng: np.random.Generator) -> pd.DataFrame:
+    """SYNTHETIC CGI 15-minute values."""
+    stamps = pd.date_range("2026-08-30 00:00", "2026-10-05 18:30", freq="15min", tz="UTC")
+    cgi = []
+    for gpu, base in (("H100", 3.5), ("B200", 7.0)):
+        lv = np.log(base) + np.cumsum(rng.normal(0.0, 0.002, len(stamps)))
+        cgi.append(pd.DataFrame({"as_of": stamps, "gpu_model": gpu, "value": np.exp(lv)}))
+    return pd.concat(cgi, ignore_index=True).assign(is_synthetic=True)
+
+
+def _synthetic_gd(rng: np.random.Generator) -> pd.DataFrame:
+    """SYNTHETIC GetDeploying weekly medians and offering counts."""
+    weeks = pd.date_range("2025-10-06", "2026-10-05", freq="7D")
+    gd = []
+    for gpu, term, base in (
+        ("H100", "on_demand", 3.4),
+        ("H100", "spot", 2.0),
+        ("B200", "on_demand", 6.8),
+    ):
+        lv = np.log(base) + np.cumsum(rng.normal(0.0, 0.02, len(weeks)))
+        cnt = np.maximum(5, 60 + np.cumsum(rng.integers(-3, 4, len(weeks))))
+        gd.append(
+            pd.DataFrame(
+                {
+                    "week": weeks.date,
+                    "gpu_model": gpu,
+                    "term": term,
+                    "value": np.exp(lv),
+                    "n_listings": cnt.astype(float),
+                }
+            )
+        )
+    return pd.concat(gd, ignore_index=True).assign(is_synthetic=True)
+
+
+def _synthetic_aws(rng: np.random.Generator, plant: frozenset[str]) -> pd.DataFrame:
+    """SYNTHETIC AWS pool prices; 2026-03 to 2026-06 absent as in the archive."""
+    days = pd.date_range("2024-10-01", "2026-09-30", freq="D")
+    keep = ~((days >= "2026-03-01") & (days <= "2026-06-30"))
+    rows = []
+    for gpu, itype, n_pools, base in (
+        ("H100", "p5.48xlarge", 5, 3.0),
+        ("H200", "p5e.48xlarge", 4, 4.0),
+    ):
+        eps = rng.normal(0.0, 0.01, len(days))
+        common = np.zeros(len(days))
+        phi = 0.9 if (gpu == "H100" and "H09" in plant) else 0.0
+        for t in range(1, len(days)):
+            common[t] = phi * common[t - 1] + eps[t]
+        level = np.log(base) + np.cumsum(common)
+        for k in range(n_pools):
+            lp = level + np.cumsum(rng.normal(0.0, 0.002, len(days)))
+            frame = pd.DataFrame(
+                {
+                    "day": days.date,
+                    "az_id": f"use1-az{k + 1}",
+                    "instance_type": itype,
+                    "gpu": gpu,
+                    "price_per_gpu_hour": np.exp(lp),
+                }
+            )
+            rows.append(frame.loc[keep])
+    return pd.concat(rows, ignore_index=True).assign(is_synthetic=True)
+
+
+def synthetic_round1(
+    seed: int,
+    plant: frozenset[str] = frozenset(),
+    universe: dict[str, list[str]] | None = None,
+    benchmark: str = "XLK",
+) -> dict[str, pd.DataFrame]:
+    """SYNTHETIC inputs for exploration round 1, every frame flagged ``is_synthetic``.
+
+    Spans match the real datasets (docs/exploration_plan.md section 2).
+    ``plant`` adds a known effect: ``H01`` (repricing toward the median),
+    ``H02`` (followers copy the leaders two days later) or ``H09`` (AWS spot
+    changes with strong persistence). Without it every series is independent.
+    """
+    from compute_curve.claim4.market_data import sessions_from_calendar  # noqa: PLC0415
+
+    rng = np.random.default_rng(seed)
+    uni = universe or {"neocloud": ["NC1", "NC2"], "gpu_semis": ["GS1", "GS2"]}
+    members = [s for b in uni.values() for s in b]
+    sessions = sessions_from_calendar(
+        synthetic_weekday_calendar(date(2024, 9, 3), date(2026, 10, 5))
+    )
+    bars = synthetic_equity_bars(sessions, members, benchmark, seed + 1)
+    return {
+        "listings": _synthetic_listings(rng, plant),
+        "cgi": _synthetic_cgi(rng),
+        "gd": _synthetic_gd(rng),
+        "aws": _synthetic_aws(rng, plant),
+        "bars": bars[["symbol", "session", "open", "close", "is_synthetic"]],
+    }

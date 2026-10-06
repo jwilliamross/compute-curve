@@ -215,6 +215,86 @@ class BootstrapConfig(_Strict):
     confidence: float = Field(default=0.95, gt=0.5, lt=1.0)
 
 
+class Claim4Universe(_Strict):
+    neocloud: list[str]
+    gpu_semis: list[str]
+    power_capacity: list[str]
+
+    def buckets(self) -> dict[str, list[str]]:
+        return {
+            "neocloud": self.neocloud,
+            "gpu_semis": self.gpu_semis,
+            "power_capacity": self.power_capacity,
+        }
+
+    def members(self) -> list[str]:
+        return [s for b in self.buckets().values() for s in b]
+
+
+class Claim4Costs(_Strict):
+    """All values are assumptions (docs/claim4_plan.md section 7)."""
+
+    stock_side_bps: float = Field(ge=0)
+    benchmark_side_bps: float = Field(ge=0)
+    sell_fee_bps: float = Field(ge=0)
+    commission_per_order: float = Field(ge=0)
+    stock_borrow_annual: float = Field(ge=0)
+    benchmark_borrow_annual: float = Field(ge=0)
+    sensitivity_multipliers: list[float] = [0.0, 0.5, 1.0, 2.0, 4.0]
+
+
+class Claim4Risk(_Strict):
+    pair_notional_usd: float = Field(gt=0)
+    max_position_usd: float = Field(gt=0)
+    max_gross_exposure_usd: float = Field(gt=0)
+    daily_loss_limit_usd: float = Field(gt=0)
+    max_drawdown_usd: float = Field(gt=0)
+    halt_sessions_after_daily_breach: int = Field(default=1, ge=0)
+    kill_switch: bool = False
+
+
+class Claim4Config(_Strict):
+    """Pre-registered claim-4 settings (docs/claim4_plan.md)."""
+
+    benchmark: str
+    first_session: date
+    bars_start: date
+    horizons: list[int]
+    signals: list[str]
+    feed: Literal["sip", "iex"] = "sip"
+    adjustment: Literal["raw", "split", "dividend", "all"] = "all"
+    availability_margin_minutes: int = Field(default=60, ge=0)
+    daily_cutoff_utc: str = Field(default="23:30", pattern=r"^\d{2}:\d{2}$")
+    open_buffer_minutes: int = Field(default=5, ge=0)
+    min_bucket_coverage: float = Field(default=0.5, gt=0, le=1)
+    event_threshold: float = Field(default=0.02, gt=0)
+    min_events: int = Field(default=10, ge=1)
+    min_nonzero_signal: int = Field(default=10, ge=1)
+    min_train: int = Field(default=20, ge=3)
+    alpha: float = Field(default=0.05, gt=0, lt=0.5)
+    fdr_q: float = Field(default=0.10, gt=0, lt=0.5)
+    min_oos_forecasts: int = Field(default=120, ge=1)
+    min_oos_nonzero: int = Field(default=30, ge=1)
+    max_index_age_days: int = Field(default=3, ge=0)
+    paper_start: date
+    universe: Claim4Universe
+    panels: dict[str, list[str]]
+    costs: Claim4Costs
+    risk: Claim4Risk
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Claim4Config:
+        if self.benchmark in self.universe.members():
+            raise ValueError("benchmark must not be a universe member")
+        if len(set(self.universe.members())) != len(self.universe.members()):
+            raise ValueError("a symbol appears in two buckets")
+        if self.risk.pair_notional_usd > self.risk.max_position_usd:
+            raise ValueError("pair notional per leg exceeds the per-symbol limit")
+        if 2 * self.risk.pair_notional_usd > self.risk.max_gross_exposure_usd:
+            raise ValueError("a full pair exceeds the gross exposure limit")
+        return self
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -229,6 +309,7 @@ class Config(_Strict):
     launches: list[HardwareLaunch] = []
     relative_value: RelativeValueConfig
     bootstrap: BootstrapConfig = BootstrapConfig()
+    claim4: Claim4Config | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

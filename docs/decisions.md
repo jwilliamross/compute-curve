@@ -231,3 +231,38 @@ conservative reading that satisfies both:
   risk limit holds. Otherwise the run is shadow mode and sends no order.
 - CLAUDE.md's scope section is amended to record this single exception, so
   a later session does not remove the adapter as a violation.
+
+## D31. Claim-4 signal timing matches the live cycle, not the publisher's clock
+
+The gpurentalprices.com archive stamps each daily file within about two
+minutes of its last offer fetch, mostly between 05:00 and 11:00 UTC. The
+website served that snapshot all day, so the publisher-time assumption (D23)
+is plausible. For claim 4 the more conservative rule was chosen anyway. Index
+day `d` is usable at the later of its snapshot time plus 60 minutes and
+23:30 UTC on `d`, the time the scheduled live cycle runs. A backtest
+therefore acts on exactly what the live system would have had. In practice a
+weekday's index reaches the market at the next session's open, never the
+same day's.
+
+## D32. Claim-4 universe frozen by a written rule; basket weighted by category
+
+The universe rule (docs/claim4_plan.md section 2) needs judgment about which
+companies depend on GPU compute. To keep that judgment from being tuned on
+results, the list was frozen before any test-window return was fetched. The
+liquidity screen used June and July 2026 only, which is before the test
+window, and printed pass or fail without values. Cerebras (CBRS) was added
+because a name search of Alpaca's asset list found it listed and it meets
+the rule. The primary basket gives each of the three buckets one third.
+Equal weight across all 21 names would give data-center power, the bucket
+most loosely linked to rental prices, the largest weight only because it
+has the most names. Per-stock tests are not run.
+
+## D33. Claim-4 provider panels are frozen in config; formation days excluded
+
+The fixed panels (19 H100 and 8 B200 providers) are recomputed by code from
+the first 30 days of history. A future backfill of earlier days, such as the
+Zenodo archive, would change that window and silently change the signal. So
+the claim-4 panels are frozen in `config/default.toml`. As in D21, the 30
+formation days are in-sample for the panel choice, so claim-4 signals start
+at the first session whose index days are both after 2026-08-17, which is
+2026-08-20.

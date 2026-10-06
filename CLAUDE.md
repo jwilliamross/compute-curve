@@ -36,6 +36,8 @@ uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_pl
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
 uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
+uv run compute-curve explore round1 exploration   # exploration sets only (docs/exploration_plan.md)
+uv run compute-curve explore round1 shadow        # daily: candidates' shadow forecasts, no orders
 ```
 
 ## Standards (non-negotiable)
@@ -116,6 +118,8 @@ src/compute_curve/
                         index signals, tests, gate, paper strategy, risk, daily cycle
   claim5/               claim 5: AWS spot archive download/filter, spot signals,
                         evaluation with claim 4's battery
+  explore/              exploration rounds: split-truncated data, hypothesis builders,
+                        BH screen, one-shot confirmation, shadow forward tests
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/

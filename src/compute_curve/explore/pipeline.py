@@ -191,6 +191,35 @@ def run_exploration(cfg: Config) -> Path:  # pragma: no cover - reads local data
     return p["explore_md"]
 
 
+def describe_survivors(
+    data: Round1Data, hids: list[str], ecfg: ExplorationConfig, c4: Claim4Config
+) -> str:
+    """Descriptive stability checks on the exploration set only (not tests)."""
+    exp = data.restrict(ecfg, "explore")
+    lines = [
+        f"# Exploration round {ecfg.round}: survivors, descriptive checks ({LABEL})",
+        "",
+        "Exploration set only. These are descriptive, post hoc and not tests; they change",
+        "nothing in the frozen specifications.",
+        "",
+        "| ID | Correlation, all | First half | Second half | Without the 1% largest signals |",
+        "|---|---|---|---|---|",
+    ]
+    for hid in hids:
+        f = build(hid, exp, ecfg, c4).frame.dropna(subset=["x", "y"]).sort_values("t")
+        x, y = f["x"].to_numpy(float), f["y"].to_numpy(float)
+        half = len(f) // 2
+        keep = np.abs(x) <= np.quantile(np.abs(x), 0.99)
+        cells = [
+            np.corrcoef(x, y)[0, 1],
+            np.corrcoef(x[:half], y[:half])[0, 1],
+            np.corrcoef(x[half:], y[half:])[0, 1],
+            np.corrcoef(x[keep], y[keep])[0, 1],
+        ]
+        lines.append(f"| {hid} | " + " | ".join(_f(c, 2) for c in cells) + " |")
+    return "\n".join(lines) + "\n"
+
+
 def run_freeze(cfg: Config) -> Path:  # pragma: no cover - file glue
     ecfg, _ = _cfgs(cfg)
     p = paths(cfg)
@@ -204,6 +233,11 @@ def run_freeze(cfg: Config) -> Path:  # pragma: no cover - file glue
         frozen.append(freeze(r))
     payload = {"frozen_at": datetime.now(UTC).isoformat(), "frozen": frozen}
     p["frozen"].write_text(json.dumps(_clean(payload), indent=2, default=str))
+    if frozen:
+        _, c4 = _cfgs(cfg)
+        hids = [fz["hid"] for fz in frozen]
+        text = describe_survivors(load_round1(cfg), hids, ecfg, c4)
+        (p["dir"] / f"round{ecfg.round}_descriptive.md").write_text(text)
     return p["frozen"]
 
 

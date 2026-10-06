@@ -259,3 +259,10 @@ def test_reports_label_results_exploratory(cfg: Config, ecfg: ExplorationConfig)
     md = xp.render_exploration(results, {}, ecfg)
     assert "EXPLORATORY" in md and "exploratory" in md
     assert md.count("| H") == 12
+
+
+def test_describe_survivors_uses_the_exploration_set(cfg: Config, ecfg: ExplorationConfig) -> None:
+    assert cfg.claim4 is not None
+    data = _data(cfg, 7, frozenset({"H09"}))
+    md = xp.describe_survivors(data, ["H09"], ecfg, cfg.claim4)
+    assert "| H09 |" in md and "not tests" in md

@@ -233,6 +233,14 @@ REGISTERED: tuple[Variant, ...] = (
         0,
     ),
     Variant(
+        "explore1.posthoc_stability",
+        "explore1",
+        "Survivors' correlation by half and without the 1% largest signals (descriptive)",
+        "2026-10-06",
+        False,
+        0,
+    ),
+    Variant(
         "explore1.confirm",
         "explore1",
         "One-shot confirmation of <= 3 survivors: one-sided HAC (Holm), OOS R2 vs 2 baselines",

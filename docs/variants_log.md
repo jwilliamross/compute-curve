@@ -44,6 +44,7 @@ never deleted.
 | explore1.H11 | exploration 1 | Neocloud bucket 5-session excess return over XLK → AWS H100 spot change over the next 7 days. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
 | explore1.H12 | exploration 1 | Equity target: AWS H100 20-day spot trend → neocloud minus GPU-semis excess return over the next 5 sessions. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
 | explore1.echo (filter, not a test) | exploration 1 | Partial slope after removing the target's own past change; survival filter for 9 hypotheses | 2026-10-06 | no | see docs/exploration_round1.md |
+| explore1.posthoc_stability (descriptive, post hoc) | exploration 1 | Survivors' correlation in each half of the exploration sample and without the 1% largest signal values. Added after seeing which hypotheses survived, on the exploration set only; changes nothing in the frozen specifications; not a test | 2026-10-06 | no | see reports/exploration/round1_descriptive.md |
 | explore1.confirm (up to 3 tests) | exploration 1 | One shot per survivor on the confirmation set: one-sided Newey-West (Holm) and out-of-sample R² above 0 against both naive baselines | 2026-10-06 | yes | see docs/exploration_round1.md |
 
 ## Design changes made before any result existed

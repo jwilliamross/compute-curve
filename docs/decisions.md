@@ -194,3 +194,115 @@ both versions.
 
 These are built-in tools, not MCP connectors, so the no-connector instruction
 did not exclude them. No MCP tool was called.
+
+## D29. Alpaca market data is cached in `var/` only and never committed
+
+Claim 4 uses daily bars from Alpaca's market data API. Alpaca's Terms and
+Conditions limit Content (market data, and account positions, balances and
+orders) to personal, non-commercial use, and forbid copying or uploading it to
+another server "for publication or distribution". Alpaca's support pages
+also say its API data may not be redistributed (docs/env_check_claim4.md).
+This repository may become public. So bars are fetched at run time into the
+git-ignored `var/market_data/` and never written under `data/raw/`. The
+GitHub Actions workflow keeps them on the ephemeral runner, with no artifact
+or cache. What is committed: a fetch manifest (symbols, dates, feed, row
+counts, a content hash), our own signals and predictions, and aggregate test
+statistics. Reports give no prices, no per-stock return series, no dollar
+balances and no fill prices. This is a deliberate exception to the
+immutable-raw-Parquet rule, the same exception as Silicon Data (D14).
+Reproducibility rests on re-fetching. The manifest hash shows whether a
+re-fetch returned identical data.
+
+## D30. Alpaca paper adapter: a scoped exception to "no brokerage connectivity"
+
+CLAUDE.md's scope said "no brokerage connectivity, no order routing". On
+2026-10-05 the owner explicitly asked for an Alpaca paper adapter beside the
+local engine, with simulation only, no real money and no live endpoint. The
+conservative reading that satisfies both:
+
+- The adapter lives in `compute_curve.claim4`, not in the local futures
+  engine `compute_curve.paper`. The local engine still contains no
+  broker code.
+- Only Alpaca's paper endpoint is reachable. Every client hard-fails at
+  construction unless `APCA_API_BASE_URL` is exactly the paper endpoint.
+  Every request is re-checked against the allowed host, and redirects are
+  not followed. Request URLs come from constants, not from the environment.
+- Orders are sent only when the claim-4 validation gate passes and every
+  risk limit holds. Otherwise the run is shadow mode and sends no order.
+- CLAUDE.md's scope section is amended to record this single exception, so
+  a later session does not remove the adapter as a violation.
+
+## D31. Claim-4 signal timing matches the live cycle, not the publisher's clock
+
+The gpurentalprices.com archive stamps each daily file within about two
+minutes of its last offer fetch, mostly between 05:00 and 11:00 UTC. The
+website served that snapshot all day, so the publisher-time assumption (D23)
+is plausible. For claim 4 the more conservative rule was chosen anyway. Index
+day `d` is usable at the later of its snapshot time plus 60 minutes and
+23:30 UTC on `d`, the time the scheduled live cycle runs. A backtest
+therefore acts on exactly what the live system would have had. In practice a
+weekday's index reaches the market at the next session's open, never the
+same day's.
+
+## D32. Claim-4 universe frozen by a written rule; basket weighted by category
+
+The universe rule (docs/claim4_plan.md section 2) needs judgment about which
+companies depend on GPU compute. To keep that judgment from being tuned on
+results, the list was frozen before any test-window return was fetched. The
+liquidity screen used June and July 2026 only, which is before the test
+window, and printed pass or fail without values. Cerebras (CBRS) was added
+because a name search of Alpaca's asset list found it listed and it meets
+the rule. The primary basket gives each of the three buckets one third.
+Equal weight across all 21 names would give data-center power, the bucket
+most loosely linked to rental prices, the largest weight only because it
+has the most names. Per-stock tests are not run.
+
+## D33. Claim-4 provider panels are frozen in config; formation days excluded
+
+The fixed panels (19 H100 and 8 B200 providers) are recomputed by code from
+the first 30 days of history. A future backfill of earlier days, such as the
+Zenodo archive, would change that window and silently change the signal. So
+the claim-4 panels are frozen in `config/default.toml`. As in D21, the 30
+formation days are in-sample for the panel choice, so claim-4 signals start
+at the first session whose index days are both after 2026-08-17, which is
+2026-08-20.
+
+## D34. Statistical guards added after the first claim-4 run (bug fixes, all stricter)
+
+The first real run, on 2026-10-06, printed numbers that were artifacts of a
+tiny sample. They were fixed before any result was written up. Each fix can
+only make a test harder to pass, never easier:
+
+1. **Block bootstrap with fewer than two blocks.** At `h = 20` there were 13
+   windows against a block length of 20. Every resample was then a rotation
+   of the whole sample, so the interval collapsed to a point, for example
+   `[0.16, 0.16]`. Intervals now need at least two blocks; otherwise "n/a".
+2. **Newey-West and Clark-West with the lag close to `n`.** A lag of 20 on
+   13 windows, or 5 on 4, gave spurious p-values near 0. Both now need
+   `n >= 3 × lag`; otherwise "too few windows".
+3. **Sharpe interval for sparse strategies.** Resamples with no trade have
+   zero variance. They were dropped as undefined. That kept only resamples
+   containing the one or two profitable trades, and let two strategies with
+   1 or 2 trades out of 12 windows "pass" G3. A strategy that never trades
+   now scores a Sharpe of 0. Neither strategy passes G3 any more, and
+   neither could have opened the gate, because G1, G2 and G4 failed.
+4. **Holm and Benjamini-Hochberg family size.** Tests that could not be
+   computed were left out of the adjustment, which shrinks the family. They
+   now count as `p = 1`, so the family keeps its pre-registered size of 18,
+   or 54 for family S.
+5. **Event-study intervals** are shown only when there are at least 10
+   events, the plan's minimum for inference. The sign-flip p-value is still
+   shown.
+
+No definition, threshold, signal, universe member or cost changed. The plan
+treats bug fixes like these as decisions, not new variants (section 13).
+
+## D35. A claim-4 gate file older than 36 hours is ignored
+
+`var/claim4_validation.json` lives on whichever machine ran the evaluation.
+On a local machine it outlives the run. If an evaluation failed and someone
+then ran `claim4 daily` by hand, an old file could still select a pair and
+send paper orders. The daily step therefore ignores a gate decision whose
+`generated` time is more than 36 hours old, and records why. CI is not
+affected: `var/` starts empty on every run, and the daily step runs only
+after a successful evaluation.

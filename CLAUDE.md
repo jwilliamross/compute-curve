@@ -9,6 +9,13 @@ compute futures: GPU1 (Silicon Data H100 Rental Index) and GPU2 (B200).
   no real money, no account sign-ups, no purchases.
 - The paper trading engine is a local simulation. It must never contain code
   that talks to an exchange, broker or payment system.
+- Single exception (owner request, 2026-10-05; docs/decisions.md D30): the
+  claim-4 adapter in `compute_curve.claim4` may call Alpaca's **paper**
+  trading API (`https://paper-api.alpaca.markets`) and its market data API.
+  Every Alpaca client must hard-fail unless `APCA_API_BASE_URL` is exactly
+  the paper endpoint. Paper orders only when the claim-4 validation gate
+  passes; otherwise shadow mode. Never a live endpoint or real money.
+- Alpaca market data is never committed (D29); it is cached under `var/`.
 
 ## Commands
 
@@ -24,6 +31,9 @@ uv run compute-curve status               # paper account status
 uv run compute-curve daily                # daily cycle: ingest, signal, fill, report
 uv run compute-curve evaluate             # claim tests on real data + validation gate
 uv run compute-curve backtest --synthetic-engine-check
+uv run compute-curve claim4 check         # Alpaca paper endpoint + data check (names only)
+uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_plan.md)
+uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
 ```
 
 ## Standards (non-negotiable)
@@ -100,7 +110,10 @@ src/compute_curve/
   models/               nowcast (+ baselines), Schwartz-Smith Kalman, term-structure
                         walk-forward, relative value
   backtest/             walk-forward runner, bootstrap, tearsheet
+  claim4/               claim 4: Alpaca paper/data clients (paper-only guard),
+                        index signals, tests, gate, paper strategy, risk, daily cycle
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/
+.github/workflows/daily.yml   daily cycle after the US close (default branch only)
 ```

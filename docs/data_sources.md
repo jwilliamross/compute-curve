@@ -31,6 +31,16 @@ was created, and no key was sent to any source.
 | Shadeform | Aggregated offers | API needs a key | Terms ban scrapers | Not collected |
 | GitHub price trackers (cherielilili, Zeno00-00, xcidjazz) | Archived prices | raw files | No licence, or scraped against source terms | Not used |
 
+## Equity market data for claim 4 (Alpaca)
+
+Added 2026-10-05 for claim 4 (docs/claim4_plan.md). Checked in
+docs/env_check_claim4.md.
+
+| Source | What it gives | Access | Terms verdict | Status in this repo |
+|---|---|---|---|---|
+| Alpaca market data API (`data.alpaca.markets`) | Daily OHLCV bars for US stocks and ETFs; consolidated (SIP) history except the latest 15 minutes on the free plan | API key from the owner's paper account, read from the environment | Personal, non-commercial use; no copying or uploading for publication or distribution; no redistribution | **Fetched at run time into git-ignored `var/market_data/`; never committed** (D29). Only a manifest with counts and a hash is committed |
+| Alpaca paper trading API (`paper-api.alpaca.markets`) | Simulated account, orders, positions, trading calendar | Same key; paper endpoint only | Same terms | **Paper adapter** `compute_curve.claim4.alpaca`, hard-fails off the paper endpoint (D30) |
+
 ## Rules applied to every collector
 
 - robots.txt is fetched and obeyed before any request; a host whose robots.txt

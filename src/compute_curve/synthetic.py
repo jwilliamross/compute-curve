@@ -13,7 +13,7 @@ Kalman filter can be checked against a known data-generating process.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 import numpy as np
 import pandas as pd
@@ -139,3 +139,104 @@ def synthetic_final_settlement(
 ) -> float | None:
     s = pd.Series(sm.spot["value"].to_numpy(), index=list(sm.spot["as_of_date"]))
     return final_settlement(s, spec, month)
+
+
+# ---------------------------------------------------------------------------
+# Claim 4: SYNTHETIC sessions, signals and equity bars (tests only)
+# ---------------------------------------------------------------------------
+def synthetic_weekday_calendar(start: date, end: date) -> list[dict[str, str]]:
+    """Alpaca-style calendar rows for every weekday (no holidays). SYNTHETIC."""
+    out = []
+    d = start
+    while d <= end:
+        if d.weekday() < 5:
+            out.append({"date": d.isoformat(), "open": "09:30", "close": "16:00"})
+        d += timedelta(days=1)
+    return out
+
+
+def synthetic_signals(
+    sessions: pd.DataFrame, seed: int, nonzero_share: float = 1.0, scale: float = 0.02
+) -> pd.DataFrame:
+    """SYNTHETIC session signals in the claim-4 layout, flagged ``is_synthetic``."""
+    from compute_curve.claim4.signals import SIGNAL_NAMES  # noqa: PLC0415
+
+    rng = np.random.default_rng(seed)
+    n = len(sessions)
+    df = sessions[["session", "open_utc"]].copy().reset_index(drop=True)
+    prev = [s - timedelta(days=1) for s in df["session"]]
+    df["asof_h100"] = prev
+    df["asof_b200"] = prev
+    for name in SIGNAL_NAMES:
+        x = rng.normal(0.0, scale, n)
+        x[rng.random(n) >= nonzero_share] = 0.0
+        df[name] = x
+    df["is_synthetic"] = True
+    return df
+
+
+def synthetic_equity_bars(
+    sessions: pd.DataFrame,
+    symbols: list[str],
+    benchmark: str,
+    seed: int,
+    effect: float = 0.0,
+    driver: np.ndarray | None = None,
+    vol: float = 0.02,
+) -> pd.DataFrame:
+    """SYNTHETIC daily bars. Each non-benchmark symbol's open-to-close return is
+    ``market + noise + effect * driver[t]``; the benchmark's is ``market``."""
+    rng = np.random.default_rng(seed)
+    n = len(sessions)
+    drv = np.zeros(n) if driver is None else np.asarray(driver, dtype=float)
+    market = rng.normal(0.0, vol / 2, n)
+    rows = []
+    for sym in [*symbols, benchmark]:
+        px = 100.0
+        for t, s in enumerate(sessions["session"]):
+            o = px * float(np.exp(rng.normal(0.0, vol / 4)))
+            r = (
+                market[t]
+                if sym == benchmark
+                else market[t] + rng.normal(0.0, vol) + effect * drv[t]
+            )
+            c = max(o * (1.0 + r), 0.01)
+            rows.append(
+                {
+                    "symbol": sym,
+                    "session": s,
+                    "open": o,
+                    "high": max(o, c),
+                    "low": min(o, c),
+                    "close": c,
+                    "volume": 1e6,
+                    "vwap": (o + c) / 2,
+                    "n_trades": 1000.0,
+                    "is_synthetic": True,
+                }
+            )
+            px = c
+    return pd.DataFrame(rows)
+
+
+def synthetic_bars_json(bars: pd.DataFrame) -> dict[str, list[dict[str, object]]]:
+    """Alpaca ``/v2/stocks/bars`` payload for SYNTHETIC bars (``t`` = midnight New York)."""
+    from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+    ny = ZoneInfo("America/New_York")
+    out: dict[str, list[dict[str, object]]] = {}
+    for r in bars.itertuples(index=False):
+        t = pd.Timestamp(datetime.combine(r.session, time(0, 0), tzinfo=ny)).tz_convert("UTC")
+        out.setdefault(r.symbol, []).append(
+            {
+                "t": t.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "o": r.open,
+                "h": r.high,
+                "l": r.low,
+                "c": r.close,
+                "v": r.volume,
+                "vw": r.vwap,
+                "n": r.n_trades,
+            }
+        )
+    return out

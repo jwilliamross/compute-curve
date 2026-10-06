@@ -16,6 +16,13 @@ never deleted.
 | rv.ar1_spread | H4 | AR(1) on performance-normalized log spread | 2026-10-05 | yes | no (history below 120 days) |
 | strategy.nowcast_front | claim 3 | Front month on nowcast edge above 2x cost | 2026-10-05 | yes | no (no futures) |
 | strategy.rv_fade | claim 3 | Fade abs(z) > 2 on second-month spread | 2026-10-05 | yes | no (no futures) |
+| claim4.leadlag (18 tests) | claim 4 | Family P: 6 signals × horizons 1, 5, 20; category-balanced basket minus XLK; HAC t and circular-shift permutation; Holm | 2026-10-06 | yes | see docs/claim4_results.md |
+| claim4.event (6 tests) | claim 4 | Family E: signed CAR after a level move of 2% or more; H100 and B200 × 3 horizons; sign-flip test; Holm | 2026-10-06 | no | see docs/claim4_results.md |
+| claim4.walkforward (18 tests) | claim 4 | Family W: expanding-window OLS against zero and mean baselines; Clark-West; Holm | 2026-10-06 | yes | see docs/claim4_results.md |
+| claim4.buckets (54 tests) | claim 4 | Family S: lead-lag per bucket basket; Benjamini-Hochberg at 10%; cannot open the gate | 2026-10-06 | no | see docs/claim4_results.md |
+| claim4.strategy_pair (18 evaluations) | claim 4 | Gate G3: long-short basket against XLK on each walk-forward forecast, net of costs | 2026-10-06 | no | see docs/claim4_results.md |
+| claim4.crosscorr (descriptive) | claim 4 | Cross-correlogram, leads and lags −5 to +5; not a test | 2026-10-06 | no | see docs/claim4_results.md |
+| claim4.posthoc_drop_large_moves (descriptive, post hoc) | claim 4 | Correlation without the two sessions with level moves of 2% or more, for neocloud vs level_b200 and basket vs level_h100 at h = 1. Run after seeing results, to check whether two days drove them; not a test | 2026-10-06 | no | yes: −0.42 to −0.12 and −0.41 to −0.06 |
 
 ## Design changes made before any result existed
 
@@ -32,5 +39,18 @@ run on real data, so they are not post-hoc tuning:
 - Throughput ratio central value moved from 2.3 to 2.5 after Bandi and Su's
   Table 2 was read (range unchanged).
 - Fixed-panel history series added to remove composition breaks.
+
+Claim 4 entries stand for several tests each. The total declared for claim 4
+is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside
+gate G3. Per-stock tests were deliberately not declared (docs/claim4_plan.md
+6.6).
+
+## Changes after the first claim-4 run
+
+On 2026-10-06, after the first real-data run, five computational guards were
+added (docs/decisions.md D34). They stop degenerate intervals and p-values
+from appearing on tiny samples. Each can only make a test stricter. The only
+outcomes that changed were two G3 "passes" that were artifacts, both now
+fails. No definition or threshold changed, so no new variant was declared.
 
 Engine-validation runs on synthetic data are not variants and are not counted.

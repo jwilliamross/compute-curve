@@ -178,3 +178,60 @@ window_start = 2027-07-01
 affects = ["H100", "B200"]
 kind = "announced"
 source = "https://blogs.nvidia.com/blog/nvidia-keynote-at-gtc-2025-ai-news-live-updates/"
+
+# ---------------------------------------------------------------------------
+# Claim 4: do changes in our index lead compute-linked equities?
+# Pre-registered in docs/claim4_plan.md on 2026-10-06, before any test-window
+# return was seen. Changing a value here after results exist is a new variant
+# (docs/variants_log.md). Cost and risk numbers are ASSUMPTIONS.
+# ---------------------------------------------------------------------------
+[claim4]
+benchmark = "XLK"
+first_session = 2026-08-20          # first session whose signal uses only post-formation index days
+bars_start = 2026-06-01             # first bar fetched (pre-sample window for the liquidity rule)
+horizons = [1, 5, 20]
+signals = ["level_h100", "level_b200", "disp_h100", "disp_b200", "avail_h100", "avail_b200"]
+feed = "sip"
+adjustment = "all"
+availability_margin_minutes = 60    # D31
+daily_cutoff_utc = "23:30"          # D31: when the live cycle runs
+open_buffer_minutes = 5
+min_bucket_coverage = 0.5
+event_threshold = 0.02
+min_events = 10
+min_nonzero_signal = 10
+min_train = 20
+alpha = 0.05
+fdr_q = 0.10
+min_oos_forecasts = 120
+min_oos_nonzero = 30
+max_index_age_days = 3
+paper_start = 2026-10-06            # paper P&L, peaks and drawdown are measured from here
+
+[claim4.universe]
+neocloud = ["CRWV", "NBIS", "IREN", "WYFI"]
+gpu_semis = ["NVDA", "AMD", "AVGO", "TSM", "MU", "MRVL", "SMCI", "CBRS"]
+power_capacity = ["VST", "CEG", "TLN", "VRT", "BE", "APLD", "CORZ", "CIFR", "WULF"]
+
+[claim4.panels]
+# Frozen from the first 30 days of the history series (2026-07-19 to 2026-08-17).
+H100 = ["coreweave", "crusoe", "digitalocean", "gmicloud", "hyperstack", "jarvislabs", "lambda", "latitude", "massedcompute", "nebius", "ovh", "primeintellect", "scaleway", "spheron", "tensordock", "thundercompute", "together", "verda", "voltagepark"]
+B200 = ["coreweave", "gmicloud", "hyperstack", "lambda", "nebius", "primeintellect", "together", "verda"]
+
+[claim4.costs]
+stock_side_bps = 15.0               # ASSUMPTION: half-spread + slippage per side, universe stocks
+benchmark_side_bps = 3.0            # ASSUMPTION: same for XLK
+sell_fee_bps = 1.0                  # ASSUMPTION: SEC + FINRA fees on sells
+commission_per_order = 0.0          # ASSUMPTION: Alpaca stock pricing, not re-verified
+stock_borrow_annual = 0.05          # ASSUMPTION
+benchmark_borrow_annual = 0.005     # ASSUMPTION
+sensitivity_multipliers = [0.0, 0.5, 1.0, 2.0, 4.0]
+
+[claim4.risk]
+pair_notional_usd = 10000.0         # per leg at full position
+max_position_usd = 10000.0          # per symbol, absolute market value
+max_gross_exposure_usd = 20000.0
+daily_loss_limit_usd = 1000.0
+max_drawdown_usd = 3000.0
+halt_sessions_after_daily_breach = 1
+kill_switch = false                 # true closes all claim-4 positions and blocks orders

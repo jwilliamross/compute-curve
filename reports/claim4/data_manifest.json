@@ -1,0 +1,152 @@
+{
+  "adjustment": "all",
+  "benchmark": "XLK",
+  "end": "2026-10-05",
+  "feed": "sip",
+  "note": "Prices are not stored in the repository (docs/decisions.md D29).",
+  "provider": "Alpaca market data API (data.alpaca.markets)",
+  "rows": 1936,
+  "sha256": "afdec263a4bedd119e6b2dd5ba3fcdbb292cb65b59d70b15a5b758083c3f30ec",
+  "start": "2026-06-01",
+  "symbols": {
+    "AMD": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "APLD": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "AVGO": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "BE": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "CBRS": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "CEG": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "CIFR": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "CORZ": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "CRWV": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "IREN": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "MRVL": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "MU": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "NBIS": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "NVDA": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "SMCI": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "TLN": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "TSM": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "VRT": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "VST": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "WULF": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "WYFI": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    },
+    "XLK": {
+      "bars": 88,
+      "first": "2026-06-01",
+      "last": "2026-10-05"
+    }
+  },
+  "universe": {
+    "gpu_semis": [
+      "NVDA",
+      "AMD",
+      "AVGO",
+      "TSM",
+      "MU",
+      "MRVL",
+      "SMCI",
+      "CBRS"
+    ],
+    "neocloud": [
+      "CRWV",
+      "NBIS",
+      "IREN",
+      "WYFI"
+    ],
+    "power_capacity": [
+      "VST",
+      "CEG",
+      "TLN",
+      "VRT",
+      "BE",
+      "APLD",
+      "CORZ",
+      "CIFR",
+      "WULF"
+    ]
+  }
+}

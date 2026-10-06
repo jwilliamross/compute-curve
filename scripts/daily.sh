@@ -17,6 +17,19 @@ uv sync --quiet
 uv run compute-curve daily
 uv run compute-curve evaluate
 
+# Claim 4 runs only when the Alpaca paper keys are in the environment. The
+# code refuses any base URL other than the paper endpoint. Use either this
+# script or the GitHub Actions workflow (.github/workflows/daily.yml), not both.
+if [ -n "${APCA_API_KEY_ID:-}" ] && [ -n "${APCA_API_SECRET_KEY:-}" ]; then
+  export APCA_API_BASE_URL="https://paper-api.alpaca.markets"
+  if uv run pytest -q; then
+    uv run compute-curve claim4 evaluate && uv run compute-curve claim4 daily \
+      || echo "warning: claim 4 step failed; data is still committed"
+  else
+    echo "warning: tests failed; claim 4 skipped"
+  fi
+fi
+
 git add data/raw data/collection_log.jsonl reports
 if ! git diff --cached --quiet; then
   git commit --quiet -m "Daily snapshot $(date -u +%Y-%m-%d)"

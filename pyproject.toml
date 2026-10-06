@@ -60,6 +60,8 @@ ignore = [
 "src/compute_curve/evaluation.py" = ["E501"]
 "src/compute_curve/pipeline.py" = ["E501"]
 # Lazy per-command imports keep CLI start-up fast; one return per command.
-"src/compute_curve/cli.py" = ["PLC0415", "PLR0911"]
+"src/compute_curve/cli.py" = ["PLC0415", "PLR0911", "PLR0912"]
 # Collection error handling returns early with one outcome per failure mode.
 "src/compute_curve/snapshot.py" = ["PLR0911"]
+# Claim-4 report builders contain long human-readable f-strings.
+"src/compute_curve/claim4/pipeline.py" = ["E501"]

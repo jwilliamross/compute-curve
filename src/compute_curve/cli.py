@@ -10,6 +10,7 @@ daily      daily cycle: snapshot, index, signals, simulated fills, report
 evaluate   test the three claims on real data; write reports/evaluation.md
 backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
+claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
            paper endpoint only; the daily step sends paper orders only when
            the pre-registered gate passes (docs/claim4_plan.md)
@@ -60,6 +61,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     c4 = sub.add_parser("claim4", help="claim 4: GPU index vs compute-linked equities")
     c4.add_argument("action", choices=["check", "evaluate", "daily"])
+    c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
+    c5.add_argument("action", choices=["fetch", "evaluate"])
     return p
 
 
@@ -145,6 +148,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "claim4":
         return _claim4(cfg, args.action)
+    if args.command == "claim5":
+        from compute_curve.claim5 import pipeline as c5p
+
+        if args.action == "fetch":
+            man = c5p.run_fetch(cfg)
+            print(f"files: {len(man['files'])}; wrote {c5p.paths(cfg)['daily_csv']}")
+            return 0
+        print(f"wrote {c5p.run_evaluation(cfg)}")
+        return 0
     if args.command == "backtest":
         from compute_curve.evaluation import run_backtests
 

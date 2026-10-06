@@ -306,3 +306,67 @@ send paper orders. The daily step therefore ignores a gate decision whose
 `generated` time is more than 36 hours old, and records why. CI is not
 affected: `var/` starts empty on every run, and the daily step runs only
 after a successful evaluation.
+
+## D36. Claim-5 raw spot files stay git-ignored; only the needed months are fetched
+
+The Zenodo dataset is 5.16 GB, and rows cannot be downloaded by instance
+type. The owner asked for only what is needed and for raw files in a
+git-ignored folder. So:
+
+- Only the 20 monthly files covering the pre-registered sample are
+  downloaded: 2024-10 to 2026-09, without the absent 2026-03 to 06. That
+  is 3.7 GB.
+- Each file is MD5-verified against Zenodo, made read-only and never
+  overwritten, under `var/aws_spot/raw/<record>/`. This keeps the spirit of
+  the immutable-raw rule, outside git because of the size.
+- Zenodo's robots.txt is applied with RFC 9309 wildcard semantics, and its
+  10-second crawl delay is honoured. The project's general client
+  correctly refused `/api` metadata calls, so the record's landing page was
+  used instead.
+- The filtered rows (GPU types, US zones, Linux) are a derived Parquet file
+  under `var/`. The committed outputs are the daily per-GPU-class series
+  and a manifest with checksums. CC BY 4.0 permits this, with attribution.
+
+## D37. Claim-5 signals: matched-pool changes, two GPU classes, no availability
+
+These choices were fixed before any stock return was fetched
+(docs/claim5_plan.md).
+
+- **Classes.** A100 (`p4d.24xlarge`, `p4de.24xlarge`) and H100
+  (`p5.48xlarge`, `p5.4xlarge`), priced per GPU-hour. These two have spot
+  prices throughout the sample. H200, B200 and B300 rows are kept in the
+  filtered data for description but are not tested. This keeps the family
+  size at 12 primary tests.
+- **Level.** The median across matched pools (availability zone ×
+  instance type, priced on both days) of the log price change. When AWS
+  adds an availability zone at a different price, a median of levels would
+  jump; a matched-pool change cannot.
+- **Dispersion.** The change in the cross-pool IQR of log prices, over the
+  same matched pools.
+- **No availability signal.** Within a month a pool can only appear, never
+  disappear: the archive has no withdrawal marker, and a month's file
+  starts with a fresh snapshot. A pool count would therefore mostly mark
+  month starts.
+- **Staleness.** The data cover every calendar day. A session whose latest
+  price day is not the calendar day before it gets no signal. This marks
+  the 2026-03 to 06 gap and the end of the data instead of inventing
+  zeros.
+
+## D38. Claim-5 universe history: claim 4's coverage rule plus one start date
+
+The 21-stock universe and its category-balanced basket are reused
+unchanged. Several members lack history for part of the window (docs/claim5_plan.md
+section 2). Claim 4's rule already handles this: a bucket counts only when
+half its members have a return, and the basket needs all three buckets. One
+override was added before any return was fetched. NBIS returns are used
+only from 2024-10-21. Before 2024 the ticker belonged to Yandex N.V., a
+different business, and trading was suspended from February 2022 until
+2024-10-21. The sample therefore starts on 2024-10-21, the first session on
+which the neocloud bucket can have two of its four members (IREN and NBIS).
+
+The universe was chosen in October 2026 from current business descriptions.
+Applying it to 2024 to 2026 returns builds in hindsight: the miners and
+neoclouds are included partly because they later became AI companies. This
+mainly biases mean excess returns, which the walk-forward's mean baseline
+absorbs, less so the predictive slope. It is disclosed as a limitation, not
+corrected.

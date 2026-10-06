@@ -91,6 +91,55 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         0,
     ),
+    # Claim 5 (docs/claim5_plan.md): claim 4's battery on AWS GPU spot signals.
+    Variant(
+        "claim5.leadlag",
+        "claim5",
+        "Family P: 4 spot signals x 3 horizons, basket minus XLK, HAC + permutation, Holm",
+        "2026-10-06",
+        True,
+        12,
+    ),
+    Variant(
+        "claim5.event",
+        "claim5",
+        "Family E: signed CAR after |spot level change| >= 2%, A100 and H100 x 3 horizons",
+        "2026-10-06",
+        False,
+        6,
+    ),
+    Variant(
+        "claim5.walkforward",
+        "claim5",
+        "Family W: expanding OLS vs zero and mean baselines, Clark-West, Holm",
+        "2026-10-06",
+        True,
+        12,
+    ),
+    Variant(
+        "claim5.buckets",
+        "claim5",
+        "Family S: lead-lag per bucket basket, 3 x 4 x 3, Benjamini-Hochberg",
+        "2026-10-06",
+        False,
+        36,
+    ),
+    Variant(
+        "claim5.strategy_pair",
+        "claim5",
+        "Gate G3: long-short basket vs XLK on each walk-forward forecast, claim 4 costs",
+        "2026-10-06",
+        False,
+        12,
+    ),
+    Variant(
+        "claim5.crosscorr",
+        "claim5",
+        "Descriptive cross-correlogram for the two level signals (not a test)",
+        "2026-10-06",
+        False,
+        0,
+    ),
 )
 
 

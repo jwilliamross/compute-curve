@@ -240,3 +240,20 @@ def synthetic_bars_json(bars: pd.DataFrame) -> dict[str, list[dict[str, object]]
             }
         )
     return out
+
+
+def synthetic_spot_pools(
+    start: date, end: date, gpus: tuple[str, ...], n_pools: int, seed: int, vol: float = 0.02
+) -> pd.DataFrame:
+    """SYNTHETIC per-pool daily spot prices per GPU-hour (claim 5), flagged ``is_synthetic``."""
+    rng = np.random.default_rng(seed)
+    days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
+    rows = []
+    for gpu in gpus:
+        for k in range(n_pools):
+            logp = np.log(2.0) + np.cumsum(rng.normal(0.0, vol, len(days)))
+            for d, lp in zip(days, logp, strict=True):
+                rows.append((d, f"use1-az{k + 1}", f"SYNTHETIC-{gpu}", gpu, float(np.exp(lp))))
+    df = pd.DataFrame(rows, columns=["day", "az_id", "instance_type", "gpu", "price_per_gpu_hour"])
+    df["is_synthetic"] = True
+    return df

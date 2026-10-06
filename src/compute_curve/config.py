@@ -295,6 +295,22 @@ class Claim4Config(_Strict):
         return self
 
 
+class Claim5Config(_Strict):
+    """Claim 5 signal settings (docs/claim5_plan.md). Everything else is [claim4]'s."""
+
+    zenodo_record: int
+    months: list[str]
+    gpu_classes: list[str]
+    cutoff_utc: str = Field(default="23:30", pattern=r"^\d{2}:\d{2}$")
+    availability_margin_minutes: int = Field(default=60, ge=0)
+    max_age_days: int = Field(default=3, ge=0)
+    min_pools: int = Field(default=3, ge=1)
+    first_session: date
+    signals: list[str]
+    bars_start: date
+    member_start: dict[str, date] = {}
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -310,6 +326,7 @@ class Config(_Strict):
     relative_value: RelativeValueConfig
     bootstrap: BootstrapConfig = BootstrapConfig()
     claim4: Claim4Config | None = None
+    claim5: Claim5Config | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

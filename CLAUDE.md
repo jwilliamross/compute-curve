@@ -34,6 +34,8 @@ uv run compute-curve backtest --synthetic-engine-check
 uv run compute-curve claim4 check         # Alpaca paper endpoint + data check (names only)
 uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_plan.md)
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
+uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
+uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
 ```
 
 ## Standards (non-negotiable)
@@ -112,6 +114,8 @@ src/compute_curve/
   backtest/             walk-forward runner, bootstrap, tearsheet
   claim4/               claim 4: Alpaca paper/data clients (paper-only guard),
                         index signals, tests, gate, paper strategy, risk, daily cycle
+  claim5/               claim 5: AWS spot archive download/filter, spot signals,
+                        evaluation with claim 4's battery
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/

@@ -245,13 +245,14 @@ def event_study(
 
 
 def event_family(
-    df: pd.DataFrame, as_of: pd.Timestamp, cfg: Claim4Config, n_boot: int, seed: int
+    df: pd.DataFrame,
+    as_of: pd.Timestamp,
+    cfg: Claim4Config,
+    n_boot: int,
+    seed: int,
+    gpus: Sequence[str] = ("H100", "B200"),
 ) -> list[EventResult]:
-    out = [
-        event_study(df, g, h, as_of, cfg, n_boot, seed)
-        for g in ("H100", "B200")
-        for h in cfg.horizons
-    ]
+    out = [event_study(df, g, h, as_of, cfg, n_boot, seed) for g in gpus for h in cfg.horizons]
     for r, p in zip(out, cs.holm([r.p_sign_flip for r in out]), strict=True):
         r.p_adj = p
         r.passes = bool(np.isfinite(p) and p < cfg.alpha and r.n_events >= cfg.min_events)

@@ -1,7 +1,69 @@
 # Status
 
-_Last updated: 2026-10-06, end of the claim-5 run. Branch
+_Last updated: 2026-10-06, end of exploration round 1. Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## Final summary: exploration round 1 (find candidate signals, honestly)
+
+**Bottom line.** One candidate, no findings. Nothing survived for our own
+index. The gate was not loosened. Details are in
+`docs/exploration_round1.md`.
+
+- **Protocol.**
+  - The plan was committed before any analysis (`6a21706`). It fixed:
+    - per-dataset 70/30 time splits;
+    - 12 hypotheses, one of them with an equity target;
+    - Benjamini-Hochberg across the round;
+    - survival filters;
+    - a one-shot confirmation;
+    - a 60-session forward test.
+  - The code cuts each dataset to one set before computing anything, and
+    synthetic tests check it.
+- **Exploration** (exploratory).
+  - **Two survivors:**
+    - H05, the CGI H100 index giving back about a third of a 6-hour move;
+    - H09, AWS H100 spot moves persisting over a week.
+  - **Our own index:**
+    - H01 (providers converge to the market price) passed the
+      false-discovery screen but failed its sign-flip check (p 0.087);
+    - H02 (price leadership) was not testable, because the five largest
+      providers changed price on one day in 56.
+  - **The rest:** the other eight show nothing.
+- **Confirmation, one shot each.**
+  - **H05 confirmed:** one-sided p 0.001 and out-of-sample R² +0.11
+    against both baselines.
+  - **H09 not confirmed:** the direction held, but the frozen forecast lost
+    to "no change".
+- **Forward test.** H05 is a **candidate**, not a finding.
+  - `compute-curve explore round1 shadow` logs its frozen forecasts, with
+    no orders, for every hourly decision point in the 60 US equity sessions
+    from 2026-10-07 to 2026-12-31.
+  - It is evaluated once, from 2027-01-01.
+  - Even if it passes, it stays in shadow mode until a contract on such an
+    index trades (D26).
+- **Workflow.** A step was added after the tests in
+  `.github/workflows/daily.yml` and `scripts/daily.sh`.
+- **Tests.** 219 offline tests pass and ruff is clean. 23 are new, all on
+  synthetic data:
+  - outcome poisoning;
+  - planted effects found and a null world clean;
+  - the echo filter;
+  - the one-shot guard;
+  - forward-log immutability.
+- **Variants.** 16 declared for this round; 217 project-wide.
+
+### Actions for you (exploration round 1)
+
+1. **Merge this branch into the default branch.** Scheduled workflows run
+   only there, and H05's forward window starts on 2026-10-07.
+   - If the merge comes later, nothing is lost: the shadow step re-imports
+     CGI's last 90 days, and each logged forecast still uses only the
+     values stamped before its decision time (D42).
+   - But each day of delay makes the log less of a live record.
+2. **Nothing else is required.** The most valuable new data for a round 2
+   are listed in `docs/exploration_round1.md`. The first is licensed
+   settlement-index history (B7).
+
 
 ## Final summary: claim 5 (do AWS GPU spot prices lead compute-linked equities?)
 
@@ -214,11 +276,15 @@ is `docs/summary.md`.
 - Claim-5 run (2026-10-06): the AWS spot archive audit and download,
   pre-registration, evaluation with claim 4's battery (gate not passed),
   and the results.
+- Exploration round 1 (2026-10-06): plan, exploration, one-shot
+  confirmation, and a shadow forward test for the one candidate (H05).
 
 ## In progress
 
 - Daily collection and the claim-4 shadow log, once the workflow is merged
   and the secrets are added.
+- H05's shadow forward test, 2026-10-07 to 2026-12-31, once the workflow is
+  merged. It is evaluated once, from 2027-01-01.
 
 ## Blocked
 
@@ -233,5 +299,5 @@ is `docs/summary.md`.
 
 ## Needs you
 
-- Claim-4 actions 1 to 7 above, then the still-open items. Claim 5 needs
-  nothing.
+- The merge (exploration action 1) and claim-4 actions 1 to 7 above, then
+  the still-open items. Claim 5 needs nothing.

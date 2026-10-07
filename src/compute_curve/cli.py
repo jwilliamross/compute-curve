@@ -11,6 +11,9 @@ evaluate   test the three claims on real data; write reports/evaluation.md
 backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
+explore    exploration rounds: round1 exploration | freeze | confirmation | shadow
+           (docs/exploration_plan.md; the confirmation runs once; shadow logs
+           candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
            paper endpoint only; the daily step sends paper orders only when
            the pre-registered gate passes (docs/claim4_plan.md)
@@ -63,6 +66,9 @@ def _parser() -> argparse.ArgumentParser:
     c4.add_argument("action", choices=["check", "evaluate", "daily"])
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
+    ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
+    ex.add_argument("round", choices=["round1"])
+    ex.add_argument("stage", choices=["exploration", "freeze", "confirmation", "shadow"])
     return p
 
 
@@ -156,6 +162,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"files: {len(man['files'])}; wrote {c5p.paths(cfg)['daily_csv']}")
             return 0
         print(f"wrote {c5p.run_evaluation(cfg)}")
+        return 0
+    if args.command == "explore":
+        from compute_curve.explore import pipeline as xp
+
+        stage = {
+            "exploration": xp.run_exploration,
+            "freeze": xp.run_freeze,
+            "confirmation": xp.run_confirmation,
+            "shadow": xp.run_shadow,
+        }[args.stage]
+        print(f"wrote {stage(cfg)}")
         return 0
     if args.command == "backtest":
         from compute_curve.evaluation import run_backtests

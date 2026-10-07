@@ -78,6 +78,40 @@ do, our index could become a trading signal.
   relationship, and none appeared. A weak one cannot be ruled out. Nothing
   was added to the daily routine.
 
+## A third piece of work: searching for signals
+
+- **The question.** Can anything in our data forecast GPU rental prices
+  themselves? Those prices are what the futures and prediction markets pay
+  out on.
+- **How the search was kept honest.**
+  - Each dataset was split by date. Ideas were tried only on the earlier
+    70%, and anything promising had one chance on the later 30%.
+  - Twelve ideas were written down, with their tests, before any data was
+    looked at.
+  - The bar was raised for running twelve at once.
+- **Our own index.** Nothing usable yet. It has only 80 days of history,
+  and list prices rarely change. The five biggest cloud providers changed
+  their H100 price on one day in 56. One idea is worth re-testing in about
+  six months: providers priced above the market tend to cut.
+- **Amazon's spot prices.** Price moves tended to continue for a week in
+  2024–25. They continued in the later period too, but more weakly, so a
+  forecast built on the earlier strength did worse than guessing "no
+  change". It was not adopted.
+- **One candidate.** An independent index that is updated every 15 minutes
+  (the Computable GPU Index) tends to give back about a third of any
+  6-hour move. This held in the test period.
+  - It is probably a quirk of how that index is measured, not a market
+    effect.
+  - No contract trades on that index.
+  - It is now being watched for 60 trading days, to 31 December 2026,
+    without any trades. Only if it holds up then is it judged against
+    the project's usual rules.
+- **Stocks.** The one new stock idea, and a check of whether stock moves
+  foretell Amazon's prices, found nothing.
+
+The details are in `docs/exploration_plan.md` (the rules) and
+`docs/exploration_round1.md` (the results).
+
 ## What happens now
 
 - **Daily, automatically.** After each US market close the system collects

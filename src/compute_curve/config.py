@@ -8,7 +8,8 @@ in the TOML and surfaced in every report.
 from __future__ import annotations
 
 import tomllib
-from datetime import date
+from datetime import date, datetime
+from itertools import pairwise
 from pathlib import Path
 from typing import Literal
 
@@ -311,6 +312,57 @@ class Claim5Config(_Strict):
     member_start: dict[str, date] = {}
 
 
+class SplitConfig(_Strict):
+    """One dataset's time split: an exploration range and confirmation blocks (inclusive)."""
+
+    explore: tuple[date, date] | tuple[datetime, datetime]
+    confirm: list[tuple[date, date]] | list[tuple[datetime, datetime]]
+
+    @model_validator(mode="after")
+    def _ordered(self) -> SplitConfig:
+        blocks = [self.explore, *self.confirm]
+        for a, b in blocks:
+            if b < a:
+                raise ValueError(f"split range ends before it starts: {a} > {b}")
+        for (_, end), (start, _) in pairwise(blocks):
+            if start <= end:
+                raise ValueError("split blocks must be in time order and must not overlap")
+        return self
+
+
+class ForwardConfig(_Strict):
+    """A candidate's shadow forward test: its window of future sessions (inclusive)."""
+
+    start: datetime
+    end: datetime
+    sessions: int = Field(ge=1)
+    max_publish_lag_minutes: int = Field(default=15, ge=0)
+
+
+class ExplorationConfig(_Strict):
+    """Exploration round settings (docs/exploration_plan.md)."""
+
+    round: int = Field(ge=1)
+    n_boot: int = Field(default=2000, ge=100)
+    fdr_q: float = Field(default=0.10, gt=0, lt=1)
+    perm_alpha: float = Field(default=0.05, gt=0, lt=1)
+    confirm_alpha: float = Field(default=0.05, gt=0, lt=1)
+    max_confirm: int = Field(default=3, ge=0)
+    forward_sessions: int = Field(default=60, ge=1)
+    min_nonzero: int = Field(default=10, ge=1)
+    min_events: int = Field(default=5, ge=1)
+    min_cross_sections: int = Field(default=20, ge=1)
+    min_cs_providers: int = Field(default=5, ge=3)
+    echo_min_t: float = Field(default=1.0, ge=0)
+    leaders: list[str]
+    min_group_providers: int = Field(default=3, ge=1)
+    min_spot_providers: int = Field(default=2, ge=1)
+    min_pools: int = Field(default=3, ge=1)
+    cgi_max_age_minutes: int = Field(default=30, ge=0)
+    splits: dict[str, SplitConfig]
+    forward: dict[str, ForwardConfig] = {}
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -327,6 +379,7 @@ class Config(_Strict):
     bootstrap: BootstrapConfig = BootstrapConfig()
     claim4: Claim4Config | None = None
     claim5: Claim5Config | None = None
+    exploration: ExplorationConfig | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

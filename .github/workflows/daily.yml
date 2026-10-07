@@ -3,8 +3,9 @@ name: daily-cycle
 # After the US equity close: collect listings, rebuild the index, run the
 # local futures paper cycle and the claim 1-3 evaluation, then claim 4
 # (evaluation, then the daily step: shadow log, or Alpaca PAPER orders only
-# if the pre-registered gate passes). Commit the new raw data and dated
-# reports and push.
+# if the pre-registered gate passes), and the shadow log of exploration
+# candidates (forecasts only, never an order). Commit the new raw data and
+# dated reports and push.
 #
 # 23:37 UTC is after the US close in daylight and standard time, after
 # gpurentalprices.com's daily refresh, and after the 23:30 UTC cutoff that
@@ -69,6 +70,12 @@ jobs:
         continue-on-error: true
         run: uv run pytest -q
 
+      - name: Exploration round 1 candidates (shadow forecasts only, no orders)
+        id: xshadow
+        if: ${{ steps.tests.outcome == 'success' }}
+        continue-on-error: true
+        run: uv run compute-curve explore round1 shadow
+
       - name: Claim 4 evaluation and validation gate
         id: c4eval
         if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
@@ -105,12 +112,13 @@ jobs:
           failed=0
           for s in "collect:${{ steps.collect.outcome }}" "evaluate:${{ steps.evaluate.outcome }}" \
                    "tests:${{ steps.tests.outcome }}" "claim4-evaluate:${{ steps.c4eval.outcome }}" \
-                   "claim4-daily:${{ steps.c4daily.outcome }}"; do
+                   "claim4-daily:${{ steps.c4daily.outcome }}" \
+                   "explore-shadow:${{ steps.xshadow.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi
           done
           if [ "${{ steps.tests.outcome }}" = "failure" ]; then
-            echo "Tests failed, so the claim-4 steps were skipped." >&2
+            echo "Tests failed, so the claim-4 and exploration steps were skipped." >&2
           fi
           exit $failed

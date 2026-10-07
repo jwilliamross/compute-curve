@@ -258,3 +258,57 @@ bars_start = 2024-09-01
 [claim5.member_start]
 # A member's returns are used only from this date (business before it differs).
 NBIS = 2024-10-21                   # Yandex N.V. until 2024; Nasdaq trading resumed 2024-10-21
+
+# ---------------------------------------------------------------------------
+# Exploration round 1 (docs/exploration_plan.md). Fixed before any analysis.
+# Each dataset is split by time: earliest 70% exploration, latest 30%
+# confirmation. Ranges are inclusive; CGI ranges are UTC timestamps.
+# ---------------------------------------------------------------------------
+[exploration]
+round = 1
+n_boot = 2000
+fdr_q = 0.10                 # Benjamini-Hochberg across the round's 12 tests
+perm_alpha = 0.05            # circular-shift or sign-flip robustness check
+confirm_alpha = 0.05         # one-sided, Holm across the confirmed hypotheses
+max_confirm = 3
+forward_sessions = 60        # future US equity sessions a candidate must pass first
+min_nonzero = 10             # non-zero signal values
+min_events = 5               # distinct periods with a one-period change in the signal
+min_cross_sections = 20      # H01: daily cross-sections
+min_cs_providers = 5         # H01: providers per cross-section
+echo_min_t = 1.0             # partial slope |t| after removing the target's own past change
+leaders = ["coreweave", "lambda", "nebius", "crusoe", "together"]
+min_group_providers = 3
+min_spot_providers = 2
+min_pools = 3
+cgi_max_age_minutes = 30
+
+[exploration.splits.listings]
+explore = [2026-07-19, 2026-09-12]
+confirm = [[2026-09-13, 2026-10-06]]
+
+[exploration.splits.cgi]
+explore = [2026-08-30T00:00:00Z, 2026-09-24T23:45:00Z]
+confirm = [[2026-09-25T00:00:00Z, 2026-10-05T23:45:00Z]]
+
+[exploration.splits.getdeploying]
+explore = [2025-10-06, 2026-06-15]
+confirm = [[2026-06-22, 2026-10-05]]
+
+[exploration.splits.aws]
+explore = [2024-10-01, 2025-11-30]
+confirm = [[2025-12-01, 2026-02-28], [2026-07-01, 2026-09-30]]
+
+[exploration.splits.equities]
+explore = [2024-09-03, 2026-02-19]
+confirm = [[2026-02-20, 2026-10-05]]
+
+# Forward test of round-1 candidates, shadow mode only (docs/exploration_plan.md
+# section 9). H05 passed confirmation on 2026-10-06. Its 60 future US equity
+# sessions run from 2026-10-07 to 2026-12-31 (NYSE closed 2026-11-26 and
+# 2026-12-25); every hourly decision point in that window counts.
+[exploration.forward.H05]
+start = 2026-10-07T00:00:00Z
+end = 2026-12-31T23:59:59Z
+sessions = 60
+max_publish_lag_minutes = 15    # a value published later than this is not point-in-time

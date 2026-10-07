@@ -1,0 +1,51 @@
+{
+  "frozen_at": "2026-10-06T22:58:02.335188+00:00",
+  "frozen": [
+    {
+      "hid": "H09",
+      "spec": {
+        "hid": "H09",
+        "kind": "ts",
+        "data": "A",
+        "signal": "AWS H100 spot 7-day change",
+        "target": "AWS H100 spot next 7-day change",
+        "horizon": "7 days",
+        "lag": 7,
+        "min_shift": 14,
+        "block": 14,
+        "expected_sign": 1,
+        "echo": false
+      },
+      "direction": 1,
+      "intercept": 0.003049130613523887,
+      "slope": 0.6606487474486623,
+      "slope_se_explore": 0.10355493601331305,
+      "n_explore": 412,
+      "rho_explore": 0.6614166060062492,
+      "y_mean_explore": 0.008211616347369548
+    },
+    {
+      "hid": "H05",
+      "spec": {
+        "hid": "H05",
+        "kind": "ts",
+        "data": "C",
+        "signal": "CGI H100 past 6-hour change",
+        "target": "CGI H100 next 6-hour change",
+        "horizon": "6 hours",
+        "lag": 6,
+        "min_shift": 12,
+        "block": 12,
+        "expected_sign": -1,
+        "echo": false
+      },
+      "direction": -1,
+      "intercept": 0.0002666469677765162,
+      "slope": -0.3449956438348597,
+      "slope_se_explore": 0.06072855960254793,
+      "n_explore": 612,
+      "rho_explore": -0.3443526839805974,
+      "y_mean_explore": 0.000191901197864297
+    }
+  ]
+}

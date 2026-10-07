@@ -17,6 +17,15 @@ uv sync --quiet
 uv run compute-curve daily
 uv run compute-curve evaluate
 
+# Exploration candidates: shadow forecasts only, never an order
+# (docs/exploration_plan.md section 9).
+if uv run pytest -q; then
+  uv run compute-curve explore round1 shadow \
+    || echo "warning: exploration shadow step failed; data is still committed"
+else
+  echo "warning: tests failed; exploration shadow step skipped"
+fi
+
 # Claim 4 runs only when the Alpaca paper keys are in the environment. The
 # code refuses any base URL other than the paper endpoint. Use either this
 # script or the GitHub Actions workflow (.github/workflows/daily.yml), not both.

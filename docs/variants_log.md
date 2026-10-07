@@ -31,6 +31,22 @@ never deleted.
 | claim5.crosscorr (descriptive) | claim 5 | Cross-correlogram for the two level signals; not a test | 2026-10-06 | no | see docs/claim5_results.md |
 | claim5.posthoc_outlier (descriptive, post hoc) | claim 5 | disp_h100 correlations without the 2026-07-06 session, as the plan required; not a test | 2026-10-06 | no | yes: correlations move slightly away from zero; nothing would pass |
 | claim5.posthoc_mean_only (descriptive, post hoc) | claim 5 | 20-session strategy run on the running-mean forecast alone, to explain the G3 table; not a test | 2026-10-06 | no | yes: 3.6% per window, the same as with the spot signals |
+| explore1.H01 | exploration 1 | Convergence: provider premium over the cross-provider median → the provider's own matched 5-day price change; our H100 listings; Fama-MacBeth with Newey-West, sign-flip check. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H02 | exploration 1 | Leadership: CoreWeave, Lambda, Nebius, Crusoe and Together's 5-day mean change → other H100 providers' next 5-day mean change. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H03 | exploration 1 | Neocloud H100 spot listings' 5-day change → H100 on-demand next 5-day change. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H04 | exploration 1 | B200 on-demand 5-day change → H100 on-demand next 5-day change. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H05 | exploration 1 | CGI H100: past 6-hour change → next 6-hour change (reversal). One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H06 | exploration 1 | GetDeploying H100 spot weekly change → H100 on-demand change the next week. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H07 | exploration 1 | GetDeploying H100 on-demand offer-count change → H100 on-demand change the next week. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H08 | exploration 1 | GetDeploying B200 on-demand offer-count change → H100 on-demand change the next week. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H09 | exploration 1 | AWS H100 spot 7-day matched-pool change → next 7-day change (persistence). One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H10 | exploration 1 | AWS H200 minus H100 7-day change → H100 next 7-day change (catch-up). One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H11 | exploration 1 | Neocloud bucket 5-session excess return over XLK → AWS H100 spot change over the next 7 days. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.H12 | exploration 1 | Equity target: AWS H100 20-day spot trend → neocloud minus GPU-semis excess return over the next 5 sessions. One test; Benjamini-Hochberg across the round's 12 | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.echo (filter, not a test) | exploration 1 | Partial slope after removing the target's own past change; survival filter for 9 hypotheses | 2026-10-06 | no | see docs/exploration_round1.md |
+| explore1.posthoc_stability (descriptive, post hoc) | exploration 1 | Survivors' correlation in each half of the exploration sample and without the 1% largest signal values. Added after seeing which hypotheses survived, on the exploration set only; changes nothing in the frozen specifications; not a test | 2026-10-06 | no | see reports/exploration/round1_descriptive.md |
+| explore1.confirm (up to 3 tests) | exploration 1 | One shot per survivor on the confirmation set: one-sided Newey-West (Holm) and out-of-sample R² above 0 against both naive baselines | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore1.forward.H05 (1 test) | exploration 1 | Forward test of the confirmed candidate H05 (CGI H100 6-hour reversal) in shadow mode: every hourly decision point in the 60 US equity sessions from 2026-10-07 to 2026-12-31, then C1 and C2 once on forward data only. Declared when the candidate was added | 2026-10-06 | yes | runs daily; result in reports/exploration/round1_forward_H05.json after 2027-01-01 |
 
 ## Design changes made before any result existed
 
@@ -50,6 +66,11 @@ run on real data, so they are not post-hoc tuning:
 
 Claim 5 declares 78 more: 66 hypothesis tests plus 12 strategy
 evaluations, with the same battery and gate as claim 4.
+
+Exploration round 1 (docs/exploration_plan.md) declares 16 more: 12
+exploratory tests, one per hypothesis, at most 3 one-shot confirmation
+tests (2 were run), and the forward test of the one candidate, H05. The
+project total is now 217.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

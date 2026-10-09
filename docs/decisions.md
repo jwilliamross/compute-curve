@@ -487,3 +487,28 @@ Review and edits (each folder's `PROVENANCE.md` lists them in full):
 
 Updates are manual. Re-fetch at a new commit, diff it, re-review, and record
 the new SHA here.
+
+## D44. H05 shadow-step fix (2026-10-09); the forward log was rebuilt from published values
+
+The daily shadow step failed on 2026-10-07, 10-08 and 10-09, so H05's
+forward log stayed empty. There were two bugs:
+
+- **Fetch.** The CGI history request sent bounds off the index's 15-minute
+  grid. Seconds gave HTTP 400, and an end after the latest stamp gave HTTP
+  404. `collectors.cgi.fetch_history` now floors both bounds to the grid.
+- **Empty series.** With no new values, `explore.forward.shadow_rows` crashed
+  on an empty series. It now returns an empty log.
+
+Regression tests cover both.
+
+On the first run after the fix, the step imported CGI values from
+2026-10-07 onward. The forward test's rules are unchanged:
+
+- each value comes from its first observed vintage;
+- values published more than 15 minutes after their stamp are excluded
+  (none were);
+- no logged forecast is rewritten.
+
+So the forecasts for 10-07 to 10-09 equal what a live log would have
+recorded. They were, however, logged after the fact, and this is disclosed
+in the round reports. No interim performance was looked at.

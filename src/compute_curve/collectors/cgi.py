@@ -159,14 +159,25 @@ def _receipt(
 HISTORY_LIMIT = 2976  # documented maximum page size (31 days of 15-minute values)
 
 
+def _on_grid(ts: datetime) -> str:
+    """UTC timestamp floored to the index's 15-minute grid, in the API's format."""
+    floored = ts.replace(minute=ts.minute - ts.minute % 15, second=0, microsecond=0)
+    return floored.strftime("%Y-%m-%dT%H:%M:00.000Z")
+
+
 def fetch_history(
     client: PoliteClient, sku: str, start: datetime, end: datetime
 ) -> list[dict[str, Any]]:
-    """All published values for ``sku`` in [start, end], following ``next_cursor``."""
+    """All published values for ``sku`` in [start, end], following ``next_cursor``.
+
+    The API refuses bounds off its 15-minute grid: seconds give HTTP 400 and an
+    end after the latest stamp gives HTTP 404. Both bounds are floored to the
+    grid (checked 2026-10-09).
+    """
     values: list[dict[str, Any]] = []
     params: dict[str, Any] = {
-        "from": start.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "to": end.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        "from": _on_grid(start),
+        "to": _on_grid(end),
         "limit": HISTORY_LIMIT,
     }
     for _ in range(100):  # hard stop against a cursor loop

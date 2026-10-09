@@ -125,3 +125,37 @@ def test_forward_evaluation_passes_a_real_reversal_and_fails_noise(
     assert r_good["passed"] and r_good["oos_r2_zero"] > 0
     assert not r_noise["passed"]
     assert not fw.window_complete(pd.DataFrame(), FWD, pd.Timestamp("2026-10-15", tz="UTC"))
+
+
+def test_shadow_rows_with_no_values_inside_the_window(ecfg: ExplorationConfig) -> None:
+    """Regression: only pre-window values must give an empty log, not a crash."""
+    values = _values()
+    early = values.loc[values["as_of"] < pd.Timestamp(FWD.start)]
+    now = pd.Timestamp("2026-10-09", tz="UTC")
+    rows = fw.shadow_rows(early, FROZEN, FWD, now, ecfg.cgi_max_age_minutes)
+    assert rows.empty and list(rows.columns) == fw.LOG_COLUMNS
+
+
+def test_cgi_history_request_is_on_the_15_minute_grid() -> None:
+    """Regression: CGI answers 400 to seconds and 404 to an end past its last stamp."""
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    import httpx  # noqa: PLC0415
+
+    from compute_curve.collectors.cgi import fetch_history  # noqa: PLC0415
+
+    seen: list[dict[str, str]] = []
+
+    class FakeClient:
+        def get(self, url: str, params: dict[str, object]) -> httpx.Response:
+            seen.append({k: str(v) for k, v in params.items()})
+            req = httpx.Request("GET", url)
+            return httpx.Response(200, json={"data": {"values": []}}, request=req)
+
+    start = datetime(2026, 10, 7, 0, 0, 13, 500, tzinfo=UTC)
+    end = datetime(2026, 10, 9, 21, 45, 11, 152192, tzinfo=UTC)
+    fetch_history(FakeClient(), "H100", start, end)  # type: ignore[arg-type]
+    assert seen[0]["from"] == "2026-10-07T00:00:00.000Z"
+    assert seen[0]["to"] == "2026-10-09T21:45:00.000Z"
+    fetch_history(FakeClient(), "H100", start, end.replace(minute=59))  # type: ignore[arg-type]
+    assert seen[1]["to"] == "2026-10-09T21:45:00.000Z"

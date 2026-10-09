@@ -83,7 +83,10 @@ def shadow_rows(
     if pts.empty or values.empty:
         return pd.DataFrame(columns=LOG_COLUMNS)
     start = pd.Timestamp(fwd.start).tz_convert("UTC")
-    v = cgi_hourly(values.loc[values["as_of"] >= start], "H100", max_age_minutes).asfreq("h")
+    v = cgi_hourly(values.loc[values["as_of"] >= start], "H100", max_age_minutes)
+    if v.empty:  # nothing published inside the window yet
+        return pd.DataFrame(columns=LOG_COLUMNS)
+    v = v.asfreq("h")
     x = (v - v.shift(6)).reindex(pts)
     y = (v.shift(-6) - v).reindex(pts)
     known_at = pts + HORIZON + DECISION_DELAY

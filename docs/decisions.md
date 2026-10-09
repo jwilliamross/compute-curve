@@ -448,3 +448,42 @@ Four guards keep the test point-in-time:
 
 The window is the 60 US equity sessions after the candidate was added,
 2026-10-07 to 2026-12-31, as the plan required.
+
+## D43. Six agent skills committed under `.claude/skills/` (owner request, 2026-10-09)
+
+The owner approved the shortlist in `reports/Claude Code skills for quant
+research.md` and asked for it to be installed. Cloud sessions load only skills
+committed under `.claude/skills/`; they ignore marketplace plugins enabled in
+settings. So each skill is a reviewed, modified copy pinned to a recorded
+commit, not a plugin.
+
+| Skill | Source and commit | Licence |
+|---|---|---|
+| `compute-curve-research` | written here from CLAUDE.md and the decisions log | project |
+| `validate-data`, `explore-data` | anthropics/knowledge-work-plugins `95bdacc8` | Apache-2.0 |
+| `hypothesis-generation`, `statsmodels`, `exploratory-data-analysis` | K-Dense-AI/scientific-agent-skills `92ace75a` | MIT; statsmodels skill BSD-3-Clause |
+| `backtest-expert` | tradermonty/claude-trading-skills `eab8d5cb` | MIT |
+
+Review and edits (each folder's `PROVENANCE.md` lists them in full):
+
+- Every SKILL.md was read in full. Every kept file was scanned for network
+  calls, shell execution, install commands, secret handling and
+  prompt-injection phrasing, and reference files were spot-read. Nothing
+  malicious was found.
+- Removed `allowed-tools` lines, which pre-approve Bash and file writes even
+  in untrusted folders.
+- Removed pinned `uv pip install` commands. Dependencies come from `uv.lock`,
+  which already has statsmodels 0.15.0 and pandas 3.0.6.
+- Removed the K-Dense instruction to fetch an arXiv page before citing,
+  which was a hidden outbound network call.
+- No bundled scripts were vendored:
+  - the K-Dense EDA tools read CSV/TSV/JSON only, and our data are Parquet;
+  - the hypothesis validators are optional;
+  - backtest-expert's script only scores self-reported numbers, and it
+    writes into `reports/`.
+
+  No new dependency is added.
+- Each vendored skill carries a note that CLAUDE.md wins on any conflict.
+
+Updates are manual. Re-fetch at a new commit, diff it, re-review, and record
+the new SHA here.

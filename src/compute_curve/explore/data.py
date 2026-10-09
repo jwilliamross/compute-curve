@@ -14,6 +14,7 @@ from dataclasses import dataclass, replace
 from datetime import date, datetime
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 
 from compute_curve.config import Config, ExplorationConfig, IndexConfig, SplitConfig
@@ -26,7 +27,7 @@ from compute_curve.index.own_index import (
 Which = Literal["explore", "confirm"]
 
 LISTING_COLUMNS = ["as_of_date", "gpu_model", "term", "provider", "listing_id", "price"]
-CGI_COLUMNS = ["as_of", "gpu_model", "value"]
+CGI_COLUMNS = ["as_of", "gpu_model", "value", "n_providers"]
 GD_COLUMNS = ["week", "gpu_model", "term", "value", "n_listings"]
 AWS_COLUMNS = ["day", "az_id", "instance_type", "gpu", "price_per_gpu_hour"]
 BAR_COLUMNS = ["symbol", "session", "open", "close"]
@@ -35,6 +36,7 @@ GD_SERIES = {
     ("H100", "on_demand"): "GetDeploying nvidia-h100 ON_DEMAND weekly median",
     ("H100", "spot"): "GetDeploying nvidia-h100 SPOT weekly median",
     ("B200", "on_demand"): "GetDeploying nvidia-b200 ON_DEMAND weekly median",
+    ("H100", "reserved_12m"): "GetDeploying nvidia-h100 RESERVATION 12m weekly median",
 }
 CGI_SOURCE = "cgi_hist"
 
@@ -132,7 +134,9 @@ def cgi_values(ref: pd.DataFrame) -> pd.DataFrame:
     """CGI 15-minute history: one value per (GPU, stamp), the latest observed."""
     c = ref.loc[ref["source"] == CGI_SOURCE].sort_values("ts_observed")
     c = c.drop_duplicates(["gpu_model", "as_of"], keep="last")
-    out = c[["as_of", "gpu_model", "value"]].copy()
+    if "n_providers" not in c.columns:
+        c = c.assign(n_providers=np.nan)
+    out = c[["as_of", "gpu_model", "value", "n_providers"]].copy()
     out["as_of"] = pd.to_datetime(out["as_of"], utc=True)
     return out.sort_values(["gpu_model", "as_of"]).reset_index(drop=True)
 

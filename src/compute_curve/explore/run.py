@@ -242,9 +242,11 @@ def _oos_r2(y: np.ndarray, pred: np.ndarray, base: np.ndarray) -> float:
     return float(1.0 - np.sum((y - pred) ** 2) / den) if den > 0 else float("nan")
 
 
-def confirm_one(built: Built, frozen: dict[str, Any], ecfg: ExplorationConfig) -> Confirmation:
+def confirm_one(
+    built: Built, frozen: dict[str, Any], ecfg: ExplorationConfig, spec: Spec | None = None
+) -> Confirmation:
     """Frozen specification on the confirmation sample: C1 (one-sided) and C2 (OOS R2)."""
-    spec = SPECS[frozen["hid"]]
+    spec = spec or SPECS[frozen["hid"]]
     out = Confirmation(frozen["hid"])
     sign = int(frozen["direction"])
     a, b = float(frozen["intercept"]), float(frozen["slope"])

@@ -402,13 +402,52 @@ def synthetic_round1(
         synthetic_weekday_calendar(date(2024, 9, 3), date(2026, 10, 5))
     )
     bars = synthetic_equity_bars(sessions, members, benchmark, seed + 1)
-    return {
+    out = {
         "listings": _synthetic_listings(rng, plant),
         "cgi": _synthetic_cgi(rng),
         "gd": _synthetic_gd(rng),
         "aws": _synthetic_aws(rng, plant),
         "bars": bars[["symbol", "session", "open", "close", "is_synthetic"]],
     }
+    # Round-2 inputs come from a separate generator so round-1 frames stay identical.
+    _add_round2_inputs(out, np.random.default_rng(seed + 100), plant)
+    return out
+
+
+def _add_round2_inputs(
+    out: dict[str, pd.DataFrame], rng: np.random.Generator, plant: frozenset[str]
+) -> None:
+    """SYNTHETIC CGI provider counts and a GetDeploying 12-month reservation series.
+
+    ``plant`` may contain ``R2-02``: CGI H100 moves in windows where the provider
+    count changed get a transient component that reverts within 6 hours.
+    """
+    cgi = out["cgi"].copy()
+    n = len(cgi)
+    steps = (rng.random(n) < 0.01) * rng.choice([-1, 1], n)
+    cgi["n_providers"] = 12 + np.cumsum(steps)
+    if "R2-02" in plant:
+        h = cgi["gpu_model"] == "H100"
+        npv = cgi.loc[h, "n_providers"].to_numpy()
+        bump = np.zeros(h.sum())
+        changed = np.flatnonzero(np.diff(npv, prepend=npv[0]) != 0)
+        for i in changed:
+            bump[i : i + 16] += rng.normal(0.0, 0.03)
+        cgi.loc[h, "value"] = cgi.loc[h, "value"].to_numpy() * np.exp(bump)
+    out["cgi"] = cgi
+    weeks = pd.date_range("2025-10-06", "2026-10-05", freq="7D")
+    lv = np.log(2.6) + np.cumsum(rng.normal(0.0, 0.01, len(weeks)))
+    r12 = pd.DataFrame(
+        {
+            "week": weeks.date,
+            "gpu_model": "H100",
+            "term": "reserved_12m",
+            "value": np.exp(lv),
+            "n_listings": 20.0,
+            "is_synthetic": True,
+        }
+    )
+    out["gd"] = pd.concat([out["gd"], r12], ignore_index=True)
 
 
 def synthetic_cgi_vintages(

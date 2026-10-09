@@ -312,3 +312,12 @@ start = 2026-10-07T00:00:00Z
 end = 2026-12-31T23:59:59Z
 sessions = 60
 max_publish_lag_minutes = 15    # a value published later than this is not point-in-time
+
+# Exploration round 2 (docs/exploration_round2_plan.md). Round 1's split dates
+# stay fixed; confirmation sets spent in round 1 are replaced by future data.
+[exploration2]
+cgi_confirm = [2026-10-10T00:00:00Z, 2026-12-31T23:59:59Z]
+aws_confirm_months = ["2026-10", "2026-11", "2026-12"]
+min_train = 60                      # R2-04: pairs before the first walk-forward forecast
+min_oos = 120                       # R2-04: out-of-sample forecasts needed
+min_provider_change_windows = 10    # R2-02: windows with a CGI provider-count change

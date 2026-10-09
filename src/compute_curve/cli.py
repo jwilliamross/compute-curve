@@ -11,7 +11,8 @@ evaluate   test the three claims on real data; write reports/evaluation.md
 backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
-explore    exploration rounds: round1 exploration | freeze | confirmation | shadow
+explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
+           round2 exploration | replicate | confirmation
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -67,8 +68,10 @@ def _parser() -> argparse.ArgumentParser:
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
-    ex.add_argument("round", choices=["round1"])
-    ex.add_argument("stage", choices=["exploration", "freeze", "confirmation", "shadow"])
+    ex.add_argument("round", choices=["round1", "round2"])
+    ex.add_argument(
+        "stage", choices=["exploration", "freeze", "confirmation", "shadow", "replicate"]
+    )
     return p
 
 
@@ -166,6 +169,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "explore":
         from compute_curve.explore import pipeline as xp
 
+        if args.round == "round2":
+            from compute_curve.explore import round2 as r2
+
+            stages2 = {
+                "exploration": r2.run_exploration2,
+                "replicate": r2.run_replicate,
+                "confirmation": r2.run_confirmation2,
+            }
+            if args.stage not in stages2:
+                print(f"round2 has no stage {args.stage!r} yet", file=sys.stderr)
+                return 2
+            print(f"wrote {stages2[args.stage](cfg)}")
+            return 0
         stage = {
             "exploration": xp.run_exploration,
             "freeze": xp.run_freeze,

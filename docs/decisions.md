@@ -512,3 +512,40 @@ On the first run after the fix, the step imported CGI values from
 So the forecasts for 10-07 to 10-09 equal what a live log would have
 recorded. They were, however, logged after the fact, and this is disclosed
 in the round reports. No interim performance was looked at.
+
+## D45. Exploration round 2 keeps round 1's split dates; spent sets give way to future data
+
+Re-splitting all data for round 2 would turn observations already seen in
+round 1 into "new" confirmation data. So round 2 does three things:
+
+- **It keeps round 1's split dates.** It reuses the exploration sets for new
+  hypotheses only.
+- **It runs one pre-specified replication of H01** on the listings
+  confirmation set. No outcome on that set has been computed.
+- **It confirms related ideas on future data.**
+  - CGI from 2026-10-10 to 12-31, because round 1 spent CGI's confirmation
+    set on H05.
+  - The AWS months 2026-10 to 12, because round 1 spent AWS's confirmation
+    set on H09.
+
+No equity hypothesis is tested: no new equity-relevant data exists. An
+A100 variant of H09 was dropped before testing, because claim 5 already
+showed A100's trend in the confirmation period. Details are in
+docs/exploration_round2_plan.md.
+
+## D46. Round-2 confirmations use Bonferroni across the two survivors
+
+The plan said "Holm across the hypotheses confirmed". R2-03 (CGI) and R2-04
+(AWS) finish on different dates. CGI completes after 2026-12-31; AWS
+completes when Zenodo publishes the 2026-12 month. So each one-sided p is
+multiplied by 2 (Bonferroni), which is never weaker than Holm. This was
+fixed on 2026-10-09, before any confirmation data existed.
+
+- **CGI.** The R2-03 confirmation uses the same point-in-time rules as H05:
+  - the first observed vintage of each value;
+  - values published more than 15 minutes late are excluded.
+- **AWS.** R2-04 needs the 2026-10, 11 and 12 months added to
+  `[claim5].months` and fetched with `compute-curve claim5 fetch`.
+- **Runs.** `compute-curve explore round2 confirmation` runs in the daily
+  workflow. It waits until each data window is complete, runs each survivor
+  once, and refuses a rerun.

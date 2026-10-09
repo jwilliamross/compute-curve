@@ -512,3 +512,23 @@ On the first run after the fix, the step imported CGI values from
 So the forecasts for 10-07 to 10-09 equal what a live log would have
 recorded. They were, however, logged after the fact, and this is disclosed
 in the round reports. No interim performance was looked at.
+
+## D45. Exploration round 2 keeps round 1's split dates; spent sets give way to future data
+
+Re-splitting all data for round 2 would turn observations already seen in
+round 1 into "new" confirmation data. So round 2 does three things:
+
+- **It keeps round 1's split dates.** It reuses the exploration sets for new
+  hypotheses only.
+- **It runs one pre-specified replication of H01** on the listings
+  confirmation set. No outcome on that set has been computed.
+- **It confirms related ideas on future data.**
+  - CGI from 2026-10-10 to 12-31, because round 1 spent CGI's confirmation
+    set on H05.
+  - The AWS months 2026-10 to 12, because round 1 spent AWS's confirmation
+    set on H09.
+
+No equity hypothesis is tested: no new equity-relevant data exists. An
+A100 variant of H09 was dropped before testing, because claim 5 already
+showed A100's trend in the confirmation period. Details are in
+docs/exploration_round2_plan.md.

@@ -363,6 +363,16 @@ class ExplorationConfig(_Strict):
     forward: dict[str, ForwardConfig] = {}
 
 
+class Round2Config(_Strict):
+    """Exploration round 2 settings (docs/exploration_round2_plan.md)."""
+
+    cgi_confirm: tuple[datetime, datetime]
+    aws_confirm_months: list[str]
+    min_train: int = Field(default=60, ge=10)
+    min_oos: int = Field(default=120, ge=1)
+    min_provider_change_windows: int = Field(default=10, ge=1)
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -380,6 +390,7 @@ class Config(_Strict):
     claim4: Claim4Config | None = None
     claim5: Claim5Config | None = None
     exploration: ExplorationConfig | None = None
+    exploration2: Round2Config | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

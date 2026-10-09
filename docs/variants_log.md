@@ -46,6 +46,12 @@ never deleted.
 | explore1.echo (filter, not a test) | exploration 1 | Partial slope after removing the target's own past change; survival filter for 9 hypotheses | 2026-10-06 | no | see docs/exploration_round1.md |
 | explore1.posthoc_stability (descriptive, post hoc) | exploration 1 | Survivors' correlation in each half of the exploration sample and without the 1% largest signal values. Added after seeing which hypotheses survived, on the exploration set only; changes nothing in the frozen specifications; not a test | 2026-10-06 | no | see reports/exploration/round1_descriptive.md |
 | explore1.confirm (up to 3 tests) | exploration 1 | One shot per survivor on the confirmation set: one-sided Newey-West (Holm) and out-of-sample R² above 0 against both naive baselines | 2026-10-06 | yes | see docs/exploration_round1.md |
+| explore2.R2-01 (1 test) | exploration 2 | Confirmatory replication of H01 with its frozen round-1 specification on the listings confirmation set (2026-09-13 to 10-06); C1 and C2 | 2026-10-09 | yes | see docs/exploration_round2.md |
+| explore2.R2-02 (1 test) | exploration 2 | Mechanism test: CGI H100 6-hour reversal stronger in windows where CGI's provider count changed (interaction slope, Frisch-Waugh-Lovell); cannot become a candidate | 2026-10-09 | yes | see docs/exploration_round2.md |
+| explore2.R2-03 (1 test) | exploration 2 | CGI B200 past 6-hour change → next 6-hour change | 2026-10-09 | yes | see docs/exploration_round2.md |
+| explore2.R2-04 (1 test) | exploration 2 | AWS H100 spot 7-day persistence with an expanding-window coefficient; Clark-West against zero change | 2026-10-09 | yes | see docs/exploration_round2.md |
+| explore2.R2-06 (1 test) | exploration 2 | GetDeploying H100 on-demand premium over the 12-month reservation price (weekly change) → next week's on-demand change | 2026-10-09 | yes | see docs/exploration_round2.md |
+| explore2.confirm (up to 3 tests) | exploration 2 | Round-2 one-shot confirmations; CGI and AWS ones on future data | 2026-10-09 | yes | see docs/exploration_round2.md |
 | explore1.forward.H05 (1 test) | exploration 1 | Forward test of the confirmed candidate H05 (CGI H100 6-hour reversal) in shadow mode: every hourly decision point in the 60 US equity sessions from 2026-10-07 to 2026-12-31, then C1 and C2 once on forward data only. Declared when the candidate was added | 2026-10-06 | yes | runs daily; result in reports/exploration/round1_forward_H05.json after 2027-01-01 |
 
 ## Design changes made before any result existed
@@ -71,6 +77,10 @@ Exploration round 1 (docs/exploration_plan.md) declares 16 more: 12
 exploratory tests, one per hypothesis, at most 3 one-shot confirmation
 tests (2 were run), and the forward test of the one candidate, H05. The
 project total is now 217.
+
+Exploration round 2 (docs/exploration_round2_plan.md) declares 8 more: one
+replication, four exploratory tests and up to three confirmations. The
+project total is now 225.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

@@ -1,0 +1,45 @@
+{
+  "hid": "H01",
+  "n": 19,
+  "slope": -0.036685638937666874,
+  "slope_se": 0.028521465685338324,
+  "t_stat": -1.286246623592188,
+  "p_one_sided": 0.10732815336290136,
+  "p_holm": 0.10732815336290136,
+  "oos_r2_zero": 0.02435049929818167,
+  "oos_r2_mean": 0.01653204570029343,
+  "power": 0.7191014234978155,
+  "c1": false,
+  "c2": true,
+  "confirmed": false,
+  "verdict": "not confirmed",
+  "notes": [],
+  "frozen": {
+    "hid": "H01",
+    "spec": {
+      "hid": "H01",
+      "kind": "panel",
+      "data": "L",
+      "signal": "provider premium over the cross-provider median (H100 on-demand)",
+      "target": "provider's own matched 5-day change",
+      "horizon": "5 days",
+      "lag": 5,
+      "min_shift": 5,
+      "block": 5,
+      "expected_sign": -1,
+      "echo": false
+    },
+    "direction": -1,
+    "intercept": 0.002129428193358978,
+    "slope": -0.03632546946322318,
+    "slope_se_explore": 0.009964775119464944,
+    "n_explore": 51,
+    "rho_explore": -0.12429928855338077,
+    "y_mean_explore": 0.002027075948799871
+  },
+  "window": [
+    "2026-09-13 00:00:00",
+    "2026-10-01 00:00:00"
+  ],
+  "generated": "2026-10-09T21:55:46.712193+00:00"
+}

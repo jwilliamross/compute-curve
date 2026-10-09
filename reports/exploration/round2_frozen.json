@@ -1,0 +1,65 @@
+{
+  "frozen_at": "2026-10-09T21:56:11.236555+00:00",
+  "frozen": [
+    {
+      "hid": "R2-03",
+      "spec": {
+        "hid": "R2-03",
+        "kind": "ts",
+        "data": "C",
+        "signal": "CGI B200 past 6-hour change",
+        "target": "CGI B200 next 6-hour change",
+        "horizon": "6 hours",
+        "lag": 6,
+        "min_shift": 12,
+        "block": 12,
+        "expected_sign": -1,
+        "echo": false
+      },
+      "direction": -1,
+      "intercept": 0.00048414442808578377,
+      "slope": -0.36640046413416416,
+      "slope_se_explore": 0.07531389266198674,
+      "n_explore": 612,
+      "rho_explore": -0.3663746221531896,
+      "y_mean_explore": 0.00035507434427643005,
+      "confirm_data": "CGI B200 values from 2026-10-10 00:00 to 2026-12-31 23:59 UTC",
+      "rules": "C1 one-sided Newey-West (lag 6) in the exploration direction, Holm across confirmed; C2 frozen a+b*x beats zero and exploration mean out of sample"
+    },
+    {
+      "hid": "R2-04",
+      "spec": {
+        "hid": "R2-04",
+        "kind": "walkforward",
+        "data": "A",
+        "signal": "AWS H100 spot 7-day change (expanding-window OLS forecast)",
+        "target": "AWS H100 spot next 7-day change",
+        "horizon": "7 days",
+        "lag": 7,
+        "min_shift": 14,
+        "block": 14,
+        "expected_sign": 1,
+        "echo": false
+      },
+      "direction": 1,
+      "procedure": {
+        "min_train": 60,
+        "horizon_days": 7,
+        "training": "all pairs whose outcome is known at t, from 2024-10-01",
+        "model": "OLS y = a + b x refitted daily",
+        "baselines": [
+          "zero change",
+          "running training mean"
+        ]
+      },
+      "exploration": {
+        "clark_west_p": 0.0076145747575879505,
+        "oos_r2_zero": 0.17205138586085744,
+        "oos_r2_mean": 0.2444430018841055,
+        "n_oos": 346
+      },
+      "confirm_data": "AWS H100 spot pools, months 2026-10, 2026-11, 2026-12 once published (forecast dates whose outcome falls inside those months)",
+      "rules": "C1 Clark-West one-sided p <= 0.05, Holm across confirmed; C2 out-of-sample R2 above 0 against zero and against the running mean"
+    }
+  ]
+}

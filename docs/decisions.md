@@ -532,3 +532,20 @@ No equity hypothesis is tested: no new equity-relevant data exists. An
 A100 variant of H09 was dropped before testing, because claim 5 already
 showed A100's trend in the confirmation period. Details are in
 docs/exploration_round2_plan.md.
+
+## D46. Round-2 confirmations use Bonferroni across the two survivors
+
+The plan said "Holm across the hypotheses confirmed". R2-03 (CGI) and R2-04
+(AWS) finish on different dates. CGI completes after 2026-12-31; AWS
+completes when Zenodo publishes the 2026-12 month. So each one-sided p is
+multiplied by 2 (Bonferroni), which is never weaker than Holm. This was
+fixed on 2026-10-09, before any confirmation data existed.
+
+- **CGI.** The R2-03 confirmation uses the same point-in-time rules as H05:
+  - the first observed vintage of each value;
+  - values published more than 15 minutes late are excluded.
+- **AWS.** R2-04 needs the 2026-10, 11 and 12 months added to
+  `[claim5].months` and fetched with `compute-curve claim5 fetch`.
+- **Runs.** `compute-curve explore round2 confirmation` runs in the daily
+  workflow. It waits until each data window is complete, runs each survivor
+  once, and refuses a rerun.

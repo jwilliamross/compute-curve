@@ -1,7 +1,41 @@
 # Status
 
-_Last updated: 2026-10-06, end of exploration round 1. Branch
+_Last updated: 2026-10-09, end of exploration round 2. Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## Final summary: exploration round 2 (2026-10-09)
+
+**Bottom line.** Two new survivors wait for future data, and nothing is
+confirmed. Details are in `docs/exploration_round2.md`.
+
+- **H01 replication** (our own index; providers converge to the market
+  price):
+  - same effect size on unseen days;
+  - not significant in 19 days (p 0.107);
+  - not confirmed.
+- **Survivors, exploratory:**
+  - **R2-03:** CGI B200 6-hour reversal. Confirmation runs automatically on
+    or after 2027-01-01.
+  - **R2-04:** AWS H100 spot persistence with a daily re-estimated
+    coefficient. Confirmation runs once Zenodo publishes the AWS 2026-10 to
+    12 months.
+- **H05:** provider churn does not explain its reversal (R2-02).
+- **Term structure (R2-06):** nothing.
+- **Fixed on the way:** H05's daily shadow step had failed since 2026-10-07,
+  and its forward log was empty. It is fixed and merged (PR 6, D44), and the
+  log was rebuilt point-in-time.
+- **Merged.** The skills (PR 5), the shadow fix (PR 6) and round 2 (PR 7)
+  are on main. The daily workflow runs the R2-03 confirmation itself.
+
+### Actions for you (round 2)
+
+1. **When Zenodo publishes the AWS 2026-12 month** (probably in January
+   2027):
+   - add `"2026-10"`, `"2026-11"`, `"2026-12"` to `[claim5].months` in
+     `config/default.toml`;
+   - run `uv run compute-curve claim5 fetch`;
+   - then run `uv run compute-curve explore round2 confirmation`, or let the
+     daily workflow run it.
 
 ## Final summary: exploration round 1 (find candidate signals, honestly)
 

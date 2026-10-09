@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -141,3 +142,48 @@ def test_replication_uses_only_the_listings_confirmation_set(
     split = ecfg.splits["listings"]
     assert in_set(pd.Series([first.date(), last.date()]), split, "confirm").all()
     assert out["c1"] and out["confirmed"]
+
+
+def test_cgi_confirmation_waits_and_uses_only_its_window(
+    ecfg: ExplorationConfig, r2cfg: Round2Config
+) -> None:
+    from compute_curve.explore import forward as fw  # noqa: PLC0415
+    from compute_curve.explore.round2 import cgi_window_complete, confirm_cgi  # noqa: PLC0415
+    from compute_curve.synthetic import synthetic_cgi_vintages  # noqa: PLC0415
+
+    assert not cgi_window_complete(r2cfg, pd.Timestamp("2026-12-31 12:00", tz="UTC"))
+    assert cgi_window_complete(r2cfg, pd.Timestamp("2027-01-01 07:00", tz="UTC"))
+    rows = synthetic_cgi_vintages("2026-10-05", "2027-01-02", 3, transient=0.01)
+    rows["gpu_model"] = "B200"
+    values, _ = fw.point_in_time(rows, "B200", 15)
+    frozen = {
+        "hid": "R2-03",
+        "direction": -1,
+        "intercept": 0.0,
+        "slope": -0.37,
+        "rho_explore": -0.37,
+        "y_mean_explore": 0.0,
+    }
+    good = confirm_cgi(values, frozen, ecfg, r2cfg)
+    assert good["confirmed"]
+    first = pd.Timestamp(good["window"][0])
+    assert first >= pd.Timestamp(r2cfg.cgi_confirm[0]) + pd.Timedelta(hours=6)
+    noise = synthetic_cgi_vintages("2026-10-05", "2027-01-02", 4, transient=0.0)
+    noise["gpu_model"] = "B200"
+    nv, _ = fw.point_in_time(noise, "B200", 15)
+    assert not confirm_cgi(nv, frozen, ecfg, r2cfg)["confirmed"]
+
+
+def test_aws_confirmation_waits_for_december(
+    cfg: Config, ecfg: ExplorationConfig, r2cfg: Round2Config
+) -> None:
+    from compute_curve.explore.round2 import aws_window_complete, confirm_aws  # noqa: PLC0415
+    from compute_curve.synthetic import synthetic_spot_pools  # noqa: PLC0415
+
+    data = _data(cfg, 2)
+    assert not aws_window_complete(data.aws)  # synthetic archive ends 2026-09-30
+    pools = synthetic_spot_pools(date(2024, 10, 1), date(2027, 1, 10), ("H100",), 4, seed=9)
+    pools["instance_type"] = "p5.48xlarge"
+    assert aws_window_complete(pools)
+    res = confirm_aws(pools, ecfg, r2cfg)
+    assert res["n"] > 60 and not res["confirmed"]  # a random walk has no persistence

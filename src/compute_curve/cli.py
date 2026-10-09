@@ -12,7 +12,7 @@ backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
-           round2 exploration | replicate
+           round2 exploration | replicate | confirmation
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -172,7 +172,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.round == "round2":
             from compute_curve.explore import round2 as r2
 
-            stages2 = {"exploration": r2.run_exploration2, "replicate": r2.run_replicate}
+            stages2 = {
+                "exploration": r2.run_exploration2,
+                "replicate": r2.run_replicate,
+                "confirmation": r2.run_confirmation2,
+            }
             if args.stage not in stages2:
                 print(f"round2 has no stage {args.stage!r} yet", file=sys.stderr)
                 return 2

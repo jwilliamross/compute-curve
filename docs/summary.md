@@ -112,6 +112,23 @@ do, our index could become a trading signal.
 The details are in `docs/exploration_plan.md` (the rules) and
 `docs/exploration_round1.md` (the results).
 
+## A second search round (9 October 2026)
+
+- **Our own index.** The one promising pattern was re-checked on days it had
+  never been tested on: providers priced above the market tend to cut, and
+  those below to raise.
+  - It came out the same size as before.
+  - With only 19 days it is not yet strong enough to count.
+  - It is worth re-checking in a few months.
+- **Two new leads, not findings.**
+  - The B200 version of the independent 15-minute index also gives back
+    about a third of each 6-hour move.
+  - Amazon's spot price moves tend to continue for a week. The forecast is
+    re-estimated every day, which fixes the reason the first attempt failed.
+  - Each gets one test on data that does not exist yet: the index through
+    31 December, and Amazon's October to December prices once published.
+- **No trades.** Nothing trades. No contract settles on these prices yet.
+
 ## What happens now
 
 - **Daily, automatically.** After each US market close the system collects

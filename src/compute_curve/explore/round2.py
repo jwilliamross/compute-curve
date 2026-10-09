@@ -442,3 +442,124 @@ def run_replicate(cfg: Config) -> Path:  # pragma: no cover - reads local data
     out["generated"] = datetime.now(UTC).isoformat()
     p["replication_json"].write_text(json.dumps(_clean(out), indent=2, default=str))
     return p["replication_json"]
+
+
+# ---------------------------------------------------------------------------
+# One-shot confirmation of the frozen survivors (future data)
+# ---------------------------------------------------------------------------
+N_SURVIVORS = 2  # R2-03 and R2-04; each p is multiplied by 2 (Bonferroni, D46)
+AWS_CONFIRM = (pd.Timestamp("2026-10-01"), pd.Timestamp("2026-12-31"))
+
+
+def cgi_window_complete(r2cfg: Round2Config, now: pd.Timestamp) -> bool:
+    end = pd.Timestamp(r2cfg.cgi_confirm[1])
+    return bool(now >= end + pd.Timedelta(hours=6, minutes=10))
+
+
+def confirm_cgi(
+    values: pd.DataFrame, frozen: dict[str, Any], ecfg: ExplorationConfig, r2cfg: Round2Config
+) -> dict[str, Any]:
+    """R2-03 on point-in-time CGI B200 values inside the round-2 window only."""
+    a, b = (pd.Timestamp(x) for x in r2cfg.cgi_confirm)
+    inside = values.loc[(values["as_of"] >= a) & (values["as_of"] <= b)]
+    data = Round1Data(
+        listings=pd.DataFrame(),
+        cgi=inside,
+        gd=pd.DataFrame(),
+        aws=pd.DataFrame(),
+        bars=pd.DataFrame(),
+    )
+    built = cgi_reversal(data, "B200", ecfg.cgi_max_age_minutes)
+    row = confirm_one(built, frozen, ecfg, spec=R2_SPECS["R2-03"])
+    row.p_holm = min(1.0, row.p_one_sided * N_SURVIVORS) if np.isfinite(row.p_one_sided) else 1.0
+    row.c1 = bool(row.p_holm <= ecfg.confirm_alpha)
+    row.confirmed = row.c1 and row.c2
+    row.verdict = "confirmed: candidate" if row.confirmed else "not confirmed"
+    out = asdict(row)
+    out["window"] = (
+        [str(built.frame["t"].min()), str(built.frame["t"].max())] if len(built.frame) else []
+    )
+    return out
+
+
+def aws_window_complete(aws: pd.DataFrame) -> bool:
+    return bool(len(aws)) and pd.Timestamp(max(aws["day"])) >= AWS_CONFIRM[1]
+
+
+def confirm_aws(aws: pd.DataFrame, ecfg: ExplorationConfig, r2cfg: Round2Config) -> dict[str, Any]:
+    """R2-04: the frozen walk-forward procedure; forecasts whose outcome ends in Oct to Dec."""
+    data = Round1Data(
+        listings=pd.DataFrame(), cgi=pd.DataFrame(), gd=pd.DataFrame(), aws=aws, bars=pd.DataFrame()
+    )
+    fc = walk_forward(r2_04(data, ecfg).frame, pd.Timedelta(days=7), r2cfg.min_train)
+    t = pd.to_datetime(fc["t"])
+    sel = fc.loc[(t >= AWS_CONFIRM[0]) & (t + pd.Timedelta(days=7) <= AWS_CONFIRM[1])]
+    y, f = sel["y"].to_numpy(float), sel["forecast"].to_numpy(float)
+    cw = cs.clark_west(y, f, np.zeros_like(y), 7) if len(sel) else None
+    p = cw.p_value if cw is not None else float("nan")
+    p_adj = min(1.0, p * N_SURVIVORS) if np.isfinite(p) else 1.0
+    r2z = oos_r2(y, f, np.zeros_like(y)) if len(sel) else float("nan")
+    r2m = oos_r2(y, f, sel["mean"].to_numpy(float)) if len(sel) else float("nan")
+    c1 = bool(p_adj <= ecfg.confirm_alpha)
+    c2 = bool(np.isfinite(r2z) and np.isfinite(r2m) and r2z > 0 and r2m > 0)
+    return {
+        "hid": "R2-04",
+        "n": len(sel),
+        "clark_west_p": p,
+        "p_adjusted": p_adj,
+        "oos_r2_zero": r2z,
+        "oos_r2_mean": r2m,
+        "c1": c1,
+        "c2": c2,
+        "confirmed": c1 and c2,
+        "verdict": "confirmed: candidate" if c1 and c2 else "not confirmed",
+    }
+
+
+def run_confirmation2(cfg: Config, now: pd.Timestamp | None = None) -> Path:  # pragma: no cover
+    """Each survivor once, only when its future data window is complete."""
+    from compute_curve.claim5.pipeline import paths as c5paths  # noqa: PLC0415
+    from compute_curve.claim5.pipeline import read_pool_daily  # noqa: PLC0415
+    from compute_curve.explore import forward as fw  # noqa: PLC0415
+    from compute_curve.explore.pipeline import _cgi_vintages  # noqa: PLC0415
+
+    ecfg, r2cfg, _ = _cfgs(cfg)
+    p = paths(cfg)
+    now = now or pd.Timestamp.now(tz="UTC")
+    frozen = {f["hid"]: f for f in json.loads(p["frozen"].read_text())["frozen"]}
+    lines = [
+        "# Exploration round 2: confirmation status",
+        "",
+        f"Checked {now:%Y-%m-%d %H:%M} UTC.",
+        "",
+    ]
+    for hid in ("R2-03", "R2-04"):
+        out_path = p["dir"] / f"round2_confirmation_{hid}.json"
+        if out_path.exists():
+            res = json.loads(out_path.read_text())
+            lines.append(f"- {hid}: done earlier; {res['verdict']}.")
+            continue
+        if hid == "R2-03":
+            if not cgi_window_complete(r2cfg, now):
+                lines.append(f"- R2-03: waiting for CGI data to {r2cfg.cgi_confirm[1]:%Y-%m-%d}.")
+                continue
+            fwd_lag = (
+                cfg.exploration.forward["H05"].max_publish_lag_minutes if cfg.exploration else 15
+            )
+            values, counts = fw.point_in_time(_cgi_vintages(cfg), "B200", fwd_lag)
+            res = confirm_cgi(values, frozen["R2-03"], ecfg, r2cfg)
+            res["point_in_time"] = counts
+        else:
+            aws = read_pool_daily(c5paths(cfg)["pool_daily"])
+            if not aws_window_complete(aws):
+                lines.append(
+                    "- R2-04: waiting for the AWS 2026-12 month (add it to [claim5].months)."
+                )
+                continue
+            res = confirm_aws(aws, ecfg, r2cfg)
+        res["generated"] = now.isoformat()
+        out_path.write_text(json.dumps(_clean(res), indent=2, default=str))
+        lines.append(f"- {hid}: {res['verdict']}.")
+    out = p["dir"] / "round2_confirmation.md"
+    out.write_text("\n".join(lines) + "\n")
+    return out

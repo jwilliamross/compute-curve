@@ -776,3 +776,20 @@ test vectors. It is not reported as a finding until it is derived in `docs/`.
 - No public skill covers Monte Carlo of average-price (Asian-style) settlement,
   forward-curve models or OU optimal thresholds well enough to vendor. Those
   stay as derivations in `docs/` with citations.
+
+## D53. Claim 6 random-entry null: placements only inside listing periods (2026-10-10)
+
+**Decision.** The Monte Carlo random-entry null for claim 6 redraws a random
+start (up to 50 times) until every leg of the trade has prices over the whole
+holding period.
+
+**Reasoning.** The first exploration run (reports/statarb/exploration.md)
+could place a null trade before a stock listed (CRWV, WYFI, CBRS). Such a
+trade earns nothing but still pays costs, which biases the null downward. A
+post-hoc diagnostic with valid placements is logged as variant
+`statarb.null_valid`. The SA2 conclusion held: real timing beat 99.3% of
+random placements before costs.
+
+The null is descriptive and is not a survival rule. Neither strategy
+survived the pre-registered rules, and this fix changes no verdict. The frozen
+exploration report is kept as written.

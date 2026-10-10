@@ -3,6 +3,30 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Claim 6: stock statistical arbitrage (2026-10-10)
+
+**Bottom line.** No significant edge after costs. Details are in
+`docs/statarb_results.md`.
+
+- **What was tested.** Pairs trading (cointegration) and Avellaneda-Lee
+  residual reversal against XLK, on the 20 compute-linked stocks.
+  - Pre-registered: docs/statarb_plan.md, c86c7ec.
+  - A 21-cell grid, with a pooled region instead of the best cell.
+  - Deflated Sharpe, Monte Carlo nulls, a drawdown bootstrap and a cost
+    break-even.
+- **Pairs: Sharpe −1.55.** It loses before costs. AI stocks trended apart on
+  news.
+- **Residual reversal: Sharpe +0.18**, CI −1.05 to 1.25, deflated Sharpe
+  0.07.
+  - Its entry timing beats random timing (99% of Monte Carlo draws), but the
+    edge is below costs.
+  - Break-even cost is 23 bps per side, against 15 assumed.
+- **Confirmation set unspent.** Nothing survived, so the 2026-02-20 to 10-05
+  set is untouched.
+- **Skill.** `sharpe-ratio-non-iid-corrections` was added (D52). Its formulas
+  are implemented in `compute_curve.statarb.evaluate` and tested against the
+  paper's Exhibit 1.
+
 ## Exploration round 3, interim (2026-10-10)
 
 **Bottom line.** Round 3 asks what drives the CGI reversal. It has no

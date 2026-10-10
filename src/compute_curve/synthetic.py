@@ -566,3 +566,57 @@ def synthetic_cgi_panel(
     idx = pd.date_range("2030-01-01", periods=n, freq="15min", tz="UTC")
     out = pd.DataFrame(p, index=idx, columns=[f"seat_{i}" for i in range(n_seats)])
     return out.assign(is_synthetic=True)
+
+
+def synthetic_statarb_bars(
+    n_days: int,
+    seed: int,
+    pair_half_life: float = 5.0,
+    pair_sd: float = 0.03,
+    residual_half_life: float = 4.0,
+    residual_sd: float = 0.04,
+    planted: bool = True,
+) -> pd.DataFrame:
+    """SYNTHETIC daily bars for claim-6 engine tests (``is_synthetic=True``).
+
+    Symbols: ``XLK`` (market), ``PA``/``PB`` (a cointegrated pair whose log
+    spread is an OU process when ``planted``), ``RC`` (market beta plus an OU
+    residual when ``planted``) and ``N1``..``N3`` (market beta plus random-walk
+    noise). Opens carry a small overnight gap from the previous close.
+    """
+    rng = np.random.default_rng(seed)
+    sessions = pd.bdate_range("2030-01-02", periods=n_days)
+    mkt = np.cumsum(rng.normal(0.0003, 0.012, n_days))
+
+    def ou(half_life: float, sd: float) -> np.ndarray:
+        phi = 0.5 ** (1.0 / half_life)
+        e = rng.normal(0.0, sd * np.sqrt(1 - phi**2), n_days)
+        x = np.empty(n_days)
+        x[0] = rng.normal(0.0, sd)
+        for t in range(1, n_days):
+            x[t] = phi * x[t - 1] + e[t]
+        return x
+
+    def walk(sd: float) -> np.ndarray:
+        return np.cumsum(rng.normal(0.0, sd, n_days))
+
+    base_a = 1.2 * mkt + walk(0.015)
+    logp = {
+        "XLK": np.log(200.0) + mkt,
+        "PA": np.log(50.0) + base_a,
+        "PB": np.log(30.0) + base_a + (ou(pair_half_life, pair_sd) if planted else walk(0.01)),
+        "RC": np.log(80.0)
+        + 1.1 * mkt
+        + (ou(residual_half_life, residual_sd) if planted else walk(0.012)),
+    }
+    for k in range(1, 4):
+        logp[f"N{k}"] = np.log(40.0 + 10 * k) + 0.9 * mkt + walk(0.015)
+    rows = []
+    for sym, lp in logp.items():
+        close = np.exp(lp)
+        gap = np.exp(rng.normal(0.0, 0.002, n_days))
+        opens = np.concatenate([[close[0]], close[:-1]]) * gap
+        rows.append(
+            pd.DataFrame({"symbol": sym, "session": sessions, "open": opens, "close": close})
+        )
+    return pd.concat(rows, ignore_index=True).assign(is_synthetic=True)

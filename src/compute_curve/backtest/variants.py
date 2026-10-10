@@ -369,6 +369,14 @@ REGISTERED: tuple[Variant, ...] = (
         2,
     ),
     Variant(
+        "statarb.null_valid",
+        "statarb",
+        "Post-hoc diagnostic: SA2 random-entry null with placements inside listing periods",
+        "2026-10-10",
+        False,
+        1,
+    ),
+    Variant(
         "statarb.forward",
         "statarb",
         "Forward shadow test of a confirmed stat-arb strategy, 60 sessions",

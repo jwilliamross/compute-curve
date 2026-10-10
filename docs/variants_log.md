@@ -89,7 +89,8 @@ two descriptive jump thresholds. The project total is now 231.
 Claim 6, statistical arbitrage on compute-linked equities
 (docs/statarb_plan.md), declares 24 more: 21 grid cells (9 pairs, 12
 residual-reversal), up to 2 confirmations and 1 forward test. The project
-total is now 255.
+total is now 255. One post-hoc descriptive diagnostic of the random-entry null
+(D53) brings it to 256.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

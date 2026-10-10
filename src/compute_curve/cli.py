@@ -13,7 +13,7 @@ backtest   engine validation on SYNTHETIC data, and real-data backtests when
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
            round2 exploration | replicate | confirmation;
-           round3 exploration | confirmation
+           round3 exploration | confirmation | mechanism
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -72,7 +72,8 @@ def _parser() -> argparse.ArgumentParser:
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
     ex.add_argument("round", choices=["round1", "round2", "round3"])
     ex.add_argument(
-        "stage", choices=["exploration", "freeze", "confirmation", "shadow", "replicate"]
+        "stage",
+        choices=["exploration", "freeze", "confirmation", "shadow", "replicate", "mechanism"],
     )
     return p
 
@@ -107,6 +108,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore import pipeline as xp
     from compute_curve.explore import round2 as r2
     from compute_curve.explore import round3 as r3
+    from compute_curve.explore.mechanism import run_mechanism
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -123,6 +125,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
         "round3": {
             "exploration": r3.run_exploration3,
             "confirmation": r3.run_confirmation3,
+            "mechanism": run_mechanism,
         },
     }
     run = stages[round_].get(stage_name)

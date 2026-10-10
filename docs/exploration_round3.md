@@ -104,6 +104,105 @@ model separates them. This explanation is unverified.
   2026-07-05.** New candidates, which collect from today forward, are listed
   in docs/data_sources.md under "Candidates (2026-10-10)".
 
+## 6. Addendum: what can produce the reversal (plan section 9)
+
+Pre-registered in commit 5caf536 before running. No real data is tested
+here and the confirmation window is untouched.
+
+### 6.1 How much of a 6-hour move must be transient (derivation)
+
+Model the log index as a random walk plus a stationary transient part. The
+6-hour-on-6-hour slope is then
+
+  β = −γ₀(1 − ρ)² / (σ² + 2γ₀(1 − ρ)),
+
+where:
+
+- σ² is the random walk's variance over 6 hours;
+- γ₀ is the transient part's variance;
+- ρ is the transient part's 6-hour autocorrelation.
+
+β cannot go below −0.5. For β ≈ −0.35, at least about 70% of the variance
+of a 6-hour CGI change must be transient.
+
+### 6.2 Simulation of CGI's vote rule (SYNTHETIC)
+
+Full table: `reports/exploration/round3_mechanism_simulation.md`.
+
+CGI's published vote rule is applied to simulated seat prices:
+
+- three votes per seat at c ± sd;
+- the weighted mean of the middle third of the votes.
+
+20 seeds × 60 days per row, ranges across seeds in brackets.
+
+| Scenario | β, 17 seats | β, 9 seats | VR(24) | ACF(1) of 15-min changes |
+|---|---|---|---|---|
+| S0 vote rule only, seats are random walks | −0.02 [−0.08, 0.06] | −0.02 [−0.09, 0.08] | ≈ 1.0 | ≈ 0 |
+| S1 + one-stamp seat drop-outs (2% per seat per stamp) | −0.38 [−0.42, −0.32] | −0.40 [−0.46, −0.33] | 0.05 | −0.50 |
+| S2 + seat price deviations lasting hours (3h half-life) | −0.31 [−0.35, −0.26] | −0.34 [−0.39, −0.30] | 0.57 | −0.03 |
+| S3 = S2 + CGI's 1-hour EWMA | −0.20 [−0.26, −0.15] | −0.24 [−0.30, −0.19] | 5.5 | +0.79 |
+
+The sd floor (3% or 6%) made no material difference; the rows above are
+the 3% runs.
+
+**Pre-registered reading, reported as written.** The rule printed "the
+aggregation rule alone can produce a reversal of the observed size" for
+every panel. That wording is misleading:
+
+- It was triggered by **S1 (seat drop-outs)**, because the rule grouped S0
+  and S1.
+- The vote rule on its own (S0) produces **no** reversal.
+- The rule is not changed after the fact. This paragraph explains it.
+
+**What the simulation shows (synthetic, so a mechanism check rather than a
+finding):**
+
+1. **CGI's construction is not the cause.** A trimmed vote mean of seats
+   whose prices are random walks has no reversal.
+2. **Two mechanisms can each produce a reversal of the observed size.**
+   They leave different fingerprints:
+   - **Drop-outs (S1).** Moves at stamps where the seat count changes
+     reverse at once. 15-minute changes then have ACF(1) near −0.5. This is
+     exactly the channel R3-01 measures.
+   - **Seat price deviations lasting hours (S2).** The reversal is
+     broad-based, with ACF(1) near 0 before smoothing. With CGI's EWMA the
+     ACF(1) turns strongly positive while the 6-hour reversal remains (S3).
+3. **Comparison with real CGI** (descriptive, contaminated exploration
+   window):
+   - R3-01's coefficient was −0.002. Moves at seat-count changes did not
+     reverse more than other moves.
+   - After CGI added the EWMA on 2026-09-15, the ACF(1) of 15-minute changes
+     flipped from about −0.3 to +0.16 (H100) and +0.25 (B200), and the
+     6-hour reversal persisted.
+
+   Both fit S2/S3 better than S1.
+
+**Current best explanation.** Seat-level price deviations that last hours
+are the explanation most consistent with all of the above: a cheaper
+listing appearing for a while, or order-book noise. **Unconfirmed.** Only
+CGI's per-provider receipts could attribute them to seats, and those are
+blocked (B12). Asking Computable is now the most useful single step for
+this question.
+
+### 6.3 Power of the four confirmations
+
+These are planning numbers only:
+
+- standard errors come from the contaminated exploration window, scaled to
+  about 1,950 confirmation points;
+- the effect sizes are the exploration estimates.
+
+| Test | Exploration c | Expected SE on confirmation | Power (α 0.0125, first Holm step) | 80%-power MDE |
+|---|---|---|---|---|
+| R3-01 | −0.002 | 0.081 | 0.01 | 0.25 |
+| R3-02 | −0.157 | 0.090 | 0.31 | 0.28 |
+| R3-03 | +0.151 (wrong sign) | 0.066 | 0.00 | 0.20 |
+| R3-04 | +0.020 | 0.034 | 0.05 | 0.11 |
+
+A confirmation is unlikely; only R3-02 has a real chance. A null result
+on 2027-01-01 will be read as "no evidence", not "no effect".
+
 ## 5. Variants
 
 - Round 3 adds 6: 4 confirmation tests and 2 descriptive thresholds.

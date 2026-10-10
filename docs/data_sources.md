@@ -47,7 +47,7 @@ Audited 2026-10-06 for claim 5 (docs/claim5_plan.md).
 
 | Item | Finding |
 |---|---|
-| Dataset | "AWS Spot Price History", Eric Pauley, University of Wisconsin-Madison. Zenodo concept record 14254112; current version **2026-09**, record 23082767, DOI 10.5281/zenodo.23082767, published 2026-10-01. Updated on the 1st of each month with the previous month |
+| Dataset | "AWS Spot Price History", Eric Pauley, University of Wisconsin-Madison. Zenodo concept record 14198917 (corrected 2026-10-10: 14254112 is version 3, "2024-11"); current version **2026-09**, record 23082767, DOI 10.5281/zenodo.23082767, published 2026-10-01. Updated on the 1st of each month with the previous month |
 | Licence | **Creative Commons Attribution 4.0** (`cc-by-4.0` on the record). Reuse, adaptation and redistribution are allowed with attribution and an indication of changes. Research use is permitted |
 | Attribution to show | "Eric Pauley (University of Wisconsin-Madison), "AWS Spot Price History", Zenodo, version 2026-09, https://doi.org/10.5281/zenodo.23082767, CC BY 4.0", plus "filtered and aggregated by compute-curve" |
 | Format | One zstd-compressed TSV per month in the format of AWS `describe-spot-price-history`: availability zone ID, instance type, product description, USD per instance-hour, timestamp. Each month starts with the price in effect at 00:00 UTC on the 1st |
@@ -119,6 +119,33 @@ All of it is under `data/raw/` as immutable Parquet. The collection log is
   88% of days. Daily list-price changes are rare; the settlement index's
   methodology (basis adjustment, provider means, weekly recalibration) moves
   more often.
+
+## Candidates (2026-10-10, not collected yet)
+
+A data-source agent searched for more H100/B200 price history on 2026-10-10.
+Its notes are unverified until each source is reviewed again here.
+
+**No free history older than 2026-07-05 was found.** The candidates below
+add data from today forward.
+
+| Source | What it adds | Licence and terms (agent's reading) | Status |
+|---|---|---|---|
+| FastGPU open dataset (fastgpu.co/dataset; Zenodo 22842387) | Daily fixings since 2026-07-31; 29 providers including hyperscalers; an `available_count` column | Dataset files CC BY 4.0. robots.txt allows `/api/v1/dataset/`. Site terms forbid crawling the site, so only the dataset files may be used | Candidate; review its terms before adding. Vast and RunPod rows must be dropped |
+| Azure Retail Prices API | H100 on-demand, spot and reservation prices by region | Microsoft's docs describe unauthenticated use for "internal analysis and price comparison" | Candidate |
+| Lium `pricing.json` (hourly) | Hourly prices | robots.txt describes the file as hourly. No history: Grafana needs a login and `/api/` is disallowed | Already collected daily; hourly polling would need a scheduler |
+| AWS Price List Bulk API | p5/p6 on-demand list prices back to 2015 | AWS Site Terms ban "data mining, robots" on the AWS Site. About 254 MB per month | Owner decision needed |
+| Akash Console API | Daily H100 total, leased and utilization since about 2024-10 | Its terms ban "any robot, spider, or other automatic device". About 6 test requests were made before the terms were read; nothing was stored | **Rejected**; ask Overclock Labs for written permission (B13) |
+
+**Rejected by terms or robots.txt:**
+
+- Voltage Park, Prime Intellect, Thunder Compute, Denvr, Hyperbolic, Oracle
+  and DigitalOcean;
+- the Vultr, Scaleway and gpuperhour.com API hosts;
+- Zenodo 22053861 (built from Vast.ai data);
+- the AWS Spot Advisor JSON;
+- the SkyPilot catalog (no licence file).
+
+The Wayback Machine could not be reached from this environment.
 
 ## Follow-ups for the owner
 

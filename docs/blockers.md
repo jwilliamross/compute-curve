@@ -130,3 +130,14 @@ instead, and what would unblock it. Newest entries at the bottom.
   the receipts (live `/latest?include=receipts` and the published day
   files) is permitted. If yes, record it in docs/data_sources.md and plan a
   forward-only receipt collector.
+
+## B13. Akash Console GPU availability history: terms forbid automated access
+
+- **Evidence:** Akash Console's terms ban "any robot, spider, or other
+  automatic device … including monitoring or copying". The data-source
+  agent made about 6 test requests before reading the terms. Nothing was
+  stored.
+- **Impact:** the best free GPU availability history found (daily H100
+  total, leased and utilization since about 2024-10) is not usable.
+- **Owner action:** optionally ask Overclock Labs for written permission
+  for non-commercial research use.

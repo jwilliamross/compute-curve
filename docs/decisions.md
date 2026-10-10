@@ -620,3 +620,24 @@ and round-2 result is unchanged. The days do enter our own index history.
 providers, 07-06 has 11, 07-07 to 07-18 have 18. Day-to-day H100/B200 price
 changes are 0 to 3 per day. Next Zenodo version is expected quarterly
 (about 2026-10-19, unverified).
+
+## D49. Round 3 confirms every hypothesis once, with no exploration screen (2026-10-10)
+
+**Decision.** All four round-3 hypotheses (docs/exploration_round3_plan.md)
+go straight to one-shot confirmation on future CGI data (2026-10-11 to
+12-31), with Holm across the four. The CGI exploration window only freezes
+coefficients for C2.
+
+**Reasoning.**
+
+- A research agent looked descriptively at the CGI exploration window
+  before the plan, and its findings motivated the hypotheses. A screen on
+  that window would select on what was already seen.
+- Sending every hypothesis to confirmation removes that selection step.
+- The confirmation window starts one day after the plan is committed.
+- The jump threshold (25 bp) was set from the agent's descriptive
+  quantiles. This is disclosed; two other thresholds are descriptive only.
+- R2-02's null (p 0.56) is not treated as evidence of an effect. R3-01
+  re-specifies it at 15-minute resolution because hourly sampling likely
+  missed 15-minute seat drop-outs.
+- Per-provider receipts are not used (B12).

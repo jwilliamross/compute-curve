@@ -373,6 +373,17 @@ class Round2Config(_Strict):
     min_provider_change_windows: int = Field(default=10, ge=1)
 
 
+class Round3Config(_Strict):
+    """Exploration round 3 settings (docs/exploration_round3_plan.md)."""
+
+    explore: tuple[datetime, datetime]
+    confirm: tuple[datetime, datetime]
+    jump_threshold: float = Field(default=0.0025, gt=0)
+    descriptive_thresholds: list[float] = [0.001, 0.005]
+    min_points: int = Field(default=120, ge=1)
+    min_channel_windows: int = Field(default=10, ge=1)
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -391,6 +402,7 @@ class Config(_Strict):
     claim5: Claim5Config | None = None
     exploration: ExplorationConfig | None = None
     exploration2: Round2Config | None = None
+    exploration3: Round3Config | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

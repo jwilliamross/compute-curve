@@ -113,3 +113,20 @@ instead, and what would unblock it. Newest entries at the bottom.
   github.com and api.github.com. raw.githubusercontent.com works.
 - **Impact:** small. Archived snapshots were fetched from
   raw.githubusercontent.com instead.
+
+## B12. CGI per-provider receipts: licence unclear
+
+- **Evidence:** CGI's LICENSE-DATA.md (github.com/getcomputable/gpu-index,
+  commit 528b639) says receipts are included "solely for verification and
+  provenance". Historical receipts exist as day files on
+  `data.getcomputable.com`. That host is not in docs/data_sources.md, and its
+  files carry `restatements` fields.
+- **Impact:** round 3 cannot test which seats drive the CGI reversal
+  directly (the mechanism agent's M1 to M3). It tests index-level proxies
+  instead.
+- **Conservative choice:** receipts are not collected or used. Even with
+  permission, Vast and RunPod seats would still be dropped everywhere.
+- **Owner action:** ask Computable whether non-commercial research use of
+  the receipts (live `/latest?include=receipts` and the published day
+  files) is permitted. If yes, record it in docs/data_sources.md and plan a
+  forward-only receipt collector.

@@ -321,3 +321,11 @@ aws_confirm_months = ["2026-10", "2026-11", "2026-12"]
 min_train = 60                      # R2-04: pairs before the first walk-forward forecast
 min_oos = 120                       # R2-04: out-of-sample forecasts needed
 min_provider_change_windows = 10    # R2-02: windows with a CGI provider-count change
+
+[exploration3]                      # docs/exploration_round3_plan.md
+explore = [2026-09-01T00:15:00Z, 2026-09-24T23:45:00Z]   # coefficients for C2 only (contaminated)
+confirm = [2026-10-11T00:00:00Z, 2026-12-31T23:45:00Z]   # future CGI data, one shot
+jump_threshold = 0.0025             # 25 bp 15-minute log change
+descriptive_thresholds = [0.001, 0.005]
+min_points = 120
+min_channel_windows = 10

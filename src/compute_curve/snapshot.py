@@ -23,9 +23,11 @@ from typing import Any
 
 import httpx
 
+from compute_curve.collectors.azure_retail import AzureRetailCollector
 from compute_curve.collectors.base import CollectedBatch, Collector
 from compute_curve.collectors.cgi import SKUS as CGI_SKUS
 from compute_curve.collectors.cgi import CgiCollector, fetch_history, normalize_history
+from compute_curve.collectors.fastgpu import FastGpuCollector
 from compute_curve.collectors.getdeploying import GetDeployingCollector
 from compute_curve.collectors.gpurentalprices import (
     GpuRentalPricesCollector,
@@ -86,6 +88,8 @@ def registry(cfg: Config) -> dict[str, Collector]:
         CoreWeaveCollector(),
         HyperstackCollector(),
         VerdaCollector(),
+        AzureRetailCollector(),
+        FastGpuCollector(excluded),
         VastCollector(),
     ]
     return {c.source_id: c for c in collectors}

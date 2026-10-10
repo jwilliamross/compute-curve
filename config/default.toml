@@ -17,7 +17,7 @@ max_retries = 2
 
 [collectors]
 # Only sources approved in docs/data_sources.md.
-enabled = ["cgi", "getdeploying", "gpurentalprices", "lium", "nebius", "lambda", "coreweave", "hyperstack", "verda"]
+enabled = ["cgi", "getdeploying", "gpurentalprices", "lium", "nebius", "lambda", "coreweave", "hyperstack", "verda", "azure_retail", "fastgpu"]
 # Terms prohibit automated collection or index use (docs/data_sources.md).
 excluded_providers = ["vast", "runpod"]
 # Sources that require a data licence; add one only after a licence is held.

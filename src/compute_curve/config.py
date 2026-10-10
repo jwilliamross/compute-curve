@@ -125,6 +125,8 @@ class CollectorsConfig(_Strict):
         "coreweave",
         "hyperstack",
         "verda",
+        "azure_retail",
+        "fastgpu",
     ]
     # Providers whose own terms prohibit automated collection or index use;
     # dropped even when they arrive via a third-party aggregator.

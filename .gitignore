@@ -20,3 +20,4 @@ var/
 
 # Local copies of third-party papers (copyright; keep out of git)
 references/
+.claude/worktrees/

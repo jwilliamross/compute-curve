@@ -527,3 +527,42 @@ def synthetic_cgi_channels(
             "is_synthetic": True,
         }
     )
+
+
+def synthetic_cgi_panel(
+    n_seats: int,
+    days: int,
+    seed: int,
+    sigma_m: float = 0.001,
+    sigma_u: float = 0.002,
+    offset_sd: float = 0.15,
+    dropout: float = 0.0,
+    transient_sd: float = 0.0,
+    transient_half_life_stamps: float = 12.0,
+) -> pd.DataFrame:
+    """SYNTHETIC seat log prices on a 15-minute grid (docs/exploration_round3_plan.md 9.2).
+
+    Seat log price = common random walk + fixed offset + idiosyncratic random
+    walk (+ an AR(1) deviation with stationary sd ``transient_sd``). A seat is
+    absent (NaN) with probability ``dropout`` at each stamp. Columns
+    ``seat_0..``; ``is_synthetic=True``. Mechanism check only, never a result.
+    """
+    rng = np.random.default_rng(seed)
+    n = days * 96
+    common = np.cumsum(rng.normal(0.0, sigma_m, n))[:, None]
+    offset = rng.normal(0.0, offset_sd, n_seats)[None, :]
+    idio = np.cumsum(rng.normal(0.0, sigma_u, (n, n_seats)), axis=0)
+    p = np.log(3.0) + common + offset + idio
+    if transient_sd > 0:
+        phi = 0.5 ** (1.0 / transient_half_life_stamps)
+        eps = rng.normal(0.0, transient_sd * np.sqrt(1.0 - phi**2), (n, n_seats))
+        d = np.empty((n, n_seats))
+        d[0] = rng.normal(0.0, transient_sd, n_seats)
+        for t in range(1, n):
+            d[t] = phi * d[t - 1] + eps[t]
+        p = p + d
+    if dropout > 0:
+        p = np.where(rng.random((n, n_seats)) < dropout, np.nan, p)
+    idx = pd.date_range("2030-01-01", periods=n, freq="15min", tz="UTC")
+    out = pd.DataFrame(p, index=idx, columns=[f"seat_{i}" for i in range(n_seats)])
+    return out.assign(is_synthetic=True)

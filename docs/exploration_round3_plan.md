@@ -222,3 +222,100 @@ Round 3 counts 6 variants:
 - 2 descriptive thresholds for x_jump.
 
 The project total rises from 225 to 231 (`docs/variants_log.md`).
+
+## 9. Addendum (2026-10-10, before running): what can produce the reversal?
+
+This addendum adds no test on real data and does not touch the confirmation
+window. It asks which kinds of mechanism can produce a 6-hour slope near
+−0.35 at all.
+
+### 9.1 Derivation: how much of a 6-hour move must be transient
+
+Write the log index as a random walk W plus a stationary transient part T:
+
+- one 6-hour step of W has variance σ²;
+- T has variance γ₀;
+- ρ is T's autocorrelation at 6 hours.
+
+Past and future are adjacent 6-hour changes, so
+
+  Cov(past, future) = 2γ₆ − γ₀ − γ₁₂,  with γ_k the autocovariance of T.
+
+For T an AR(1) at the 6-hour step (γ₆ = ργ₀, γ₁₂ = ρ²γ₀):
+
+  β = −γ₀(1 − ρ)² / (σ² + 2γ₀(1 − ρ)).
+
+**Bound.** β is never below −1/2. It reaches −1/2 only with no random walk
+and transients that die within 6 hours (ρ = 0).
+
+**What β = −0.35 implies.** With ρ = 0 the transient part T must carry
+about 70% of the variance of a 6-hour change. With ρ > 0 it must carry
+more. The agent's descriptive look found retracement that lasts many hours,
+which means ρ > 0.
+
+Standard algebra; see e.g. Campbell, Lo and MacKinlay (1997), *The
+Econometrics of Financial Markets*, ch. 2 (variance ratios and
+autocorrelation of sums).
+
+### 9.2 Simulation of CGI's aggregation (SYNTHETIC, mechanism check only)
+
+A simulator of the aggregation published in CGI's METHODOLOGY.md, sections
+6 and 7:
+
+- each passing seat casts its weight three times, at c − sd, c and c + sd;
+- sd is the 3% floor, with a 6% variant;
+- the index is the weight-weighted mean of the votes between the 1/3 and
+  2/3 cumulative-weight quantiles;
+- weights are equal.
+
+**Seats.** 17 (H100-like) and 9 (B200-like). Seat log price is
+
+  p_i,t = m_t + o_i + u_i,t (+ d_i,t).
+
+- **m_t:** a common random walk, σ_m = 0.001 per 15 minutes.
+- **o_i:** a fixed offset, drawn from N(0, 0.15²).
+- **u_i,t:** an idiosyncratic random walk, σ_u = 0.002 per 15 minutes.
+- **d_i,t** (S2 and S3 only): an AR(1) seat deviation with a 3-hour
+  half-life. Its stationary sd is 0.03.
+
+**Scenarios.**
+
+| Scenario | Adds |
+|---|---|
+| S0 | Aggregation only |
+| S1 | S0 plus seat drop-outs: each seat is absent with probability 0.02 at each stamp, for one stamp, and not carried. This is the R3-01 channel |
+| S2 | S0 plus the transient seat deviations d |
+| S3 | S2 plus CGI's 1-hour-half-life EWMA on seat prices (calc_v16) |
+
+**Runs.** 20 seeds per scenario. Each run is 60 days of 15-minute stamps.
+
+**Reported.** The mean and the 5th to 95th percentile across seeds of:
+
+- the hourly 6-hour-on-6-hour slope β;
+- the 6-hour variance ratio VR(24);
+- the ACF(1) of 15-minute changes.
+
+**Interpretation, fixed now:**
+
+- If S0 and S1 both give mean β in [−0.10, 0], aggregation and drop-outs
+  alone cannot produce the observed reversal. The cause must then be
+  seat-level price deviations that last hours. Only per-provider receipts
+  (B12) can attribute those to seats.
+- If S0 or S1 gives mean β ≤ −0.25, the aggregation rule alone can produce
+  a reversal of the observed size.
+- Anything between is inconclusive.
+
+**Labelling.** Output is built by `compute_curve.synthetic` with
+`is_synthetic=True`, written to
+`reports/exploration/round3_mechanism_simulation.md` under a SYNTHETIC
+banner, and is never presented as a finding about CGI.
+
+### 9.3 Power of the four confirmations
+
+The expected power of each test on the confirmation window is computed
+from the exploration window's standard errors, scaled by √(n_explore /
+n_confirm). Those standard errors are contaminated estimates, so this is
+planning arithmetic only.
+
+**Variants.** None added. No hypothesis test is run on real data. The
+project total stays at 231.

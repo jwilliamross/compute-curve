@@ -30,6 +30,16 @@ finding yet. Details are in `docs/exploration_round3.md`.
 - **Automatic confirmation.** The daily workflow runs `explore round3
   confirmation` once the window is complete (on or after 2027-01-01 05:55
   UTC).
+- **Mechanism check (synthetic, section 6 of the report).**
+  - CGI's vote rule alone produces no reversal.
+  - Seat drop-outs or seat price deviations lasting hours can each produce
+    one.
+  - Real CGI's fingerprint (R3-01 null; ACF(1) flips sign after the EWMA)
+    fits multi-hour seat deviations best. Unconfirmed: it needs receipts
+    (B12).
+- **New collectors (PR 9).**
+  - `azure_retail` and `fastgpu` run daily from 2026-10-11.
+  - The owner chose to keep FastGPU.
 
 ### Actions for you (round 3)
 

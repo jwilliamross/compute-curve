@@ -22,7 +22,11 @@ finding yet. Details are in `docs/exploration_round3.md`.
   - gpurentalprices.com was backfilled for 2026-07-05 to 07-18 from Zenodo
     (D48).
   - Collection runs on every turn.
-  - New candidate sources are listed in docs/data_sources.md.
+  - Two new daily collectors from 2026-10-10: `azure_retail` (Azure H100
+    and H200 VM prices by region, D50) and `fastgpu` (FastGPU open dataset,
+    CC BY 4.0, Vast.ai and RunPod rows dropped, D51). First run: 480 and
+    84 rows.
+  - The remaining candidate sources are listed in docs/data_sources.md.
 - **Automatic confirmation.** The daily workflow runs `explore round3
   confirmation` once the window is complete (on or after 2027-01-01 05:55
   UTC).

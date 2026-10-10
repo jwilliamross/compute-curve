@@ -641,3 +641,73 @@ coefficients for C2.
   re-specifies it at 15-minute resolution because hourly sampling likely
   missed 15-minute seat drop-outs.
 - Per-provider receipts are not used (B12).
+
+## D50. Azure Retail Prices API collected daily as `azure_retail` (2026-10-10)
+
+**Decision.** Add a daily collector for Azure's public retail prices of the
+H100 and H200 VM SKUs whose GPU count Microsoft documents. It writes
+listings under `data/raw/listings/azure_retail/` with provider `azure`.
+Spot and reservation meters are kept as separate terms. Details and quotes
+are in docs/data_sources.md.
+
+**Reasoning.**
+
+- Microsoft's own documentation invites this use. It describes "an
+  unauthenticated experience to get retail rates for all Azure services"
+  and tools "for internal analysis and price comparison across SKUs and
+  regions". prices.azure.com has no robots.txt (404). No key is sent.
+- One filtered query covers every mapped SKU, so a run makes 1 or 2
+  requests. The service rate-limits bursts (HTTP 429). Pages are spaced by
+  6 seconds, and a 429 is retried once after the advertised wait.
+- GPUs per VM are mapped only where a Microsoft size page states the count
+  (five SKUs). Variants without a public size page are not requested, and
+  neither is GB200, a different product from B200. Azure lists no B200 SKU
+  today.
+- Reservation prices are totals for the term. They are converted to an
+  hourly rate with 8,760 hours per year. This is an assumption, recorded in
+  `price_basis`.
+- Linux, primary-region, USD meters only. Windows prices include an OS
+  licence, and DevTest prices are not public prices.
+- No effect on our index: `index.exclude_providers` already removes
+  `azure` (the index is neocloud-only). The rows give a hyperscaler
+  reference level and spot/reserved spreads by region from 2026-10-10.
+- First run (2026-10-10): 480 rows (H100 356, H200 124); 374 Windows,
+  low-priority or non-primary meters skipped. Azure H200 spot meters carry
+  the on-demand price. They are stored as published, with a data-quality
+  note.
+
+## D51. FastGPU open dataset collected daily as `fastgpu` (2026-10-10)
+
+**Decision.** Add a daily collector for the FastGPU current-snapshot file
+(`/api/v1/dataset/gpu-prices-current.csv`, CC BY 4.0). It keeps H100, H200
+and B200 offers and drops Vast.ai and RunPod rows (D13) and serverless
+offers. It keeps `available_count` in `raw_json` and maps it to
+availability. Listings go under `data/raw/listings/fastgpu/`. Details and
+quotes are in docs/data_sources.md.
+
+**Reasoning.**
+
+- The licence is clear. The dataset page and the terms (section 7) put the
+  published dataset files under CC BY 4.0, and so does the Zenodo record.
+- Programmatic download of the files is allowed:
+  - robots.txt allows `/api/v1/dataset/` for `*`;
+  - the dataset page shows `pandas.read_csv` on this exact URL;
+  - section 18 of the terms overrides section 5's ban on automated
+    collection for the open dataset;
+  - the ban still applies to the rest of the site, which is never
+    requested.
+- One request per run, for "the current snapshot", which the terms name as
+  part of the open dataset. The fixings file is not used. The terms' list
+  does not name it, and Vast.ai or RunPod offers can set its floors, which
+  cannot be removed from an aggregate.
+- Rows enter the headline (multi-source) index, which reads every listing
+  source, at the lowest source priority. A provider that a direct page or
+  gpurentalprices.com already reports that day keeps that source's rows.
+  The index code and config are unchanged. The fixed-panel history series,
+  which models, exploration and claim 4 read, uses only `history_sources`
+  and is unaffected. Hyperscaler rows (aws, azure, gcp, oci) are excluded by
+  `index.exclude_providers`. The headline series already changes
+  composition (2026-10-03, 2026-10-04); this is another such change from
+  2026-10-10.
+- First run (2026-10-10): 84 rows from 24 providers (H100 37, H200 26,
+  B200 21). 20 rows were dropped: 5 Vast.ai and 15 RunPod.

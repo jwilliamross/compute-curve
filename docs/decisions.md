@@ -711,3 +711,68 @@ quotes are in docs/data_sources.md.
   2026-10-10.
 - First run (2026-10-10): 84 rows from 24 providers (H100 37, H200 26,
   B200 21). 20 rows were dropped: 5 Vast.ai and 15 RunPod.
+
+## D52. An eighth skill, sharpe-ratio-non-iid-corrections, vendored with edits (2026-10-10)
+
+The owner asked for skills that improve advanced quantitative work. A search
+agent screened skills and repositories for statistical arbitrage, OU
+mean reversion, Kalman hedge ratios, Monte Carlo of average-price settlement,
+forward curves, regime detection, microstructure and robust backtest
+statistics. One skill was clearly worth vendoring: terrylica/cc-skills
+`sharpe-ratio-non-iid-corrections` (MIT) at commit
+`b592ad8d044a8c301a8998e58e66746a819cf19a`.
+
+It covers what `quant-research` lacks. That skill's deflated Sharpe ignores
+skew, kurtosis and autocorrelation (D47). This one gives the Sharpe-estimate
+variance with skew, kurtosis and AR(1) terms, after López de Prado, Lipton and
+Zoonekynd (2026), and from it:
+
+- PSR and the minimum track record length;
+- power, pFDR and oFDR;
+- the deflated Sharpe and the SFDR threshold.
+
+Our return series are short and autocorrelated, so these corrections matter
+most here.
+
+**Review.** SKILL.md and the equation tracker were read in full. The Exhibit 1
+values were recomputed with numpy and scipy, and all agree to three decimals.
+The SFDR example's 0.760 could not be reproduced: the stated inputs give 0.862.
+It is corrected, with a note. All changes are listed in the folder's
+`PROVENANCE.md`:
+
+- removed `allowed-tools`;
+- removed the "Self-Evolving Skill" and "Post-Execution Reflection" blocks,
+  which tell the agent to rewrite the skill file during use;
+- removed the upstream crypto project's default (SFDR for unrecoverable
+  searches). Here K is known from `docs/variants_log.md`, so DSR is the
+  default;
+- left out the Numba script (numba is not in the stack), the paper PDF, and a
+  full transcription of the paper, whose licence is not stated;
+- marked the paper title as unverified, because the authors' replication
+  repository titles SSRN 5520741 differently.
+
+No code and no dependency is added. A function built from these formulas goes
+into `compute_curve`, using numpy and scipy only, with the Exhibit 1 values as
+test vectors. It is not reported as a finding until it is derived in `docs/`.
+
+**Considered and not installed:**
+
+- agiprolabs/claude-trading-skills `cointegration-analysis`,
+  `mean-reversion`, `regime-detection` and `walk-forward-validation` (MIT).
+  - Crypto-first.
+  - Factual errors: the Johansen `det_order` meanings are wrong;
+    `statsmodels coint` is described as Phillips-Ouliaris; the DSR mixes
+    annualized and per-period Sharpe, and its expected maximum is unscaled.
+  - Full-sample z-scores and CUSUM statistics, which are look-ahead.
+  - Scripts that fetch from keyed crypto APIs.
+- HKUDS/Vibe-Trading `correlation-analysis`, `quant-statistics` and
+  `market-microstructure` (MIT).
+  - Written around that project's own `src.quantlib` library.
+  - The Kalman spread uses the updated state rather than the one-step-ahead
+    prediction.
+  - Kept as reading material only.
+- tradermonty `pair-trade-screener` (MIT). Its scripts call a keyed market
+  data API.
+- No public skill covers Monte Carlo of average-price (Asian-style) settlement,
+  forward-curve models or OU optimal thresholds well enough to vendor. Those
+  stay as derivations in `docs/` with citations.

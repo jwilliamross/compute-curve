@@ -589,3 +589,34 @@ from ruff. They are reviewed third-party copies, not project code.
   need a rewrite.
 - tradermonty `residual-edge-analyzer`: optional, and not needed for
   current work.
+
+## D48. gpurentalprices.com backfill from its Zenodo archive (2026-10-10)
+
+**Decision.** Import 2026-07-05 to 2026-07-18 from the publisher's frozen
+Zenodo archive (record 21435395, concept DOI 10.5281/zenodo.21435394,
+version 2026-07-19, CC BY 4.0). Command:
+`compute-curve backfill gpurentalprices-zenodo --start 2026-07-05 --end 2026-07-18`.
+
+**Reasoning.**
+
+- The source is already approved (docs/data_sources.md). The archive
+  carries the same licence, and the zip's LICENSE file grants reuse with
+  attribution.
+- The GitHub mirror keeps only a rolling window and no longer serves these
+  days. Zenodo is the version of record.
+- One request. Zenodo's robots.txt allows `/records/*/files` and sets a
+  10-second crawl delay. The md5 of the zip is checked against the record
+  (`57f098ba77a6dc38b900f3a0245040dd`) before anything is written.
+- Each day is stamped with its `generated_at`; rows keep the publisher's
+  `fetched_at` as `ts_source`. Days already stored are skipped, so re-runs
+  are no-ops and no request is made.
+
+**Effect on earlier rounds.** None. The listing split
+(`[exploration.splits.listings]`) starts on 2026-07-19, so the new days fall
+outside both the exploration and the confirmation set, and every round-1
+and round-2 result is unchanged. The days do enter our own index history.
+
+**Coverage, unverified figures from the data agent's profile.** 07-05 has 2
+providers, 07-06 has 11, 07-07 to 07-18 have 18. Day-to-day H100/B200 price
+changes are 0 to 3 per day. Next Zenodo version is expected quarterly
+(about 2026-10-19, unverified).

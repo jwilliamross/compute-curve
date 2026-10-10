@@ -14,7 +14,7 @@ was created, and no key was sent to any source.
 | CME GPU1/GPU2 settlements | Futures prices | cmegroup.com blocks automation; DataMine free after midnight CT with a CME login (snippet) | Automated access to cmegroup.com prohibited | **Manual CSV drop** (`data/manual/cme_settlements/`). None yet: not listed (B8) |
 | Computable GPU Index (CGI) | Independent H100/B200 index, 15-minute values, per-provider receipts | Keyless JSON API | Data CC BY-NC 4.0; not for settlement or products | **Collector `cgi`**; history backfilled from 2026-08-30 |
 | GetDeploying | Weekly medians by billing type, 53 weeks | Keyless CSV | CC BY 4.0 | **Collector `getdeploying`** (index rows) |
-| gpurentalprices.com | Daily per-provider offers with source URLs | Keyless JSON; archive on raw.githubusercontent.com | CC BY 4.0 | **Collector `gpurentalprices`**; archive backfilled 2026-07-19 to 2026-10-04 |
+| gpurentalprices.com | Daily per-provider offers with source URLs | Keyless JSON; archive on raw.githubusercontent.com | CC BY 4.0 | **Collector `gpurentalprices`**; archive backfilled 2026-07-19 to 2026-10-04; Zenodo archive 2026-07-05 to 07-18 (D48) |
 | Lium | Marketplace reference price plus listed/rented/idle GPUs | Keyless JSON advertised in robots.txt | No restriction found | **Collector `lium`** |
 | Nebius | List prices by platform and region | Markdown docs page | No scraping clause | **Collector `nebius`** |
 | Lambda | On-demand list prices by instance size | HTML | No scraping clause in website terms; AUP requires rate-limited crawling | **Collector `lambda`** |
@@ -132,6 +132,5 @@ All of it is under `data/raw/` as immutable Parquet. The collection log is
    public catalog is permitted.
 4. CME: once GPU1/GPU2 list, download daily settlements under your own CME
    account and drop them in `data/manual/cme_settlements/`.
-5. Optional backfill: the Zenodo record 21435394 covers gpurentalprices.com
-   for 2026-07-05 to 2026-07-18 (CC BY 4.0). It was not fetched because
-   Zenodo sets a 10-second crawl delay and serves a zip archive.
+5. Done 2026-10-10 (D48): the Zenodo record 21435394 (gpurentalprices.com,
+   2026-07-05 to 2026-07-18, CC BY 4.0) was imported in one request.

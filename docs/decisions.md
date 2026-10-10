@@ -549,3 +549,43 @@ fixed on 2026-10-09, before any confirmation data existed.
 - **Runs.** `compute-curve explore round2 confirmation` runs in the daily
   workflow. It waits until each data window is complete, runs each survivor
   once, and refuses a rerun.
+
+## D47. A seventh skill, quant-research, vendored with edits (2026-10-10)
+
+The owner asked for useful skills to be installed autonomously. A search
+agent compared candidates and recommended Jimmy7892/quant-research-skill
+(MIT) at commit `5821293a950faf0e05f83114df954f70471ba7e8`. It covers what
+the six installed skills lack:
+
+- trial counting;
+- effective sample size;
+- deflated Sharpe;
+- probability of backtest overfitting;
+- reading a parameter region rather than an argmax.
+
+**Review.** SKILL.md was read in full. The two kept scripts import only
+numpy and the standard library, and make no network, subprocess or
+file-writing calls. All changes are listed in the folder's `PROVENANCE.md`:
+
+- removed a block that asks the agent to have the user star the repository
+  and offers to run `gh api -X PUT`;
+- removed promotion of an external backtest engine and an external blog
+  link;
+- narrowed the trigger description;
+- left out the sizing, drawdown, live-monitoring and engine references and
+  two scripts;
+- added a note that the deflated Sharpe is a simplification (no skew or
+  kurtosis), that PBO is a diagnostic, and that self-tests are synthetic.
+
+Neither method is reported as a finding until it is derived in `docs/` and
+tested in `compute_curve`.
+
+**Ruff.** Vendored scripts under `.claude/skills/*/scripts` are excluded
+from ruff. They are reviewed third-party copies, not project code.
+
+**Considered and not installed:**
+
+- `duckdb-skills/read-file`: modest gain over `explore-data`, and it would
+  need a rewrite.
+- tradermonty `residual-edge-analyzer`: optional, and not needed for
+  current work.

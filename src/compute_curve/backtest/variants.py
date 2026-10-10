@@ -304,6 +304,46 @@ REGISTERED: tuple[Variant, ...] = (
         True,
         1,
     ),
+    Variant(
+        "explore3.R3-01",
+        "explore3",
+        "CGI H100 reversal of moves made at n_passing changes (R2-02 at 15-min resolution)",
+        "2026-10-10",
+        True,
+        1,
+    ),
+    Variant(
+        "explore3.R3-02",
+        "explore3",
+        "CGI H100 reversal of 15-min moves >= 25 bp (jump channel)",
+        "2026-10-10",
+        True,
+        1,
+    ),
+    Variant(
+        "explore3.R3-03",
+        "explore3",
+        "CGI B200 reversal of 15-min moves >= 25 bp (jump channel)",
+        "2026-10-10",
+        True,
+        1,
+    ),
+    Variant(
+        "explore3.R3-04",
+        "explore3",
+        "CGI H100 moves shared by the pinned lower band edge revert less (band-edge proxy)",
+        "2026-10-10",
+        True,
+        1,
+    ),
+    Variant(
+        "explore3.jump_thresholds",
+        "explore3",
+        "Jump channel at 10 bp and 50 bp thresholds (descriptive only, not tested)",
+        "2026-10-10",
+        False,
+        2,
+    ),
 )
 
 

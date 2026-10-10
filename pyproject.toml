@@ -40,6 +40,8 @@ addopts = "-q --strict-markers -m 'not network and not slow'"
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
+# Vendored third-party skill scripts are reviewed copies, not project code (D47).
+extend-exclude = [".claude/skills/*/scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "ANN", "N", "SIM", "RUF", "PL", "NPY", "PD", "DTZ", "S"]

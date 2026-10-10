@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && timeout 240 uv run compute-curve snapshot >/dev/null 2>&1 || true",
+            "timeout": 260,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

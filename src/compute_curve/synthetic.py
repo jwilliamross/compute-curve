@@ -476,3 +476,54 @@ def synthetic_cgi_vintages(
             "is_synthetic": True,
         }
     )
+
+
+def synthetic_cgi_channels(
+    start: str,
+    end: str,
+    seed: int,
+    gpu: str = "H100",
+    jump_rate: float = 0.0,
+    jump_size: float = 0.01,
+    half_life_stamps: float = 12.0,
+) -> pd.DataFrame:
+    """SYNTHETIC CGI 15-minute vintage rows with seat drop-outs, jumps and a band.
+
+    The log value is a persistent random walk plus a transient jump part:
+    with probability ``jump_rate`` per stamp a jump of ``jump_size`` (random
+    sign) starts and decays with ``half_life_stamps``. ``n_providers`` dips by
+    one at each jump stamp and returns at the next, and the lower band edge
+    (value - band) follows the random walk only, so it does not share jumps.
+    Rows carry ``n_providers``, ``methodology_id`` and ``raw_json`` with
+    ``generated_at`` and the band; every row has ``is_synthetic=True``.
+    """
+    rng = np.random.default_rng(seed)
+    stamps = pd.date_range(start, end, freq="15min", tz="UTC")
+    n = len(stamps)
+    walk = np.log(3.5) + np.cumsum(rng.normal(0.0, 0.0008, n))
+    starts = rng.random(n) < jump_rate
+    shocks = np.where(starts, rng.choice([-1.0, 1.0], n) * jump_size, 0.0)
+    decay = 0.5 ** (1.0 / half_life_stamps)
+    jump = np.zeros(n)
+    for i in range(n):
+        jump[i] = (jump[i - 1] * decay if i else 0.0) + shocks[i]
+    value = np.exp(walk + jump)
+    edge = np.exp(walk) * 0.97
+    n_prov = np.where(starts, 11, 12)
+    gen = stamps + pd.Timedelta(minutes=3)
+    raw = [
+        json.dumps({"generated_at": g.isoformat(), "stability_band_usd_gpu_hr": float(b)})
+        for g, b in zip(gen, value - edge, strict=True)
+    ]
+    return pd.DataFrame(
+        {
+            "as_of": stamps,
+            "gpu_model": gpu,
+            "value": value,
+            "n_providers": n_prov,
+            "methodology_id": "synthetic_v1",
+            "ts_observed": stamps[-1] + pd.Timedelta(hours=1),
+            "raw_json": raw,
+            "is_synthetic": True,
+        }
+    )

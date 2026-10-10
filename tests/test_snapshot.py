@@ -1,6 +1,9 @@
 """Snapshot runner tests with an in-memory HTTP transport (no network)."""
 
+import hashlib
+import io
 import json
+import zipfile
 from datetime import UTC, date, datetime
 
 import httpx
@@ -10,6 +13,7 @@ from compute_curve.http import PoliteClient
 from compute_curve.snapshot import (
     BACKFILL_SOURCE,
     backfill_gpurentalprices,
+    backfill_gpurentalprices_zenodo,
     collect_one,
     registry,
     run_snapshot,
@@ -111,4 +115,46 @@ def test_backfill_writes_each_day_once(tmp_path):
     assert [f.name for f in files] == [
         "gpurentalprices_hist_20260719T230000Z.parquet",
         "gpurentalprices_hist_20260721T230000Z.parquet",
+    ]
+
+
+def _archive(days):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for day in days:
+            snap = dict(LATEST, generated_at=f"{day}T07:00:00Z")
+            snap["offers"] = [dict(LATEST["offers"][0], fetched_at=f"{day}T07:00:00Z")]
+            z.writestr(f"gpu-rental-prices-2026-07-19/data/snapshots/{day}.json", json.dumps(snap))
+        z.writestr("gpu-rental-prices-2026-07-19/README.md", "readme")
+    return buf.getvalue()
+
+
+def test_zenodo_archive_backfill_is_md5_checked_and_idempotent(tmp_path):
+    blob = _archive(["2026-07-05", "2026-07-06"])
+    md5 = hashlib.md5(blob, usedforsecurity=False).hexdigest()
+    calls: list[str] = []
+
+    def zen(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        calls.append(str(request.url))
+        return httpx.Response(200, content=blob)
+
+    c = PoliteClient(user_agent="test", transport=httpx.MockTransport(zen), sleep=lambda s: None)
+    cfg = cfg_in(tmp_path)
+    bad = backfill_gpurentalprices_zenodo(cfg, date(2026, 7, 5), date(2026, 7, 6), c, md5="0" * 32)
+    assert [o.status for o in bad] == ["error"]
+    out = backfill_gpurentalprices_zenodo(cfg, date(2026, 7, 5), date(2026, 7, 7), c, md5=md5)
+    assert [o.status for o in out] == ["written", "written", "empty"]
+    n_calls = len(calls)
+    again = backfill_gpurentalprices_zenodo(cfg, date(2026, 7, 5), date(2026, 7, 6), c, md5=md5)
+    assert [o.status for o in again] == ["skipped_exists", "skipped_exists"]
+    assert len(calls) == n_calls  # nothing left to import, so no request
+    names = sorted(
+        f.name
+        for f in (tmp_path / "data" / "raw" / "listings" / BACKFILL_SOURCE).rglob("*.parquet")
+    )
+    assert names == [
+        "gpurentalprices_hist_20260705T070000Z.parquet",
+        "gpurentalprices_hist_20260706T070000Z.parquet",
     ]

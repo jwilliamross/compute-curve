@@ -549,3 +549,95 @@ fixed on 2026-10-09, before any confirmation data existed.
 - **Runs.** `compute-curve explore round2 confirmation` runs in the daily
   workflow. It waits until each data window is complete, runs each survivor
   once, and refuses a rerun.
+
+## D47. A seventh skill, quant-research, vendored with edits (2026-10-10)
+
+The owner asked for useful skills to be installed autonomously. A search
+agent compared candidates and recommended Jimmy7892/quant-research-skill
+(MIT) at commit `5821293a950faf0e05f83114df954f70471ba7e8`. It covers what
+the six installed skills lack:
+
+- trial counting;
+- effective sample size;
+- deflated Sharpe;
+- probability of backtest overfitting;
+- reading a parameter region rather than an argmax.
+
+**Review.** SKILL.md was read in full. The two kept scripts import only
+numpy and the standard library, and make no network, subprocess or
+file-writing calls. All changes are listed in the folder's `PROVENANCE.md`:
+
+- removed a block that asks the agent to have the user star the repository
+  and offers to run `gh api -X PUT`;
+- removed promotion of an external backtest engine and an external blog
+  link;
+- narrowed the trigger description;
+- left out the sizing, drawdown, live-monitoring and engine references and
+  two scripts;
+- added a note that the deflated Sharpe is a simplification (no skew or
+  kurtosis), that PBO is a diagnostic, and that self-tests are synthetic.
+
+Neither method is reported as a finding until it is derived in `docs/` and
+tested in `compute_curve`.
+
+**Ruff.** Vendored scripts under `.claude/skills/*/scripts` are excluded
+from ruff. They are reviewed third-party copies, not project code.
+
+**Considered and not installed:**
+
+- `duckdb-skills/read-file`: modest gain over `explore-data`, and it would
+  need a rewrite.
+- tradermonty `residual-edge-analyzer`: optional, and not needed for
+  current work.
+
+## D48. gpurentalprices.com backfill from its Zenodo archive (2026-10-10)
+
+**Decision.** Import 2026-07-05 to 2026-07-18 from the publisher's frozen
+Zenodo archive (record 21435395, concept DOI 10.5281/zenodo.21435394,
+version 2026-07-19, CC BY 4.0). Command:
+`compute-curve backfill gpurentalprices-zenodo --start 2026-07-05 --end 2026-07-18`.
+
+**Reasoning.**
+
+- The source is already approved (docs/data_sources.md). The archive
+  carries the same licence, and the zip's LICENSE file grants reuse with
+  attribution.
+- The GitHub mirror keeps only a rolling window and no longer serves these
+  days. Zenodo is the version of record.
+- One request. Zenodo's robots.txt allows `/records/*/files` and sets a
+  10-second crawl delay. The md5 of the zip is checked against the record
+  (`57f098ba77a6dc38b900f3a0245040dd`) before anything is written.
+- Each day is stamped with its `generated_at`; rows keep the publisher's
+  `fetched_at` as `ts_source`. Days already stored are skipped, so re-runs
+  are no-ops and no request is made.
+
+**Effect on earlier rounds.** None. The listing split
+(`[exploration.splits.listings]`) starts on 2026-07-19, so the new days fall
+outside both the exploration and the confirmation set, and every round-1
+and round-2 result is unchanged. The days do enter our own index history.
+
+**Coverage, unverified figures from the data agent's profile.** 07-05 has 2
+providers, 07-06 has 11, 07-07 to 07-18 have 18. Day-to-day H100/B200 price
+changes are 0 to 3 per day. Next Zenodo version is expected quarterly
+(about 2026-10-19, unverified).
+
+## D49. Round 3 confirms every hypothesis once, with no exploration screen (2026-10-10)
+
+**Decision.** All four round-3 hypotheses (docs/exploration_round3_plan.md)
+go straight to one-shot confirmation on future CGI data (2026-10-11 to
+12-31), with Holm across the four. The CGI exploration window only freezes
+coefficients for C2.
+
+**Reasoning.**
+
+- A research agent looked descriptively at the CGI exploration window
+  before the plan, and its findings motivated the hypotheses. A screen on
+  that window would select on what was already seen.
+- Sending every hypothesis to confirmation removes that selection step.
+- The confirmation window starts one day after the plan is committed.
+- The jump threshold (25 bp) was set from the agent's descriptive
+  quantiles. This is disclosed; two other thresholds are descriptive only.
+- R2-02's null (p 0.56) is not treated as evidence of an effect. R3-01
+  re-specifies it at 15-minute resolution because hourly sampling likely
+  missed 15-minute seat drop-outs.
+- Per-provider receipts are not used (B12).

@@ -82,6 +82,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve explore round2 confirmation
 
+      - name: Exploration round 3 confirmation (runs once when the CGI window is complete)
+        id: xconfirm3
+        if: ${{ steps.tests.outcome == 'success' }}
+        continue-on-error: true
+        run: uv run compute-curve explore round3 confirmation
+
       - name: Claim 4 evaluation and validation gate
         id: c4eval
         if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
@@ -120,7 +126,8 @@ jobs:
                    "tests:${{ steps.tests.outcome }}" "claim4-evaluate:${{ steps.c4eval.outcome }}" \
                    "claim4-daily:${{ steps.c4daily.outcome }}" \
                    "explore-shadow:${{ steps.xshadow.outcome }}" \
-                   "explore2-confirm:${{ steps.xconfirm2.outcome }}"; do
+                   "explore2-confirm:${{ steps.xconfirm2.outcome }}" \
+                   "explore3-confirm:${{ steps.xconfirm3.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

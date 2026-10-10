@@ -1,7 +1,37 @@
 # Status
 
-_Last updated: 2026-10-09, end of exploration round 2. Branch
+_Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## Exploration round 3, interim (2026-10-10)
+
+**Bottom line.** Round 3 asks what drives the CGI reversal. It has no
+finding yet. Details are in `docs/exploration_round3.md`.
+
+- **Plan.** It was committed before any statistic was computed (80aaaa7).
+  - Four tests, each run once on future CGI data (2026-10-11 to 12-31).
+  - Holm across the four.
+  - No exploration screen, because the window had been looked at (D49).
+- **R2-02 was followed up.** Re-specified at 15-minute resolution (R3-01),
+  it still shows nothing on the exploration window (p 0.50, contaminated).
+- **Jump and band-edge channels.** Neither explains the reversal on the
+  exploration window. The reversal looks broad-based.
+- **Per-provider receipts would show which seats drive it.** Their licence
+  is unclear, so they are blocked (B12).
+- **Data.**
+  - gpurentalprices.com was backfilled for 2026-07-05 to 07-18 from Zenodo
+    (D48).
+  - Collection runs on every turn.
+  - New candidate sources are listed in docs/data_sources.md.
+- **Automatic confirmation.** The daily workflow runs `explore round3
+  confirmation` once the window is complete (on or after 2027-01-01 05:55
+  UTC).
+
+### Actions for you (round 3)
+
+1. Optional: ask Computable whether research use of CGI's per-provider
+   receipts is permitted (B12).
+2. Optional: ask Overclock Labs about Akash availability data (B13).
 
 ## Final summary: exploration round 2 (2026-10-09)
 

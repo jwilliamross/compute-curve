@@ -1,6 +1,6 @@
 # Summary for a finance reader
 
-_As of 6 October 2026. Simulation only: no real money is involved._
+_As of 10 October 2026. Simulation only: no real money is involved._
 
 ## What this project is
 
@@ -128,6 +128,23 @@ The details are in `docs/exploration_plan.md` (the rules) and
   - Each gets one test on data that does not exist yet: the index through
     31 December, and Amazon's October to December prices once published.
 - **No trades.** Nothing trades. No contract settles on these prices yet.
+
+## A third search round (10 October 2026)
+
+- **The question.** Why does the independent index give back part of each
+  6-hour move? Three possible causes were pre-registered:
+  - providers dropping in and out of the index's sample;
+  - sudden jumps;
+  - moves inside the index's averaging rule.
+- **Early look (on data already seen, so it counts for nothing).** None of
+  the three explains it. The give-back seems to apply to every kind of
+  move, not to one measurement quirk.
+- **The real test** runs once, on the index from 11 October to 31
+  December 2026.
+- **Not used.** The index's per-provider detail would answer the question
+  directly. Its licence may forbid this use, so it is not used.
+- **More data.** Two more weeks of history, from 5 to 18 July 2026, came
+  from an open archive.
 
 ## What happens now
 

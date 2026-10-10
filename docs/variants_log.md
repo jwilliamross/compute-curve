@@ -82,6 +82,10 @@ Exploration round 2 (docs/exploration_round2_plan.md) declares 8 more: one
 replication, four exploratory tests and up to three confirmations. The
 project total is now 225.
 
+Exploration round 3 (docs/exploration_round3_plan.md) declares 6 more: four
+one-shot confirmation tests on future CGI data (Holm across the four) and
+two descriptive jump thresholds. The project total is now 231.
+
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside
 gate G3. Per-stock tests were deliberately not declared (docs/claim4_plan.md

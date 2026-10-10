@@ -12,7 +12,8 @@ backtest   engine validation on SYNTHETIC data, and real-data backtests when
            CME settlement history exists
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
-           round2 exploration | replicate | confirmation
+           round2 exploration | replicate | confirmation;
+           round3 exploration | confirmation
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -26,6 +27,7 @@ import argparse
 import logging
 import os
 import sys
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
@@ -44,7 +46,7 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--force", action="store_true", help="append another snapshot today")
 
     bf = sub.add_parser("backfill", help="one-off backfill of archived source history")
-    bf.add_argument("source", choices=["gpurentalprices", "cgi"])
+    bf.add_argument("source", choices=["gpurentalprices", "gpurentalprices-zenodo", "cgi"])
     bf.add_argument("--start", type=date.fromisoformat, required=True)
     bf.add_argument("--end", type=date.fromisoformat, required=True)
 
@@ -68,7 +70,7 @@ def _parser() -> argparse.ArgumentParser:
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
-    ex.add_argument("round", choices=["round1", "round2"])
+    ex.add_argument("round", choices=["round1", "round2", "round3"])
     ex.add_argument(
         "stage", choices=["exploration", "freeze", "confirmation", "shadow", "replicate"]
     )
@@ -100,6 +102,37 @@ def _claim4(cfg: Config, action: str) -> int:
     return 0
 
 
+def _explore(round_: str, stage_name: str, cfg: Config) -> int:
+    """Run one stage of an exploration round."""
+    from compute_curve.explore import pipeline as xp
+    from compute_curve.explore import round2 as r2
+    from compute_curve.explore import round3 as r3
+
+    stages: dict[str, dict[str, Callable[[Config], Path]]] = {
+        "round1": {
+            "exploration": xp.run_exploration,
+            "freeze": xp.run_freeze,
+            "confirmation": xp.run_confirmation,
+            "shadow": xp.run_shadow,
+        },
+        "round2": {
+            "exploration": r2.run_exploration2,
+            "replicate": r2.run_replicate,
+            "confirmation": r2.run_confirmation2,
+        },
+        "round3": {
+            "exploration": r3.run_exploration3,
+            "confirmation": r3.run_confirmation3,
+        },
+    }
+    run = stages[round_].get(stage_name)
+    if run is None:
+        print(f"{round_} has no stage {stage_name!r}", file=sys.stderr)
+        return 2
+    print(f"wrote {run(cfg)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     logging.basicConfig(
@@ -120,7 +153,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "backfill":
         from datetime import UTC, datetime, time
 
-        from compute_curve.snapshot import backfill_cgi, backfill_gpurentalprices
+        from compute_curve.snapshot import (
+            backfill_cgi,
+            backfill_gpurentalprices,
+            backfill_gpurentalprices_zenodo,
+        )
 
         if args.source == "cgi":
             outs = backfill_cgi(
@@ -128,6 +165,8 @@ def main(argv: list[str] | None = None) -> int:
                 datetime.combine(args.start, time(0, 0), tzinfo=UTC),
                 datetime.combine(args.end, time(23, 45), tzinfo=UTC),
             )
+        elif args.source == "gpurentalprices-zenodo":
+            outs = backfill_gpurentalprices_zenodo(cfg, args.start, args.end)
         else:
             outs = backfill_gpurentalprices(cfg, args.start, args.end)
         for o in outs:
@@ -167,29 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote {c5p.run_evaluation(cfg)}")
         return 0
     if args.command == "explore":
-        from compute_curve.explore import pipeline as xp
-
-        if args.round == "round2":
-            from compute_curve.explore import round2 as r2
-
-            stages2 = {
-                "exploration": r2.run_exploration2,
-                "replicate": r2.run_replicate,
-                "confirmation": r2.run_confirmation2,
-            }
-            if args.stage not in stages2:
-                print(f"round2 has no stage {args.stage!r} yet", file=sys.stderr)
-                return 2
-            print(f"wrote {stages2[args.stage](cfg)}")
-            return 0
-        stage = {
-            "exploration": xp.run_exploration,
-            "freeze": xp.run_freeze,
-            "confirmation": xp.run_confirmation,
-            "shadow": xp.run_shadow,
-        }[args.stage]
-        print(f"wrote {stage(cfg)}")
-        return 0
+        return _explore(args.round, args.stage, cfg)
     if args.command == "backtest":
         from compute_curve.evaluation import run_backtests
 

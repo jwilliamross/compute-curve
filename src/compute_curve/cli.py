@@ -47,7 +47,9 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--force", action="store_true", help="append another snapshot today")
 
     bf = sub.add_parser("backfill", help="one-off backfill of archived source history")
-    bf.add_argument("source", choices=["gpurentalprices", "gpurentalprices-zenodo", "cgi"])
+    bf.add_argument(
+        "source", choices=["gpurentalprices", "gpurentalprices-zenodo", "gpuprices-hf", "cgi"]
+    )
     bf.add_argument("--start", type=date.fromisoformat, required=True)
     bf.add_argument("--end", type=date.fromisoformat, required=True)
 
@@ -161,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
         from compute_curve.snapshot import (
             backfill_cgi,
+            backfill_gpuprices_hf,
             backfill_gpurentalprices,
             backfill_gpurentalprices_zenodo,
         )
@@ -171,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
                 datetime.combine(args.start, time(0, 0), tzinfo=UTC),
                 datetime.combine(args.end, time(23, 45), tzinfo=UTC),
             )
+        elif args.source == "gpuprices-hf":
+            outs = backfill_gpuprices_hf(cfg, args.start, args.end)
         elif args.source == "gpurentalprices-zenodo":
             outs = backfill_gpurentalprices_zenodo(cfg, args.start, args.end)
         else:

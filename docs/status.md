@@ -51,6 +51,11 @@ finding yet. Details are in `docs/exploration_round3.md`.
     CC BY 4.0, Vast.ai and RunPod rows dropped, D51). First run: 480 and
     84 rows.
   - The remaining candidate sources are listed in docs/data_sources.md.
+  - 2026-10-11: one-off backfill `gpuprices_hf` (GPU Price Tracker on
+    Hugging Face, CC BY 4.0, D54). 148 days from 2026-05-07, 183,929
+    H100/H200/B200 rows. Snapshots that reached the hub late are skipped,
+    including all of January to March. Not in `history_sources`, so the
+    rounds are unchanged.
 - **Automatic confirmation.** The daily workflow runs `explore round3
   confirmation` once the window is complete (on or after 2027-01-01 05:55
   UTC).

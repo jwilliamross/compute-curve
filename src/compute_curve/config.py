@@ -386,6 +386,12 @@ class Round3Config(_Strict):
     min_channel_windows: int = Field(default=10, ge=1)
 
 
+class Round4Config(_Strict):
+    """Exploration round 4: forward replication of H01 (docs/exploration_round4_plan.md)."""
+
+    h01_forward: tuple[date, date]
+
+
 class PairsConfig(_Strict):
     lookbacks: list[int] = [60, 120, 250]
     entries: list[float] = [1.5, 2.0, 2.5]
@@ -448,6 +454,7 @@ class Config(_Strict):
     exploration2: Round2Config | None = None
     exploration3: Round3Config | None = None
     statarb: StatArbConfig | None = None
+    exploration4: Round4Config | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

@@ -88,6 +88,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve explore round3 confirmation
 
+      - name: Exploration round 4 forward replication of H01 (runs once after 2026-12-31)
+        id: xconfirm4
+        if: ${{ steps.tests.outcome == 'success' }}
+        continue-on-error: true
+        run: uv run compute-curve explore round4 confirmation
+
       - name: Claim 4 evaluation and validation gate
         id: c4eval
         if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
@@ -127,7 +133,8 @@ jobs:
                    "claim4-daily:${{ steps.c4daily.outcome }}" \
                    "explore-shadow:${{ steps.xshadow.outcome }}" \
                    "explore2-confirm:${{ steps.xconfirm2.outcome }}" \
-                   "explore3-confirm:${{ steps.xconfirm3.outcome }}"; do
+                   "explore3-confirm:${{ steps.xconfirm3.outcome }}" \
+                   "explore4-confirm:${{ steps.xconfirm4.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

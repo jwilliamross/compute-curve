@@ -3,6 +3,17 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Round 4: provider-gap test (H01) forward replication (2026-10-11)
+
+- **The Hugging Face history cannot test H01.** Under the index's filters,
+  only Lambda qualifies on each day, and H01 needs at least 5 providers.
+  Providers were counted only; no outcome was computed.
+- **Pre-registered instead (R4-01).** H01's frozen specification runs once
+  on our listings from 2026-10-07 to 12-31, days no test has used. Plan:
+  docs/exploration_round4_plan.md.
+- **Automatic.** The daily workflow runs it on or after 2027-01-01.
+- **So far.** 4 listing days are in the window.
+
 ## Monte Carlo fair-value engine (2026-10-11)
 
 - **What it does.** `compute-curve fairvalue` simulates the GPU1/GPU2

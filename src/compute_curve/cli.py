@@ -13,7 +13,7 @@ backtest   engine validation on SYNTHETIC data, and real-data backtests when
 claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
            round2 exploration | replicate | confirmation;
-           round3 exploration | confirmation | mechanism
+           round3 exploration | confirmation | mechanism; round4 confirmation
 statarb    claim 6: exploration | confirmation (docs/statarb_plan.md)
 fairvalue  Monte Carlo fair-value strip on proxies (docs/montecarlo_fair_value.md)
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
@@ -74,7 +74,7 @@ def _parser() -> argparse.ArgumentParser:
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
-    ex.add_argument("round", choices=["round1", "round2", "round3"])
+    ex.add_argument("round", choices=["round1", "round2", "round3", "round4"])
     ex.add_argument(
         "stage",
         choices=["exploration", "freeze", "confirmation", "shadow", "replicate", "mechanism"],
@@ -118,6 +118,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore import round2 as r2
     from compute_curve.explore import round3 as r3
     from compute_curve.explore.mechanism import run_mechanism
+    from compute_curve.explore.round4 import run_confirmation4
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -136,6 +137,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
             "confirmation": r3.run_confirmation3,
             "mechanism": run_mechanism,
         },
+        "round4": {"confirmation": run_confirmation4},
     }
     run = stages[round_].get(stage_name)
     if run is None:

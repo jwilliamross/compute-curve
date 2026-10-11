@@ -93,6 +93,9 @@ total is now 255. One post-hoc descriptive diagnostic of the random-entry null
 (D53) brings it to 256. The proxy-calibrated Monte Carlo fair-value strip
 (D55, descriptive) brings it to 257.
 
+Exploration round 4 (docs/exploration_round4_plan.md) declares one forward
+one-shot replication of H01 (R4-01). The project total is now 258.
+
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside
 gate G3. Per-stock tests were deliberately not declared (docs/claim4_plan.md

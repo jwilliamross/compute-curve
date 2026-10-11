@@ -334,6 +334,9 @@ min_channel_windows = 10
 # Claim 6: statistical arbitrage on compute-linked equities (docs/statarb_plan.md).
 # Fixed before any strategy return was computed.
 # ---------------------------------------------------------------------------
+[exploration4]                      # docs/exploration_round4_plan.md
+h01_forward = [2026-10-07, 2026-12-31]
+
 [statarb]
 explore = [2024-09-03, 2026-02-19]
 confirm = [2026-02-20, 2026-10-05]

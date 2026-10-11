@@ -59,3 +59,26 @@ All other rules are claim 6's SA2, unchanged.
 - 1 descriptive spread measurement.
 
 The project total rises from 289 to 292.
+
+## 6. Addendum (2026-10-11, after the confirmation): the forward shadow test
+
+Both strategies confirmed (docs/statarb_results.md, section "Claim 6c").
+As section 4 says, they now run a 60-session forward shadow test. It is
+fixed now, before any forward session's return was computed.
+
+- **Window.** The first 60 sessions on or after 2026-10-06; positions are
+  opened only from then. The window is truncated at its 60th session before
+  anything is computed.
+- **Frozen inputs.** Strategies, regions and costs as in sections 2 and 3:
+  - the quoted-spread medians in `reports/statarb/claim6c_spreads.json`;
+  - the strategy code as of the commit that adds this addendum.
+- **Criteria.** C1 and C2 as in section 4, with Holm over the 2 strategies.
+- **Run.** Daily in the workflow (`statarb forward`). The step fetches bars
+  through the previous session and reports the session count. It evaluates
+  once, when 60 sessions exist. No order is sent at any point.
+- **Outcome.**
+  - **Pass.** Paper trading would still need the owner's explicit approval
+    and a claim-4-style risk gate.
+  - **Fail.** The signal is reported as not robust out of sample.
+- **Variants.** One forward test, `statarb.forward`, already declared. The
+  project total is unchanged.

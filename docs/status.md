@@ -3,6 +3,23 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Claim 6c: stock stat-arb passes its one-shot confirmation (2026-10-11)
+
+- **The test.** Residual reversal (Avellaneda-Lee) on the compute-linked
+  stocks.
+  - Costs come from real quoted NBBO spreads.
+  - It went straight to the pre-registered one-shot confirmation
+    (2026-02-20 to 10-05). Plan: docs/statarb_plan3.md.
+- **Both versions passed.**
+  - All 20 stocks: 10.6 bps a day net, Sharpe 1.80, Holm p 0.023.
+  - 10 liquid stocks: 4.9 bps a day, Sharpe 1.73, Holm p 0.049.
+  - Both still positive at double costs.
+- **But fragile (post-hoc).** Without the 5 best of 157 days, the return
+  falls to about 1 bp a day. SMCI, CIFR and NBIS give most of the profit.
+- **Next.** A 60-session forward shadow test from 2026-10-06 runs
+  automatically (`statarb forward`, about the end of December). No orders.
+  Details: docs/statarb_results.md.
+
 ## Round 4: provider-gap test (H01) forward replication (2026-10-11)
 
 - **The Hugging Face history cannot test H01.** Under the index's filters,

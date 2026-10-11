@@ -312,9 +312,11 @@ def confirm_strategy(
     strategy: str,
     region: list[list[float]],
     costs: tuple[Costs, Costs, Costs] | None = None,
+    window: tuple[date, date] | None = None,
 ) -> dict[str, Any]:
-    p = prices.until(sa.confirm[1])
-    lo, hi = set_bounds(p, sa.confirm[0])
+    start, end = window or sa.confirm
+    p = prices.until(end)
+    lo, hi = set_bounds(p, start)
     if costs is None:
         base, stress = costs_of(sa), costs_of(sa, sa.stress_multiplier, sa.stress_borrow_annual)
     else:
@@ -323,8 +325,8 @@ def confirm_strategy(
     for a, b in region:
         tr = cell_trades(p, sa, groups, strategy, a, b, lo, hi)
         n_trades += len(tr)
-        base_series.append(in_set(run_book(tr, p.opens, p.closes, base), sa.confirm[0]))
-        stress_series.append(in_set(run_book(tr, p.opens, p.closes, stress), sa.confirm[0]))
+        base_series.append(in_set(run_book(tr, p.opens, p.closes, base), start))
+        stress_series.append(in_set(run_book(tr, p.opens, p.closes, stress), start))
     pooled, pooled_stress = ev.pool(base_series), ev.pool(stress_series)
     m = ev.moments(pooled.to_numpy())
     return {
@@ -566,3 +568,201 @@ def run_claim6b(cfg: Config) -> Path:  # pragma: no cover - reads local data
         conf_p.write_text(json.dumps(_clean({"rows": rows}), indent=2))
     (d / "claim6b_confirmation.md").write_text(render_confirmation(rows, sa))
     return d / "claim6b_exploration.md"
+
+
+# ---------------------------------------------------------------------------
+# Claim 6c: quoted-spread costs, straight to one-shot confirmation (docs/statarb_plan3.md)
+# ---------------------------------------------------------------------------
+QUOTED_COST_NOTE = (
+    "Costs: per-symbol quoted-spread costs (half the median NBBO spread + 2 bps slippage, "
+    "ASSUMPTION; reports/statarb/claim6c_spreads.json), sell fee 1 bp, borrow 3%/yr on shorts. "
+    "Stress: all costs x2, borrow 10%/yr."
+)
+
+
+def _costs_line(sa: StatArbConfig) -> str:
+    from compute_curve.statarb.report import _costs  # noqa: PLC0415
+
+    return _costs(sa)
+
+
+LIQUID_6C = ["MU", "TSM", "VRT", "AMD", "CRWV", "AVGO", "SMCI", "NVDA", "TLN", "VST"]
+REGIONS_6C: dict[str, list[list[float]]] = {
+    "SA2-M": [[w, e] for w in (40.0, 60.0, 90.0) for e in (1.0, 1.25, 1.5, 2.0)],
+    "SA2-L": [[w, e] for w in (60.0, 90.0) for e in (1.0, 1.25, 1.5, 2.0)],
+}
+
+
+def quoted_costs(sa: StatArbConfig, spreads: pd.Series) -> tuple[Costs, Costs, Costs]:
+    """Half the median quoted spread + 2 bps per side for every symbol, XLK included."""
+    per = tuple((s, float(v) / 2 + SLIPPAGE_6B) for s, v in spreads.items())
+    etf = float(spreads.get(ETF, sa.etf_side_bps / 1e4 * 2)) / 2 + SLIPPAGE_6B
+    base = Costs(sa.stock_side_bps / 1e4, etf, sa.sell_fee_bps / 1e4, sa.borrow_annual, ETF, per)
+    return (
+        base,
+        base.scaled(0.0, sa.borrow_annual),
+        base.scaled(sa.stress_multiplier, sa.stress_borrow_annual),
+    )
+
+
+def fetch_quoted_spreads(
+    cfg: Config, sessions: list[date], symbols: list[str]
+) -> pd.Series:  # pragma: no cover
+    """Median quoted spread per symbol over the sampled points (Alpaca data API, read-only)."""
+    from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
+    from compute_curve.statarb.spreads import (  # noqa: PLC0415
+        first_valid_spread,
+        median_quoted_spreads,
+        sample_points,
+    )
+
+    samples: dict[str, list[float]] = {s: [] for s in symbols}
+    with AlpacaDataClient() as client:
+        for start, end in sample_points(sessions):
+            quotes = client.quotes_window(symbols, start, end)
+            for sym in symbols:
+                v = first_valid_spread(quotes.get(sym, []))
+                if v is not None:
+                    samples[sym].append(v)
+    return median_quoted_spreads(samples)
+
+
+def run_claim6c(cfg: Config) -> Path:  # pragma: no cover - reads local data, calls Alpaca data
+    from compute_curve.statarb.report import render_confirmation  # noqa: PLC0415
+
+    sa, c4 = cfg.statarb, cfg.claim4
+    if sa is None or c4 is None:
+        raise RuntimeError("[statarb] and [claim4] config are required")
+    d = paths(cfg)["dir"]
+    sp_path, conf_p = d / "claim6c_spreads.json", d / "claim6c_confirmation.json"
+    if conf_p.exists():
+        raise RuntimeError(f"{conf_p} exists; claim 6c runs once")
+    prices = load_prices(cfg)
+    symbols = [*c4.universe.members(), ETF]
+    if sp_path.exists():
+        spreads = pd.Series(json.loads(sp_path.read_text())["median_quoted_spread"], dtype=float)
+    else:
+        idx = prices.closes.index
+        sessions = [
+            t.date() for t in idx if pd.Timestamp(sa.explore[0]) <= t <= pd.Timestamp(sa.explore[1])
+        ]
+        spreads = fetch_quoted_spreads(cfg, sessions, symbols)
+        sp_path.write_text(
+            json.dumps(
+                {"median_quoted_spread": spreads.to_dict(), "note": "derived medians only (D29)"},
+                indent=2,
+            )
+        )
+    costs = quoted_costs(sa, spreads)
+    groups = c4.universe.buckets()
+    variants = {"SA2-M": prices, "SA2-L": subset(prices, LIQUID_6C)}
+    rows = []
+    for name, p in variants.items():
+        row = confirm_strategy(p, sa, groups, "SA2", REGIONS_6C[name], costs)
+        row["strategy"] = name
+        rows.append(row)
+    finish_confirmation(rows, sa.alpha)
+    conf_p.write_text(json.dumps(_clean({"rows": rows}), indent=2))
+    lines = [
+        render_confirmation(rows, sa)
+        .replace(
+            "# Claim 6: statistical arbitrage, one-shot confirmation",
+            "# Claim 6c: residual reversal with quoted-spread costs, one-shot confirmation",
+        )
+        .replace(_costs_line(sa), QUOTED_COST_NOTE),
+        "## Quoted spreads (Alpaca NBBO, sampled exploration sessions)",
+        "",
+        "Per-side cost = half the median quoted spread + 2 bps (ASSUMPTION).",
+        "",
+        "| Symbol | Median quoted spread (bps) | Per-side cost (bps) |",
+        "|---|---|---|",
+        *[
+            f"| {s} | {v * 1e4:.2f} | {(v / 2 + SLIPPAGE_6B) * 1e4:.2f} |"
+            for s, v in spreads.sort_values().items()
+        ],
+    ]
+    out = d / "claim6c_confirmation.md"
+    out.write_text("\n".join(lines) + "\n")
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Claim 6c forward shadow test (docs/statarb_plan3.md section 6)
+# ---------------------------------------------------------------------------
+FORWARD_START = date(2026, 10, 6)
+FORWARD_SESSIONS = 60
+
+
+def forward_window(sessions: pd.DatetimeIndex) -> tuple[date, date] | None:
+    """(first, 60th) session on or after FORWARD_START, or None while fewer exist."""
+    fwd = [t.date() for t in sessions if t.date() >= FORWARD_START]
+    if len(fwd) < FORWARD_SESSIONS:
+        return None
+    return fwd[0], fwd[FORWARD_SESSIONS - 1]
+
+
+def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, reads local data
+    """Count forward sessions daily; evaluate once when 60 exist. Never sends an order."""
+    from datetime import timedelta  # noqa: PLC0415
+
+    from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
+    from compute_curve.claim4.market_data import fetch_bars_cached  # noqa: PLC0415
+    from compute_curve.claim5.pipeline import claim5_cfg  # noqa: PLC0415
+    from compute_curve.statarb.report import render_confirmation  # noqa: PLC0415
+    from compute_curve.timeutil import utc_now  # noqa: PLC0415
+
+    sa, c4, c5 = cfg.statarb, cfg.claim4, claim5_cfg(cfg)
+    if sa is None or c4 is None:
+        raise RuntimeError("[statarb] and [claim4] config are required")
+    d = paths(cfg)["dir"]
+    out_json, out_md = d / "claim6c_forward.json", d / "claim6c_forward.md"
+    if out_json.exists():
+        out_md.write_text("# Claim 6c forward test\n\nDone earlier; see claim6c_forward.json.\n")
+        return out_md
+    symbols = [*c4.universe.members(), c4.benchmark]
+    last = utc_now().date() - timedelta(days=1)
+    with AlpacaDataClient() as client:
+        bars = fetch_bars_cached(
+            client,
+            symbols,
+            c5.bars_start.isoformat(),
+            last.isoformat(),
+            cfg.path("var") / "market_data",
+            feed=c4.feed,
+            end_param=f"{last.isoformat()}T23:59:00Z",
+        )
+    prices = wide_prices(bars, symbols, dict(c5.member_start), sa.min_history)
+    win = forward_window(prices.closes.index)
+    n_fwd = int((prices.closes.index.date >= FORWARD_START).sum())
+    if win is None:
+        out_md.write_text(
+            "# Claim 6c forward test\n\n"
+            f"Forward sessions so far: {n_fwd} of {FORWARD_SESSIONS} (from {FORWARD_START}). "
+            "No statistic is computed until all 60 exist. No orders.\n"
+        )
+        return out_md
+    spreads = pd.Series(
+        json.loads((d / "claim6c_spreads.json").read_text())["median_quoted_spread"], dtype=float
+    )
+    costs = quoted_costs(sa, spreads)
+    groups = c4.universe.buckets()
+    rows = []
+    for name, p in {"SA2-M": prices, "SA2-L": subset(prices, LIQUID_6C)}.items():
+        row = confirm_strategy(p, sa, groups, "SA2", REGIONS_6C[name], costs, win)
+        row["strategy"] = name
+        rows.append(row)
+    finish_confirmation(rows, sa.alpha)
+    for r in rows:
+        r["verdict"] = "forward test passed" if r["confirmed"] else "forward test failed"
+    out_json.write_text(
+        json.dumps(_clean({"window": [str(w) for w in win], "rows": rows}), indent=2)
+    )
+    out_md.write_text(
+        render_confirmation(rows, sa)
+        .replace(
+            "# Claim 6: statistical arbitrage, one-shot confirmation",
+            f"# Claim 6c forward shadow test, sessions {win[0]} to {win[1]}",
+        )
+        .replace(_costs_line(sa), QUOTED_COST_NOTE)
+    )
+    return out_md

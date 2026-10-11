@@ -7,6 +7,10 @@ their overnight adjustment; negative two-day estimates are set to zero.
 
 from __future__ import annotations
 
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
+from zoneinfo import ZoneInfo
+
 import numpy as np
 import pandas as pd
 
@@ -44,3 +48,38 @@ def median_spreads(bars: pd.DataFrame, start: object, end: object) -> pd.Series:
         s = corwin_schultz(g["high"].to_numpy(), g["low"].to_numpy(), g["close"].to_numpy())
         out[sym] = float(np.median(s))
     return pd.Series(out, dtype=float).sort_values()
+
+
+# ---------------------------------------------------------------------------
+# Quoted spreads (claim 6c, docs/statarb_plan3.md)
+# ---------------------------------------------------------------------------
+SAMPLE_EVERY = 18
+SAMPLE_TIMES_NY = ("10:00", "12:00", "14:00", "15:30")
+NY = ZoneInfo("America/New_York")
+
+
+def first_valid_spread(quotes: list[dict[str, Any]]) -> float | None:
+    """(ask - bid) / mid of the first quote with bid > 0 and ask > bid."""
+    for q in quotes:
+        bid, ask = float(q.get("bp") or 0.0), float(q.get("ap") or 0.0)
+        if bid > 0 and ask > bid:
+            return (ask - bid) / ((ask + bid) / 2)
+    return None
+
+
+def sample_points(sessions: list[date]) -> list[tuple[str, str]]:
+    """(start, end) RFC 3339 UTC strings: every 18th session, four 2-second windows each."""
+    out = []
+    for d in sessions[::SAMPLE_EVERY]:
+        for hhmm in SAMPLE_TIMES_NY:
+            h, m = (int(x) for x in hhmm.split(":"))
+            t0 = datetime(d.year, d.month, d.day, h, m, tzinfo=NY).astimezone(UTC)
+            t1 = t0 + timedelta(seconds=2)
+            out.append((t0.strftime("%Y-%m-%dT%H:%M:%SZ"), t1.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    return out
+
+
+def median_quoted_spreads(samples: dict[str, list[float]]) -> pd.Series:
+    return pd.Series(
+        {s: float(np.median(v)) for s, v in samples.items() if v}, dtype=float
+    ).sort_values()

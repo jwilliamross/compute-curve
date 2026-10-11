@@ -9,8 +9,15 @@ import pytest
 from compute_curve.config import load_config
 from compute_curve.statarb import evaluate as ev
 from compute_curve.statarb.engine import Costs, book_returns, run_book
-from compute_curve.statarb.pipeline import Prices, cell_trades, costs_of, wide_prices
-from compute_curve.statarb.spreads import corwin_schultz
+from compute_curve.statarb.pipeline import (
+    FORWARD_START,
+    Prices,
+    cell_trades,
+    costs_of,
+    forward_window,
+    wide_prices,
+)
+from compute_curve.statarb.spreads import corwin_schultz, first_valid_spread, sample_points
 from compute_curve.synthetic import synthetic_statarb_bars
 
 SA = load_config().statarb
@@ -142,3 +149,25 @@ def test_measured_costs_override_the_flat_cost():
     r_meas = book_returns(w, opens, closes, measured, ["A", "B"])
     assert r_flat[0] == pytest.approx(-0.002) and r_meas[0] == pytest.approx(-0.006)
     assert measured.scaled(2.0, 0.1).side(["A", "B"]).tolist() == [0.01, 0.002]
+
+
+def test_quoted_spread_uses_the_first_valid_quote():
+    quotes = [{"bp": 0, "ap": 10.0}, {"bp": 10.0, "ap": 9.9}, {"bp": 99.99, "ap": 100.01}]
+    assert first_valid_spread(quotes) == pytest.approx(0.02 / 100.0)
+    assert first_valid_spread([{"bp": 0, "ap": 0}]) is None
+
+
+def test_sample_points_are_new_york_times_on_every_18th_session():
+    sessions = [(pd.Timestamp("2025-01-02") + pd.Timedelta(days=i)).date() for i in range(40)]
+    pts = sample_points(sessions)
+    assert len(pts) == 3 * 4  # sessions 0, 18, 36
+    assert pts[0] == ("2025-01-02T15:00:00Z", "2025-01-02T15:00:02Z")  # 10:00 EST = 15:00 UTC
+
+
+def test_forward_window_needs_60_sessions_from_the_start_date():
+    few = pd.bdate_range(FORWARD_START, periods=59)
+    assert forward_window(few) is None
+    enough = pd.bdate_range("2026-09-01", periods=100)
+    win = forward_window(enough)
+    assert win is not None and win[0] == FORWARD_START
+    assert len(pd.bdate_range(win[0], win[1])) == 60

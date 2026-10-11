@@ -416,6 +416,38 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         2,
     ),
+    Variant(
+        "statarb.SA2-M",
+        "statarb",
+        "Residual reversal, all 20 names, Corwin-Schultz measured costs (12 cells)",
+        "2026-10-11",
+        True,
+        12,
+    ),
+    Variant(
+        "statarb.SA2-L",
+        "statarb",
+        "Residual reversal, 10 lowest-spread names, measured costs (12 cells)",
+        "2026-10-11",
+        True,
+        12,
+    ),
+    Variant(
+        "statarb.6b.confirm",
+        "statarb",
+        "Claim 6b one-shot confirmation of <= 2 survivors (Holm, stress costs)",
+        "2026-10-11",
+        True,
+        2,
+    ),
+    Variant(
+        "statarb.6b.spreads",
+        "statarb",
+        "Corwin-Schultz spread estimates on the exploration set (descriptive)",
+        "2026-10-11",
+        False,
+        1,
+    ),
 )
 
 

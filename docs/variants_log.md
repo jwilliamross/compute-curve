@@ -98,6 +98,10 @@ one-shot replication of H01 (R4-01). The project total is now 258. Its
 addendum adds R4-02 (AWS scarcity leading neocloud prices): 2 confirmation
 tests and 2 descriptive exploration fits. The project total is now 262.
 
+Claim 6b (docs/statarb_plan2.md) declares 27 more: 24 grid cells, 2
+confirmations and 1 descriptive spread estimation. The project total is now
+289.
+
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside
 gate G3. Per-stock tests were deliberately not declared (docs/claim4_plan.md

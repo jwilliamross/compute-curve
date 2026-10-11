@@ -384,6 +384,14 @@ REGISTERED: tuple[Variant, ...] = (
         True,
         1,
     ),
+    Variant(
+        "fairvalue.proxy_strip",
+        "fairvalue",
+        "Monte Carlo fair-value strip on proxy calibration, 3 scenarios (descriptive, D55)",
+        "2026-10-11",
+        False,
+        1,
+    ),
 )
 
 

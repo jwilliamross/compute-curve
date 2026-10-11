@@ -14,11 +14,13 @@ USD per hour for the whole SKU, so the per-GPU price is
 ``gpu_8x_h100_sxm5`` at 31.92 = 8 x 3.99).
 
 Provenance (docs/data_sources.md, D54). The Hugging Face repository was
-created on 2026-05-07; its first upload (2026-05-07T20:26Z) carried every
-snapshot from 2026-01-12 on. Snapshots stamped before that upload cannot be
-shown to have been collected when stamped, so they are skipped
-(``FIRST_PUBLISHED``). Later snapshots appear on the hub within hours of
-their stamp.
+created on 2026-05-07. Its first upload carried every snapshot from
+2026-01-12 to 2026-03-09, and the twice-daily CI snapshots of 2026-05-08 to
+2026-07-07 were first uploaded on 2026-07-08. Neither batch can be shown to
+have been collected when stamped. A snapshot file is therefore imported only
+if the repository already held it at the last commit before the end of the
+next UTC day (``publication_cutoff``); everything else is skipped. The check
+reads the hub's commit history and the partition's tree at that commit.
 
 Kept: H100, H200 and B200 rows with ``quality == 'ok'`` (GB200, GH200, B300
 and A100 are out of scope). Dropped: Vast.ai and RunPod (D13), and Oracle
@@ -33,7 +35,7 @@ import json
 import re
 import tempfile
 from collections import Counter
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -56,16 +58,16 @@ from compute_curve.schema import (
 from compute_curve.storage.raw_store import snapshot_id
 
 REPO = "https://huggingface.co/datasets/afhubbard/gpu-prices"
-TREE = "https://huggingface.co/api/datasets/afhubbard/gpu-prices/tree/main/prices?recursive=1"
+API = "https://huggingface.co/api/datasets/afhubbard/gpu-prices"
+TREE = API + "/tree/main/prices?recursive=1"
+COMMITS = API + "/commits/main?p=0&limit=50"
+PARTITION_AT = API + "/tree/{rev}/prices/dt={day}"
 RESOLVE = "https://huggingface.co/datasets/afhubbard/gpu-prices/resolve/main/{path}"
 TERMS_URL = REPO
 ATTRIBUTION = (
     "GPU Price Tracker by Alex Hubbard (https://huggingface.co/datasets/afhubbard/gpu-prices), "
     "CC BY 4.0"
 )
-# Time of the repository's first data upload. Earlier snapshot stamps are not
-# verifiable as contemporaneous and are skipped (D54).
-FIRST_PUBLISHED = datetime(2026, 5, 7, 20, 26, 7, tzinfo=UTC)
 # Oracle and Vultr: their direct collection was rejected on terms
 # (docs/data_sources.md); dropped here too, conservatively (D54).
 EXTRA_EXCLUDED: frozenset[str] = frozenset({"oci", "vultr"})
@@ -114,6 +116,26 @@ def file_stamp(path: str) -> datetime:
     if not m:
         raise ValueError(f"not a snapshot file: {path}")
     return datetime.strptime(m.group(2), "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+
+
+def commit_times(commits: Any) -> list[tuple[datetime, str]]:
+    """(commit time, commit id) pairs from commit-history pages, oldest first."""
+    out = []
+    for c in commits if isinstance(commits, list) else []:
+        if c.get("id") and c.get("date"):
+            out.append((datetime.fromisoformat(str(c["date"]).replace("Z", "+00:00")), c["id"]))
+    return sorted(out)
+
+
+def publication_cutoff(day: date) -> datetime:
+    """A snapshot of ``day`` counts as contemporaneous if published before this."""
+    return datetime.combine(day + timedelta(days=2), time(0, 0), tzinfo=UTC)
+
+
+def revision_at(commits: list[tuple[datetime, str]], cutoff: datetime) -> str | None:
+    """Id of the last commit strictly before ``cutoff``, or None."""
+    before = [sha for ts, sha in commits if ts < cutoff]
+    return before[-1] if before else None
 
 
 def read_snapshot_bytes(blob: bytes) -> pd.DataFrame:

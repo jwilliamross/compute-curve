@@ -80,40 +80,63 @@ def _parquet(tmp: Path, stamp: str, rows: list[tuple]) -> bytes:
     return path.read_bytes()
 
 
+F_MAR = "prices/dt=2026-03-09/snapshot_20260309T094314Z.parquet"
+F_A = "prices/dt=2026-05-08/snapshot_20260508T090003Z.parquet"
+F_B = "prices/dt=2026-05-08/snapshot_20260508T102007Z.parquet"
+F_LATE = "prices/dt=2026-05-08/snapshot_20260508T210002Z.parquet"
+F_C = "prices/dt=2026-05-10/snapshot_20260510T090002Z.parquet"
+# (commit time, id, files the repository holds after it), oldest first
+COMMITS = [
+    ("2026-05-07T20:26:07Z", "c1", [F_MAR]),
+    ("2026-05-09T10:00:00Z", "c2", [F_MAR, F_A, F_B]),
+    ("2026-05-10T12:00:00Z", "c3", [F_MAR, F_A, F_B, F_C]),
+    ("2026-07-08T22:31:30Z", "c4", [F_MAR, F_A, F_B, F_C, F_LATE]),  # F_LATE uploaded late
+]
+
+
 def _files(tmp: Path) -> dict[str, bytes]:
     one = [ROWS[0]]
     return {
-        # stamped before the first upload: never downloaded
-        "prices/dt=2026-03-09/snapshot_20260309T094314Z.parquet": _parquet(
-            tmp, "2026-03-09T09:43:14Z", one
-        ),
-        "prices/dt=2026-05-08/snapshot_20260508T090003Z.parquet": _parquet(
-            tmp, "2026-05-08T09:00:03.6Z", ROWS
-        ),
-        "prices/dt=2026-05-08/snapshot_20260508T210002Z.parquet": _parquet(
-            tmp, "2026-05-08T21:00:02Z", one
-        ),
-        "prices/dt=2026-05-10/snapshot_20260510T090002Z.parquet": _parquet(
-            tmp, "2026-05-10T09:00:02Z", one
-        ),
+        F_MAR: _parquet(tmp, "2026-03-09T09:43:14Z", one),
+        F_A: _parquet(tmp, "2026-05-08T09:00:03.6Z", ROWS),
+        F_B: _parquet(tmp, "2026-05-08T10:20:07Z", one),
+        F_LATE: _parquet(tmp, "2026-05-08T21:00:02Z", one),
+        F_C: _parquet(tmp, "2026-05-10T09:00:02Z", one),
     }
 
 
+def _tree(paths: list[str]) -> list[dict[str, object]]:
+    dirs = sorted({p.rsplit("/", 1)[0] for p in paths})
+    tree: list[dict[str, object]] = [{"type": "directory", "path": d, "size": 0} for d in dirs]
+    return tree + [{"type": "file", "path": p, "size": 1} for p in paths]
+
+
 def _client(files: dict[str, bytes], calls: list[str]) -> PoliteClient:
+    api = "/api/datasets/afhubbard/gpu-prices"
+    history = [{"id": i, "title": "sync", "date": t} for t, i, _ in reversed(COMMITS)]
+
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/robots.txt":
+        path = request.url.path
+        if path == "/robots.txt":
             return httpx.Response(200, text="User-agent: *\nAllow: /")
         calls.append(str(request.url))
-        if request.url.path.startswith("/api/datasets/afhubbard/gpu-prices/tree/main/prices"):
-            dirs = sorted({p.rsplit("/", 1)[0] for p in files})
-            tree = [{"type": "directory", "path": d, "size": 0} for d in dirs]
-            tree += [{"type": "file", "path": p, "size": len(b)} for p, b in files.items()]
-            return httpx.Response(200, json=tree)
-        prefix = "/datasets/afhubbard/gpu-prices/resolve/main/"
-        path = request.url.path.removeprefix(prefix)
-        if path in files:
-            return httpx.Response(200, content=files[path])
-        return httpx.Response(404)
+        if path == f"{api}/tree/main/prices":
+            return httpx.Response(200, json=_tree(list(files)))
+        if path == f"{api}/commits/main":  # two pages, linked like the hub does
+            if request.url.params.get("p") == "0":
+                nxt = f"https://huggingface.co{api}/commits/main?p=1&limit=50"
+                return httpx.Response(
+                    200, json=history[:2], headers={"Link": f'<{nxt}>; rel="next"'}
+                )
+            return httpx.Response(200, json=history[2:])
+        for _, rev, held in COMMITS:
+            prefix = f"{api}/tree/{rev}/prices/dt="
+            if path.startswith(prefix):
+                day = path.removeprefix(prefix)
+                inside = [p for p in held if p.startswith(f"prices/dt={day}/")]
+                return httpx.Response(200, json=_tree(inside)) if inside else httpx.Response(404)
+        rel = path.removeprefix("/datasets/afhubbard/gpu-prices/resolve/main/")
+        return httpx.Response(200, content=files[rel]) if rel in files else httpx.Response(404)
 
     return PoliteClient(
         user_agent="test", transport=httpx.MockTransport(handler), sleep=lambda s: None
@@ -141,9 +164,9 @@ def test_backfill_filters_maps_and_is_idempotent(tmp_path):
         cfg, date(2026, 3, 9), date(2026, 5, 11), c, today=date(2026, 5, 11)
     )
     by_day = {
-        o.detail[:10] if o.status != "written" else json.loads(o.detail)["day"]: o for o in out
+        json.loads(o.detail)["day"] if o.detail.startswith("{") else o.detail[:10]: o for o in out
     }
-    assert by_day["2026-03-09"].status == "skipped_unverified"
+    assert by_day["2026-03-09"].status == "skipped_unverified"  # first upload months later
     assert by_day["2026-05-09"].status == "empty"
     assert by_day["2026-05-11"].status == "skipped_incomplete"
     written = [o for o in out if o.status == "written"]
@@ -152,14 +175,20 @@ def test_backfill_filters_maps_and_is_idempotent(tmp_path):
     assert may8["provider:vast"] == 1 and may8["provider:runpod"] == 1
     assert may8["provider:oci"] == 1 and may8["provider:vultr"] == 1
     assert may8["quality_not_ok"] == 1
-    assert written[0].n_listings == 4  # 3 kept rows + 1 from the 21:00 file
-    # the pre-upload file was never downloaded
-    assert not any("20260309" in u for u in calls)
-    assert len(calls) == 1 + 3  # tree listing + three verified files
+    assert may8["skipped_unverified"] == 1  # the 21:00 file reached the hub months later
+    assert written[0].n_listings == 4  # 3 kept rows + 1 from the 10:20 file
+    downloads = [u for u in calls if "/resolve/" in u]
+    assert sorted(u.rsplit("/", 1)[-1] for u in downloads) == [
+        F_A.rsplit("/", 1)[-1],
+        F_B.rsplit("/", 1)[-1],
+        F_C.rsplit("/", 1)[-1],
+    ]  # unverified files are never downloaded
+    assert any("/tree/c2/prices/dt=2026-05-08" in u for u in calls)
+    assert any("/tree/c3/prices/dt=2026-05-10" in u for u in calls)
 
     paths = _stored(tmp_path)
     assert [p.name for p in paths] == [
-        "gpuprices_hf_20260508T210002Z.parquet",  # stamped with the day's latest snapshot
+        "gpuprices_hf_20260508T102007Z.parquet",  # stamped with the day's latest snapshot
         "gpuprices_hf_20260510T090002Z.parquet",
     ]
     df = read_snapshot(paths[0])
@@ -177,7 +206,7 @@ def test_backfill_filters_maps_and_is_idempotent(tmp_path):
     # ts_source is the publisher's snapshot time; ts_observed is when we fetched it
     assert set(df["snapshot_id"]) == {
         "gpuprices_hf_20260508T090003Z",
-        "gpuprices_hf_20260508T210002Z",
+        "gpuprices_hf_20260508T102007Z",
     }
     first = df.loc[df["snapshot_id"] == "gpuprices_hf_20260508T090003Z"]
     assert (first["ts_source"] == pd.Timestamp("2026-05-08T09:00:03.6Z")).all()
@@ -189,12 +218,12 @@ def test_backfill_filters_maps_and_is_idempotent(tmp_path):
         cfg, date(2026, 5, 8), date(2026, 5, 10), c, today=date(2026, 5, 11)
     )
     assert [o.status for o in again] == ["skipped_exists", "empty", "skipped_exists"]
-    assert len(calls) == n + 1  # only the tree listing, for the empty day
+    assert len(calls) == n + 3  # tree and commit history, for the empty day only
     stored_only = backfill_gpuprices_hf(
         cfg, date(2026, 5, 8), date(2026, 5, 8), c, today=date(2026, 5, 11)
     )
     assert [o.status for o in stored_only] == ["skipped_exists"]
-    assert len(calls) == n + 1  # nothing to do, so no request at all
+    assert len(calls) == n + 3  # nothing to do, so no request at all
     log = (tmp_path / "data" / "collection_log.jsonl").read_text().splitlines()
     assert any(json.loads(x)["source"] == HF_SOURCE for x in log)
 
@@ -210,9 +239,14 @@ def test_partition_files_and_stamps():
     assert list(files) == [date(2026, 5, 8)]
     assert files[date(2026, 5, 8)][0].endswith("090003Z.parquet")
     assert hf.file_stamp(files[date(2026, 5, 8)][0]) == datetime(2026, 5, 8, 9, 0, 3, tzinfo=UTC)
-    assert hf.file_stamp("prices/dt=2026-05-07/snapshot_20260507T202606Z.parquet") < (
-        hf.FIRST_PUBLISHED
+    commits = hf.commit_times(
+        [{"id": "b", "date": "2026-05-09T10:00:00Z"}, {"id": "a", "date": "2026-05-07T20:26:07Z"}]
     )
+    assert [sha for _, sha in commits] == ["a", "b"]
+    assert hf.publication_cutoff(date(2026, 5, 8)) == datetime(2026, 5, 10, tzinfo=UTC)
+    assert hf.revision_at(commits, hf.publication_cutoff(date(2026, 5, 8))) == "b"
+    assert hf.revision_at(commits, hf.publication_cutoff(date(2026, 5, 7))) == "a"
+    assert hf.revision_at(commits, hf.publication_cutoff(date(2026, 3, 9))) is None
 
 
 def test_hf_client_waits_at_least_three_seconds(tmp_path):

@@ -417,12 +417,14 @@ def backfill_gpuprices_hf(
 ) -> list[SnapshotOutcome]:
     """Import the dataset's daily partitions in ``start..end`` not stored yet.
 
-    One tree listing, then one download per snapshot file, at least 3 s
-    apart. Each partition day becomes one immutable Parquet stamped with the
-    day's latest snapshot time; every row keeps its own snapshot time as
+    Requests, at least 3 s apart: one tree listing, the commit history
+    (50 commits per page), then per day the partition's tree at the last
+    commit before ``hf.publication_cutoff(day)`` and one download per file it
+    held. Files the hub did not hold by then are skipped as unverified (D54).
+    Each partition day becomes one immutable Parquet stamped with the day's
+    latest snapshot time; every row keeps its own snapshot time as
     ``ts_source`` and its own ``snapshot_id``. Days already stored, and days
-    not yet complete (``today`` or later, UTC), make no request. Snapshots
-    stamped before the dataset's first upload are skipped (D54).
+    not yet complete (``today`` or later, UTC), make no request.
     """
     raw_dir = cfg.path("data") / "raw"
     src = HF_SOURCE
@@ -446,6 +448,7 @@ def backfill_gpuprices_hf(
             resp = client.get(hf.TREE)
             resp.raise_for_status()
             files = hf.partition_files(resp.json())
+            commits = _hf_commits(client)
         except RobotsDisallowedError as exc:
             err = SnapshotOutcome(src, "error", (), 0, 0, 0, f"robots: {exc}")
             return [*done.values(), err]
@@ -453,7 +456,7 @@ def backfill_gpuprices_hf(
             err = SnapshotOutcome(src, "error", (), 0, 0, 0, type(exc).__name__)
             return [*done.values(), err]
         for d in todo:
-            done[d] = _hf_day(client, raw_dir, d, files.get(d, []), excluded)
+            done[d] = _hf_day(client, raw_dir, d, files.get(d, []), commits, excluded)
             _log_outcome(cfg, reg, done[d], utc_now())
     finally:
         if own_client:
@@ -461,18 +464,58 @@ def backfill_gpuprices_hf(
     return [done[d] for d in days]
 
 
+def _hf_commits(client: PoliteClient, max_pages: int = 50) -> list[tuple[datetime, str]]:
+    """The dataset's full commit history (time, id), oldest first."""
+    url: str | None = hf.COMMITS
+    commits: list[Any] = []
+    for _ in range(max_pages):
+        if not url:
+            break
+        resp = client.get(url)
+        resp.raise_for_status()
+        commits.extend(resp.json())
+        url = resp.links.get("next", {}).get("url")
+    else:
+        if url:
+            raise ValueError(f"commit history longer than {max_pages} pages")
+    return hf.commit_times(commits)
+
+
+def _hf_published(client: PoliteClient, d: date, commits: list[tuple[datetime, str]]) -> set[str]:
+    """Files of partition ``d`` the hub held before ``hf.publication_cutoff(d)``."""
+    rev = hf.revision_at(commits, hf.publication_cutoff(d))
+    if rev is None:
+        return set()
+    resp = client.get(hf.PARTITION_AT.format(rev=rev, day=d.isoformat()))
+    if resp.status_code == 404:
+        return set()
+    resp.raise_for_status()
+    return {p for ps in hf.partition_files(resp.json()).values() for p in ps}
+
+
 def _hf_day(
-    client: PoliteClient, raw_dir: Path, d: date, paths: list[str], excluded: frozenset[str]
+    client: PoliteClient,
+    raw_dir: Path,
+    d: date,
+    paths: list[str],
+    commits: list[tuple[datetime, str]],
+    excluded: frozenset[str],
 ) -> SnapshotOutcome:
-    """Download, filter and store one partition day (all or nothing)."""
+    """Check publication, then download, filter and store one day (all or nothing)."""
     src = HF_SOURCE
     if not paths:
         return SnapshotOutcome(src, "empty", (), 0, 0, 0, f"{d}: no partition")
-    verified = [p for p in paths if hf.file_stamp(p) >= hf.FIRST_PUBLISHED]
+    try:
+        published = _hf_published(client, d, commits)
+    except RobotsDisallowedError as exc:
+        return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: robots {exc}")
+    except (httpx.HTTPError, ValueError) as exc:
+        return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: {type(exc).__name__}")
+    verified = [p for p in paths if p in published]
+    skipped = len(paths) - len(verified)
     if not verified:
-        return SnapshotOutcome(
-            src, "skipped_unverified", (), 0, 0, 0, f"{d}: {len(paths)} files before first upload"
-        )
+        detail = json.dumps({"day": str(d), "files": 0, "skipped_unverified": skipped})
+        return SnapshotOutcome(src, "skipped_unverified", (), 0, 0, 0, detail)
     rows: list[PriceObservation] = []
     drops: Counter[str] = Counter()
     for path in verified:
@@ -488,7 +531,6 @@ def _hf_day(
         batch, dropped = hf.normalize_frame(frame, ts_obs, src, path, excluded)
         rows.extend(batch.listings)
         drops.update(dropped)
-    skipped = len(paths) - len(verified)
     detail = json.dumps(
         {"day": str(d), "files": len(verified), "skipped_unverified": skipped, **drops},
         sort_keys=True,

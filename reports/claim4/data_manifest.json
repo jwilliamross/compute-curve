@@ -6,7 +6,7 @@
   "note": "Prices are not stored in the repository (docs/decisions.md D29).",
   "provider": "Alpaca market data API (data.alpaca.markets)",
   "rows": 2024,
-  "sha256": "fca86e0095f733883faa6fa7871a460bc4380f79ad0559ae8d20ece29238b14f",
+  "sha256": "ec2ca3bc82891a8f2729a6aa0fc7bf74f72e329a3549be88bd8dd575b9b1397c",
   "start": "2026-06-01",
   "symbols": {
     "AMD": {

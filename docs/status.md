@@ -13,6 +13,14 @@ _Last updated: 2026-10-10, exploration round 3 (interim). Branch
   docs/exploration_round4_plan.md.
 - **Automatic.** The daily workflow runs it on or after 2027-01-01.
 - **So far.** 4 listing days are in the window.
+- **R4-02 (added): does AWS H100 spot scarcity lead neocloud prices?**
+  - The exploration fits on 2026-07 to 09 are descriptive. Both slopes are
+    negative, the wrong way for the hypothesis:
+    - CGI: −0.20, one-sided p 0.90;
+    - our panel: −2.2, from only 15 changing days.
+  - The one-shot confirmation runs on 2026-10 to 12, once AWS publishes
+    December.
+- **Scarcity test.** Blocked: no usable availability measure (B14).
 
 ## Monte Carlo fair-value engine (2026-10-11)
 

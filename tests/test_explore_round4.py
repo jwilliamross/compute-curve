@@ -2,6 +2,7 @@
 
 from datetime import date
 
+import numpy as np
 import pandas as pd
 
 from compute_curve.config import Round4Config, load_config
@@ -50,3 +51,37 @@ def test_planted_convergence_confirms_and_null_does_not():
 def test_waits_until_the_window_has_closed():
     assert not r4.window_complete(WIN, date(2026, 10, 6))
     assert r4.window_complete(WIN, date(2026, 10, 7))
+
+
+def _series(values, start=date(2026, 7, 1)):
+    idx = [start + pd.Timedelta(days=i) for i in range(len(values))]
+    return pd.Series(values, index=[d.date() if hasattr(d, "date") else d for d in idx])
+
+
+def test_lead_lag_pairs_use_past_signal_and_future_target_only():
+    x = _series(list(range(30)))
+    y = _series([float(i) ** 2 for i in range(30)])
+    f = r4.lead_lag_pairs(x, y, (date(2026, 7, 10), date(2026, 7, 15)))
+    first = f.iloc[0]
+    assert first["t"] == date(2026, 7, 10)
+    assert first["x"] == 9 - 2  # x(t) - x(t-7)
+    assert first["y"] == 16**2 - 9**2  # y(t+7) - y(t)
+    late = r4.lead_lag_pairs(x, y, (date(2026, 7, 20), date(2026, 7, 28)))
+    assert late["t"].max() <= date(2026, 7, 23)  # outcome must exist (t + 7 <= last day)
+
+
+def test_planted_lead_is_recovered_and_holm_applied():
+    rng = np.random.default_rng(0)
+    n = 200
+    shocks = rng.normal(0, 0.02, n)
+    aws = np.cumsum(shocks)
+    lagged = np.concatenate([np.zeros(7), aws[:-7]])  # target follows AWS one week later
+    tgt = lagged + np.cumsum(rng.normal(0, 0.003, n))
+    xs, ys = _series(aws), _series(tgt)
+    win = (date(2026, 7, 10), date(2026, 12, 1))
+    fit = r4.fit_r402(r4.lead_lag_pairs(xs, ys, win))
+    assert fit["b"] > 0.5 and fit["p_one_sided"] < 0.01
+    noise = _series(np.cumsum(rng.normal(0, 0.01, n)))
+    frames = {"cgi": r4.lead_lag_pairs(xs, ys, win), "own_panel": r4.lead_lag_pairs(xs, noise, win)}
+    rows = r4.confirm_r402(frames, {"cgi": fit, "own_panel": fit}, 0.05)
+    assert rows[0]["confirmed"] and all(r["p_holm"] >= r["p_one_sided"] for r in rows)

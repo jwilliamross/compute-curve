@@ -94,7 +94,9 @@ total is now 255. One post-hoc descriptive diagnostic of the random-entry null
 (D55, descriptive) brings it to 257.
 
 Exploration round 4 (docs/exploration_round4_plan.md) declares one forward
-one-shot replication of H01 (R4-01). The project total is now 258.
+one-shot replication of H01 (R4-01). The project total is now 258. Its
+addendum adds R4-02 (AWS scarcity leading neocloud prices): 2 confirmation
+tests and 2 descriptive exploration fits. The project total is now 262.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

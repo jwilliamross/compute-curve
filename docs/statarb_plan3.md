@@ -82,3 +82,14 @@ fixed now, before any forward session's return was computed.
   - **Fail.** The signal is reported as not robust out of sample.
 - **Variants.** One forward test, `statarb.forward`, already declared. The
   project total is unchanged.
+
+## 7. Addendum (2026-10-11): stricter forward criterion (D56)
+
+After an independent audit, the forward test requires each strategy to pass
+C1 and C2 under **both** accountings:
+
+- the engine's constant weights;
+- fixed shares (`run_book_shares`).
+
+Holm is applied within each accounting. This only makes the test stricter.
+It was fixed before any forward-session statistic was computed.

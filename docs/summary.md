@@ -1,6 +1,6 @@
 # Summary for a finance reader
 
-_As of 10 October 2026. Simulation only: no real money is involved._
+_As of 11 October 2026. Simulation only: no real money is involved._
 
 ## What this project is
 
@@ -145,6 +145,59 @@ The details are in `docs/exploration_plan.md` (the rules) and
   directly. Its licence may forbid this use, so it is not used.
 - **More data.** Two more weeks of history, from 5 to 18 July 2026, came
   from an open archive.
+
+## Statistical arbitrage on the stocks (10-11 October 2026)
+
+**The idea.** Each of the 20 stocks is compared with the technology fund
+XLK. When a stock drifts unusually far from where the fund says it should
+be, bet on it coming back, with the fund as a hedge. This is a textbook
+hedge-fund method.
+
+**The first two tests found no edge after trading costs.**
+
+- **First try:** a flat cost of 0.15% per trade for every stock.
+- **Second try:** costs from an academic estimator. It turned out to
+  overstate costs for large companies about fiftyfold.
+
+**The third test passed.** It used real bid and ask quotes from the broker's
+data service. On February to October 2026, data no test had used, it made
+about 0.1% a day after costs.
+
+- **Return per unit of risk (Sharpe ratio):** about 1.8.
+- **Statistical significance:** p = 0.02 after allowing for two versions.
+- **Costs:** still profitable at double the measured costs.
+
+**But it is fragile.**
+
+- Most of the profit came from five days and three volatile stocks.
+- The test was the third attempt at this signal.
+- A sixty-trading-day live check on new data has started. It runs to about
+  the end of December and places no orders.
+- Paper trading with simulated money would need the owner's approval
+  afterwards.
+
+**Checks so far.**
+
+- **Placebo.** A reversed version of the strategy loses about as much as
+  the real one makes.
+- **Independent code review.** It found no cheating with future data and no
+  cost or maths errors. It found one bookkeeping shortcut that slightly
+  flattered results.
+  - With realistic bookkeeping, the all-stock version still passes.
+  - The ten-stock version falls just short (p 0.058). It is now called
+    borderline.
+  - The live check must pass under both bookkeeping methods.
+
+## A price model for the futures (11 October 2026)
+
+**What it does.** A simulation model now estimates where each month's
+futures settlement could land: a central value, a range, and a worst-case
+loss.
+
+**What it shows.** With a year of weekly data it is impossible to tell
+whether GPU rental prices trend up or down. The long end of the curve
+therefore depends on the model chosen. That is reported as uncertainty, not
+as a finding.
 
 ## What happens now
 

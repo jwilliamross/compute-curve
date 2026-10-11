@@ -8,7 +8,7 @@ import pytest
 
 from compute_curve.config import load_config
 from compute_curve.statarb import evaluate as ev
-from compute_curve.statarb.engine import Costs, book_returns, run_book
+from compute_curve.statarb.engine import Costs, Trade, book_returns, run_book, run_book_shares
 from compute_curve.statarb.pipeline import (
     FORWARD_START,
     Prices,
@@ -171,3 +171,14 @@ def test_forward_window_needs_60_sessions_from_the_start_date():
     win = forward_window(enough)
     assert win is not None and win[0] == FORWARD_START
     assert len(pd.bdate_range(win[0], win[1])) == 60
+
+
+def test_fixed_share_book_by_hand():
+    idx = pd.bdate_range("2030-01-02", periods=3)
+    opens = pd.DataFrame({"A": [10.0, 11.0, 12.0]}, index=idx)
+    closes = pd.DataFrame({"A": [10.0, 11.5, 12.5]}, index=idx)
+    # buy 1/11 shares (capital 1) at the open of day 1, sell at the open of day 2
+    r = run_book_shares([Trade(1, 2, {"A": 1.0})], opens, closes, Costs(0.001, 0, 0, 0))
+    shares = 1 / 11
+    assert r.iloc[1] == pytest.approx(shares * (11.5 - 11.0) - 0.001)
+    assert r.iloc[2] == pytest.approx(shares * (12.0 - 11.5) - shares * 12.0 * 0.001)

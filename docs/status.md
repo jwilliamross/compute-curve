@@ -22,6 +22,13 @@ _Last updated: 2026-10-10, exploration round 3 (interim). Branch
   - Under fixed-share accounting SA2-M still passes (Holm p 0.020) and
     SA2-L fails (0.058), so SA2-L is now **borderline**.
   - The forward test must pass under both accountings.
+- **Paper-trading readiness (proposal; nothing executed).**
+  - All names are shortable on Alpaca except WYFI. Without WYFI shorts the
+    strategy makes 9.5 bps a day, p 0.018.
+  - Within the claim-4 limits the size is about USD 8,600: 95% drawdown
+    about USD 720, expected about USD 8 a day if the edge holds.
+  - Needs: the forward test to pass, and the owner's approval. See
+    docs/statarb_paper_readiness.md.
 - **Next.** A 60-session forward shadow test from 2026-10-06 runs
   automatically (`statarb forward`, about the end of December). No orders.
   Details: docs/statarb_results.md.

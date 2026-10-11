@@ -464,6 +464,14 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         1,
     ),
+    Variant(
+        "statarb.6c.readiness",
+        "statarb",
+        "Paper-readiness diagnostics: shortability (WYFI excluded), sizing, tails (descriptive)",
+        "2026-10-11",
+        False,
+        1,
+    ),
 )
 
 

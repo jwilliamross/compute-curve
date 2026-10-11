@@ -392,6 +392,14 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         1,
     ),
+    Variant(
+        "explore4.R4-01",
+        "explore4",
+        "Forward one-shot replication of H01 (frozen) on listings 2026-10-07..12-31",
+        "2026-10-11",
+        True,
+        1,
+    ),
 )
 
 

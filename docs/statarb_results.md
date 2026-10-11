@@ -87,3 +87,37 @@ edge.**
 - **Rebalancing approximation.** Weights are target weights each session.
   Drift between rebalances is not charged as turnover, which is a small
   approximation.
+
+## Claim 6b: residual reversal with measured costs (2026-10-11)
+
+Plan: docs/statarb_plan2.md (commit a583c5d). Full tables:
+reports/statarb/claim6b_exploration.md.
+
+**Result: nothing survives, so the confirmation set is still unspent.**
+
+| | SA2-M (all 20, measured costs) | SA2-L (10 lowest-spread names) |
+|---|---|---|
+| Pooled net Sharpe (SE) | −0.15 (0.81) | +0.21 (0.81) |
+| 95% bootstrap CI of the Sharpe | [−1.41, 0.95] | [−1.07, 1.23] |
+| Deflated Sharpe (K = 45) | 0.01 | 0.03 |
+| Break-even, as a multiple of the measured costs | 0.8× | 1.4× |
+| Random-entry Monte Carlo: share of null Sharpes below the real one | 1.00 | 0.98 |
+| Max drawdown, 95th percentile (bootstrap) | 23% | 7% |
+
+**The measured costs are unreliable, and too high for large caps.**
+
+- The Corwin-Schultz estimator, applied to these daily bars, gives median
+  spreads of 13 to 156 bps. NVDA's is 53 bps.
+- NVDA's real quoted spread is about one cent on a share price near $180,
+  under 1 bp.
+- The estimator is known to overstate spreads for highly volatile stocks: it
+  attributes part of the intraday range to the spread (Corwin and Schultz
+  2012, section IV; Abdi and Ranaldo 2017, *Review of Financial Studies*).
+- So claim 6b is a valid test, as pre-registered, but its costs are too
+  harsh for the large caps.
+- The timing signal again beats random entry, as in claim 6. Still, no cost
+  assumption so far makes the pooled strategy pass the deflated Sharpe.
+
+**What would settle it.** Costs from **real quoted spreads** (NBBO) instead
+of an estimate, and one shot on the unspent confirmation set, with no
+further exploration. See docs/statarb_plan3.md if written.

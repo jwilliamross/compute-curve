@@ -10,6 +10,7 @@ from compute_curve.config import load_config
 from compute_curve.statarb import evaluate as ev
 from compute_curve.statarb.engine import Costs, book_returns, run_book
 from compute_curve.statarb.pipeline import Prices, cell_trades, costs_of, wide_prices
+from compute_curve.statarb.spreads import corwin_schultz
 from compute_curve.synthetic import synthetic_statarb_bars
 
 SA = load_config().statarb
@@ -110,3 +111,34 @@ def test_cost_breakeven_is_linear():
 def test_drawdown_tail_exceeds_realized_on_noise():
     r = np.random.default_rng(1).normal(0.0005, 0.01, 300)
     assert ev.drawdown_tail(r, 500, 20, 1) >= ev.max_drawdown(r) * 0.5
+
+
+def _bars_with_spread(spread: float, n_days: int = 400, seed: int = 0) -> tuple[np.ndarray, ...]:
+    rng = np.random.default_rng(seed)
+    highs, lows, closes = [], [], []
+    mid = 100.0
+    for _ in range(n_days):
+        path = mid * np.exp(np.cumsum(rng.normal(0, 0.02 / np.sqrt(78), 78)))
+        highs.append(path.max() * (1 + spread / 2))
+        lows.append(path.min() * (1 - spread / 2))
+        closes.append(path[-1] * (1 + rng.choice([-1, 1]) * spread / 2))
+        mid = path[-1]
+    return np.array(highs), np.array(lows), np.array(closes)
+
+
+def test_corwin_schultz_recovers_a_known_spread():
+    for true in (0.0, 0.01):
+        h, lo, c = _bars_with_spread(true)
+        est = float(np.median(corwin_schultz(h, lo, c)))
+        assert abs(est - true) < 0.004, (true, est)
+
+
+def test_measured_costs_override_the_flat_cost():
+    opens = closes = np.full((2, 2), 10.0)
+    w = np.array([[1.0, 1.0], [1.0, 1.0]])
+    flat = Costs(0.001, 0.0, 0.0, 0.0)
+    measured = Costs(0.001, 0.0, 0.0, 0.0, per_symbol=(("A", 0.005),))
+    r_flat = book_returns(w, opens, closes, flat, ["A", "B"])
+    r_meas = book_returns(w, opens, closes, measured, ["A", "B"])
+    assert r_flat[0] == pytest.approx(-0.002) and r_meas[0] == pytest.approx(-0.006)
+    assert measured.scaled(2.0, 0.1).side(["A", "B"]).tolist() == [0.01, 0.002]

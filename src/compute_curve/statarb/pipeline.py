@@ -17,6 +17,7 @@ from compute_curve.claim4 import stats as cs
 from compute_curve.config import Config, StatArbConfig
 from compute_curve.statarb import evaluate as ev
 from compute_curve.statarb.engine import TRADING_DAYS, Costs, Trade, run_book
+from compute_curve.statarb.spreads import median_spreads
 from compute_curve.statarb.strategies import pairs_trades, residual_trades
 
 ETF = "XLK"
@@ -216,11 +217,24 @@ def explore_strategy(
     strategy: str,
     all_cell_srs: list[float],
     seed: int,
+    costs: tuple[Costs, Costs, Costs] | None = None,
+    label: str | None = None,
 ) -> tuple[StrategyResult, dict[tuple[int, int], pd.Series], dict[tuple[int, int], list[Trade]]]:
+    """Map the grid, pool the region and run the checks on the exploration set.
+
+    ``costs`` is (base, free, stress); by default claim 6's flat costs. With
+    measured costs the break-even is reported as a multiple of the base costs.
+    """
     p = prices.until(sa.explore[1])
     lo, hi = set_bounds(p, sa.explore[0])
     ax1, ax2 = grid_axes(sa, strategy)
-    base = costs_of(sa)
+    if costs is None:
+        base, free_c = costs_of(sa), costs_of(sa, 0.0)
+        stress = costs_of(sa, sa.stress_multiplier, sa.stress_borrow_annual)
+        base_bps = sa.stock_side_bps
+    else:
+        base, free_c, stress = costs
+        base_bps = 1.0
     grid = np.full((len(ax1), len(ax2)), np.nan)
     rets: dict[tuple[int, int], pd.Series] = {}
     trades: dict[tuple[int, int], list[Trade]] = {}
@@ -235,7 +249,7 @@ def explore_strategy(
     years = len(next(iter(rets.values()))) / TRADING_DAYS if rets else 0.0
     cells = ev.region(grid, years)
     res = StrategyResult(
-        strategy,
+        label or strategy,
         (ax1, ax2),
         np.where(np.isfinite(grid), grid, np.nan).tolist(),
         [(ax1[i], ax2[j]) for i, j in cells],
@@ -252,13 +266,9 @@ def explore_strategy(
     res.ci_sharpe = boot_ci(pooled.to_numpy(), sa.boot_block, seed, _sharpe)
     res.drawdown_95 = ev.drawdown_tail(pooled.to_numpy(), sa.n_boot_paths, sa.boot_block, seed)
     free = ev.pool(
-        [
-            in_set(run_book(trades[c], p.opens, p.closes, costs_of(sa, 0.0)), sa.explore[0])
-            for c in cells
-        ]
+        [in_set(run_book(trades[c], p.opens, p.closes, free_c), sa.explore[0]) for c in cells]
     )
-    res.breakeven_bps = ev.cost_breakeven(free.to_numpy(), pooled.to_numpy(), sa.stock_side_bps)
-    stress = costs_of(sa, sa.stress_multiplier, sa.stress_borrow_annual)
+    res.breakeven_bps = ev.cost_breakeven(free.to_numpy(), pooled.to_numpy(), base_bps)
     res.stress_mean = float(
         ev.pool(
             [in_set(run_book(trades[c], p.opens, p.closes, stress), sa.explore[0]) for c in cells]
@@ -301,10 +311,14 @@ def confirm_strategy(
     groups: dict[str, list[str]],
     strategy: str,
     region: list[list[float]],
+    costs: tuple[Costs, Costs, Costs] | None = None,
 ) -> dict[str, Any]:
     p = prices.until(sa.confirm[1])
     lo, hi = set_bounds(p, sa.confirm[0])
-    base, stress = costs_of(sa), costs_of(sa, sa.stress_multiplier, sa.stress_borrow_annual)
+    if costs is None:
+        base, stress = costs_of(sa), costs_of(sa, sa.stress_multiplier, sa.stress_borrow_annual)
+    else:
+        base, _, stress = costs
     base_series, stress_series, n_trades = [], [], 0
     for a, b in region:
         tr = cell_trades(p, sa, groups, strategy, a, b, lo, hi)
@@ -424,3 +438,131 @@ def run_confirmation(cfg: Config) -> Path:  # pragma: no cover - reads local dat
     p["confirmation"].write_text(json.dumps(_clean({"rows": rows}), indent=2))
     p["confirmation_md"].write_text(render_confirmation(rows, sa))
     return p["confirmation_md"]
+
+
+# ---------------------------------------------------------------------------
+# Claim 6b: residual reversal with measured costs (docs/statarb_plan2.md)
+# ---------------------------------------------------------------------------
+SLIPPAGE_6B = 0.0002  # ASSUMPTION: 2 bps per side on top of the half-spread
+N_LIQUID = 10
+
+
+def measured_costs(sa: StatArbConfig, spreads: pd.Series) -> tuple[Costs, Costs, Costs]:
+    """(base, free, stress): half the Corwin-Schultz spread + slippage per side, per stock."""
+    per = tuple((s, float(v) / 2 + SLIPPAGE_6B) for s, v in spreads.items() if s != ETF)
+    base = Costs(
+        sa.stock_side_bps / 1e4,
+        sa.etf_side_bps / 1e4,
+        sa.sell_fee_bps / 1e4,
+        sa.borrow_annual,
+        ETF,
+        per,
+    )
+    free = base.scaled(0.0, sa.borrow_annual)
+    stress = base.scaled(sa.stress_multiplier, sa.stress_borrow_annual)
+    return base, free, stress
+
+
+def subset(prices: Prices, names: list[str]) -> Prices:
+    cols = [c for c in prices.closes.columns if c in names or c == ETF]
+    return Prices(prices.opens[cols], prices.closes[cols], prices.signal_logp[cols])
+
+
+def liquid_names(spreads: pd.Series, n: int = N_LIQUID) -> list[str]:
+    return [s for s in spreads.sort_values().index if s != ETF][:n]
+
+
+def prior_cell_srs(cfg: Config) -> list[float]:  # pragma: no cover - reads local data
+    """Daily Sharpe of claim 6's 21 cells (from its frozen exploration report)."""
+    data = json.loads(paths(cfg)["exploration"].read_text())
+    out = []
+    for r in data["results"]:
+        for row in r["grid_sr_annual"]:
+            out += [float(v) / np.sqrt(TRADING_DAYS) for v in row if v is not None]
+    return out
+
+
+def load_bars(cfg: Config) -> pd.DataFrame:  # pragma: no cover - reads local data
+    from compute_curve.claim4.market_data import _read_duckdb, cache_path  # noqa: PLC0415
+    from compute_curve.claim5.pipeline import claim5_cfg  # noqa: PLC0415
+
+    c4, sa, c5 = cfg.claim4, cfg.statarb, claim5_cfg(cfg)
+    if c4 is None or sa is None:
+        raise RuntimeError("[claim4] and [statarb] config are required")
+    symbols = [*c4.universe.members(), c4.benchmark]
+    path = cache_path(
+        cfg.path("var") / "market_data",
+        symbols,
+        c5.bars_start.isoformat(),
+        str(sa.confirm[1]),
+        c4.feed,
+    )
+    return _read_duckdb(path)
+
+
+def run_claim6b(cfg: Config) -> Path:  # pragma: no cover - reads local data
+    """Exploration of SA2-M and SA2-L with measured costs; then the one-shot confirmation."""
+    from compute_curve.statarb.report import (  # noqa: PLC0415
+        render_confirmation,
+        render_exploration,
+    )
+
+    sa, c4 = cfg.statarb, cfg.claim4
+    if sa is None or c4 is None:
+        raise RuntimeError("[statarb] and [claim4] config are required")
+    d = paths(cfg)["dir"]
+    frozen_p, conf_p = d / "claim6b_frozen.json", d / "claim6b_confirmation.json"
+    bars = load_bars(cfg)
+    spreads = median_spreads(bars, sa.explore[0], sa.explore[1])
+    costs = measured_costs(sa, spreads)
+    liquid = liquid_names(spreads)
+    prices = load_prices(cfg)
+    groups = c4.universe.buckets()
+    variants = {"SA2-M": prices, "SA2-L": subset(prices, liquid)}
+    if frozen_p.exists():
+        raise RuntimeError(f"{frozen_p} exists; claim 6b exploration is frozen")
+    all_srs = prior_cell_srs(cfg)
+    results = [
+        explore_strategy(p, sa, groups, "SA2", all_srs, cfg.project.seed, costs, label)[0]
+        for label, p in variants.items()
+    ]
+    finish_exploration(results, all_srs, sa)
+    lines = [
+        render_exploration(results, sa, len(all_srs)).replace(
+            "# Claim 6: statistical arbitrage, exploration set",
+            "# Claim 6b: residual reversal with measured costs, exploration set",
+        ),
+        "## Measured costs (Corwin-Schultz, exploration set only)",
+        "",
+        "Per-side cost = half the median spread + 2 bps slippage (ASSUMPTION). With measured "
+        "costs the 'break-even stock cost' row is the multiple of these costs at which the "
+        "mean net return reaches zero.",
+        "",
+        "| Symbol | Median spread (bps) | Per-side cost (bps) | Liquid 10 |",
+        "|---|---|---|---|",
+    ]
+    for sym, s in spreads.items():
+        if sym == ETF:
+            continue
+        lines.append(
+            f"| {sym} | {s * 1e4:.1f} | {(s / 2 + SLIPPAGE_6B) * 1e4:.1f} | "
+            f"{'yes' if sym in liquid else ''} |"
+        )
+    (d / "claim6b_exploration.md").write_text("\n".join(lines) + "\n")
+    survivors = [{"strategy": r.strategy, "region": r.region} for r in results if r.survives]
+    frozen_p.write_text(
+        json.dumps(
+            {"survivors": survivors, "spreads": spreads.to_dict(), "liquid": liquid}, indent=2
+        )
+    )
+    rows = []
+    for s in survivors:
+        p = variants[s["strategy"]]
+        row = confirm_strategy(p, sa, groups, "SA2", s["region"], costs)
+        row["strategy"] = s["strategy"]
+        rows.append(row)
+    if rows:
+        finish_confirmation(rows, sa.alpha)
+        conf_p.write_text(json.dumps(_clean({"rows": rows}), indent=2))
+    (d / "claim6b_confirmation.md").write_text(render_confirmation(rows, sa))
+    return d / "claim6b_exploration.md"

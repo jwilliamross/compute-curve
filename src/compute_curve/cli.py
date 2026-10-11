@@ -91,7 +91,7 @@ def _parser() -> argparse.ArgumentParser:
     fv.add_argument("--months", type=int, default=12)
     fv.add_argument("--paths", type=int, default=20000)
     sab = sub.add_parser("statarb", help="claim 6: stat arb on compute-linked equities")
-    sab.add_argument("stage", choices=["exploration", "confirmation"])
+    sab.add_argument("stage", choices=["exploration", "confirmation", "claim6b"])
     return p
 
 
@@ -238,7 +238,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "statarb":
         from compute_curve.statarb import pipeline as sp
 
-        run = {"exploration": sp.run_exploration, "confirmation": sp.run_confirmation}
+        run = {
+            "exploration": sp.run_exploration,
+            "confirmation": sp.run_confirmation,
+            "claim6b": sp.run_claim6b,
+        }
         print(f"wrote {run[args.stage](cfg)}")
         return 0
     if args.command == "explore":

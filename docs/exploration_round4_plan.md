@@ -47,3 +47,56 @@ on listing days no test has used.
 - **Not confirmed.** Report it, and stop testing H01 on these sources.
 
 **Variants.** One new variant: the project total rises from 257 to 258.
+
+## 3. Addendum (2026-10-11, before running): R4-02, does AWS scarcity lead neocloud prices?
+
+### Question
+
+When the AWS H100 spot price rises, do neocloud H100 rental prices rise
+over the following week?
+
+- **Mechanism.** AWS spot prices reflect AWS's spare capacity. Tight
+  hyperscaler capacity pushes demand to neoclouds.
+- **Expected sign.** Positive.
+- **New idea, not a re-test.** It was not tested in rounds 1 to 3. H09 and
+  H10 used AWS against AWS itself; H11 and H12 used AWS against equities.
+
+### Data
+
+| Role | Series |
+|---|---|
+| Signal x(t) | 7-day log change of the AWS H100 daily median spot price per GPU-hour (`reports/claim5/aws_spot_daily.csv`) |
+| Target R4-02a | next 7-day log change of the CGI H100 daily close |
+| Target R4-02b | next 7-day log change of our H100 history-panel index (`reports/own_index.csv`, `series = history_panel`) |
+
+Pairs need exact dates on both sides; nothing is filled in.
+
+### Sets
+
+- **Exploration (descriptive, freezes the coefficients for C2).** AWS months
+  2026-07 to 09, the only months that overlap the targets.
+  - Contamination: the AWS rows were used in round 1's H09 confirmation, but
+    only against AWS itself, never against a neocloud target.
+  - CGI overlap starts 2026-08-30.
+- **Confirmation (one shot).** Pairs with t from 2026-10-01 to 12-24, so
+  every outcome ends by 12-31. It runs when the AWS 2026-12 month is
+  published.
+
+### Test
+
+- Fit y = a + b·x.
+- Use Newey-West errors with lag 7, and a one-sided test of b > 0.
+- **C1.** Holm-adjusted p ≤ 0.05 across the two targets.
+- **C2.** The frozen exploration coefficients give out-of-sample R² > 0
+  against zero.
+- Confirmed means C1 and C2.
+
+### Power, stated now
+
+About 85 overlapping daily pairs make about 12 independent weeks. Only a
+strong link can confirm, so a null result means "no evidence".
+
+### Variants
+
+2 confirmation tests, plus 2 descriptive exploration fits. The project total
+rises from 258 to 262.

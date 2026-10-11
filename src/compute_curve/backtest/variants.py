@@ -400,6 +400,22 @@ REGISTERED: tuple[Variant, ...] = (
         True,
         1,
     ),
+    Variant(
+        "explore4.R4-02",
+        "explore4",
+        "AWS H100 spot 7-day change -> CGI / own-index H100 next 7-day change (Holm over 2)",
+        "2026-10-11",
+        True,
+        2,
+    ),
+    Variant(
+        "explore4.R4-02.explore",
+        "explore4",
+        "R4-02 exploration fits on AWS 2026-07..09 (descriptive, freeze coefficients)",
+        "2026-10-11",
+        False,
+        2,
+    ),
 )
 
 

@@ -862,3 +862,45 @@ Details, quotes and counts are in docs/data_sources.md.
 - The data are listings scraped with `gpuhunt`. Some spot rows are
   implausible (Nebius H200 at 0.79 USD), and `available` is always true.
   Neither has been checked against another source (unverified).
+
+## D55. Monte Carlo fair-value engine, calibrated on proxies (2026-10-11)
+
+**Decision.**
+
+- Add `compute_curve.models.montecarlo`: exact Schwartz-Smith simulation
+  with antithetic paths and a Kemna-Vorst geometric control variate.
+- Add `compute-curve fairvalue`, which writes the fair-value strip and the
+  distribution of the settlement average for GPU1/GPU2 to
+  `reports/fairvalue/strip.md`.
+- The derivation is in docs/montecarlo_fair_value.md.
+
+**Reasoning.**
+
+- GPU1 and GPU2 settle on a monthly business-day average of a non-storable
+  commodity. Their fair value is an expectation plus a risk premium, with no
+  carry arbitrage.
+- Quantiles, value-at-risk and options on the average need simulation.
+- The engine is checked against closed forms:
+  - simulated moments match the analytic moments, including correlation and
+    scheduled jumps;
+  - the controlled mean matches the analytic E[A];
+  - Black call values match simulation;
+  - a known half-life is recovered.
+
+**Calibration.**
+
+- The settlement index cannot be stored (B7), so the engine is calibrated on
+  proxies:
+  - the short-term factor on the CGI daily close (41 days);
+  - the long-term factor on the GetDeploying weekly median (52 changes).
+- Output is relative to spot (F/S0) and labelled MODEL OUTPUT ON A PROXY.
+
+**Model risk, reported.**
+
+- The proxy drift is not distinguishable from zero. For H100 it is +0.135
+  a year, 95% CI [−0.33, 0.60].
+- So the strip is shown in three scenarios: fitted, zero drift, and random
+  walk.
+
+**Status.** Not a hypothesis test and not a trading signal. D26 still
+holds. It is logged as one descriptive variant.

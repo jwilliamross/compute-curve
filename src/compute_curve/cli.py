@@ -15,6 +15,7 @@ explore    exploration rounds: round1 exploration | freeze | confirmation | shad
            round2 exploration | replicate | confirmation;
            round3 exploration | confirmation | mechanism
 statarb    claim 6: exploration | confirmation (docs/statarb_plan.md)
+fairvalue  Monte Carlo fair-value strip on proxies (docs/montecarlo_fair_value.md)
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -78,6 +79,9 @@ def _parser() -> argparse.ArgumentParser:
         "stage",
         choices=["exploration", "freeze", "confirmation", "shadow", "replicate", "mechanism"],
     )
+    fv = sub.add_parser("fairvalue", help="Monte Carlo fair-value strip on proxies (D55)")
+    fv.add_argument("--months", type=int, default=12)
+    fv.add_argument("--paths", type=int, default=20000)
     sab = sub.add_parser("statarb", help="claim 6: stat arb on compute-linked equities")
     sab.add_argument("stage", choices=["exploration", "confirmation"])
     return p
@@ -215,6 +219,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"files: {len(man['files'])}; wrote {c5p.paths(cfg)['daily_csv']}")
             return 0
         print(f"wrote {c5p.run_evaluation(cfg)}")
+        return 0
+    if args.command == "fairvalue":
+        from compute_curve.fairvalue import run_fairvalue
+
+        print(f"wrote {run_fairvalue(cfg, args.months, args.paths)}")
         return 0
     if args.command == "statarb":
         from compute_curve.statarb import pipeline as sp

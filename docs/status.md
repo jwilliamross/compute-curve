@@ -3,6 +3,24 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Monte Carlo fair-value engine (2026-10-11)
+
+- **What it does.** `compute-curve fairvalue` simulates the GPU1/GPU2
+  monthly settlement average under the two-factor model. It reports:
+  - fair value relative to spot;
+  - quantiles;
+  - the 95% value-at-risk per contract;
+  - at-the-money Asian calls.
+- **Checks.** Exact simulation and a geometric control variate cut the
+  Monte Carlo error more than fivefold. Tested against closed forms. Method:
+  docs/montecarlo_fair_value.md (D55).
+- **Proxy calibration (illustrative).**
+  - The CGI short-term half-life is about 1 day (H100) and 2.4 days (B200).
+  - The long-term drift is not distinguishable from zero, so the slope of
+    the curve is model risk.
+  - The 12-month 95% value-at-risk is about a third to a half of the
+    contract's value.
+
 ## Claim 6: stock statistical arbitrage (2026-10-10)
 
 **Bottom line.** No significant edge after costs. Details are in

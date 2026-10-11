@@ -448,6 +448,22 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         1,
     ),
+    Variant(
+        "statarb.6c.confirm",
+        "statarb",
+        "Claim 6c: SA2-M and SA2-L (frozen) with quoted-spread costs, one-shot confirmation",
+        "2026-10-11",
+        True,
+        2,
+    ),
+    Variant(
+        "statarb.6c.quotes",
+        "statarb",
+        "Quoted NBBO spreads on sampled exploration sessions (descriptive)",
+        "2026-10-11",
+        False,
+        1,
+    ),
 )
 
 

@@ -16,6 +16,12 @@ _Last updated: 2026-10-10, exploration round 3 (interim). Branch
   - Both still positive at double costs.
 - **But fragile (post-hoc).** Without the 5 best of 157 days, the return
   falls to about 1 bp a day. SMCI, CIFR and NBIS give most of the profit.
+- **Independent code audit (D56).**
+  - No look-ahead and no cost or statistics bug.
+  - One upward bias: rebalancing was free in the engine.
+  - Under fixed-share accounting SA2-M still passes (Holm p 0.020) and
+    SA2-L fails (0.058), so SA2-L is now **borderline**.
+  - The forward test must pass under both accountings.
 - **Next.** A 60-session forward shadow test from 2026-10-06 runs
   automatically (`statarb forward`, about the end of December). No orders.
   Details: docs/statarb_results.md.

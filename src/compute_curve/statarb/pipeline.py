@@ -16,7 +16,7 @@ from compute_curve.backtest.bootstrap import block_bootstrap_ci
 from compute_curve.claim4 import stats as cs
 from compute_curve.config import Config, StatArbConfig
 from compute_curve.statarb import evaluate as ev
-from compute_curve.statarb.engine import TRADING_DAYS, Costs, Trade, run_book
+from compute_curve.statarb.engine import TRADING_DAYS, Costs, Trade, run_book, run_book_shares
 from compute_curve.statarb.spreads import median_spreads
 from compute_curve.statarb.strategies import pairs_trades, residual_trades
 
@@ -313,7 +313,10 @@ def confirm_strategy(
     region: list[list[float]],
     costs: tuple[Costs, Costs, Costs] | None = None,
     window: tuple[date, date] | None = None,
+    accounting: str = "weights",
 ) -> dict[str, Any]:
+    """Frozen region on a window. ``accounting``: "weights" (engine default) or "shares" (D56)."""
+    book = run_book_shares if accounting == "shares" else run_book
     start, end = window or sa.confirm
     p = prices.until(end)
     lo, hi = set_bounds(p, start)
@@ -325,12 +328,13 @@ def confirm_strategy(
     for a, b in region:
         tr = cell_trades(p, sa, groups, strategy, a, b, lo, hi)
         n_trades += len(tr)
-        base_series.append(in_set(run_book(tr, p.opens, p.closes, base), start))
-        stress_series.append(in_set(run_book(tr, p.opens, p.closes, stress), start))
+        base_series.append(in_set(book(tr, p.opens, p.closes, base), start))
+        stress_series.append(in_set(book(tr, p.opens, p.closes, stress), start))
     pooled, pooled_stress = ev.pool(base_series), ev.pool(stress_series)
     m = ev.moments(pooled.to_numpy())
     return {
         "strategy": strategy,
+        "accounting": accounting,
         "n_sessions": int(m.n),
         "n_trades": n_trades,
         "moments": {k: float(v) for k, v in asdict(m).items()},
@@ -747,13 +751,19 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
     costs = quoted_costs(sa, spreads)
     groups = c4.universe.buckets()
     rows = []
-    for name, p in {"SA2-M": prices, "SA2-L": subset(prices, LIQUID_6C)}.items():
-        row = confirm_strategy(p, sa, groups, "SA2", REGIONS_6C[name], costs, win)
-        row["strategy"] = name
-        rows.append(row)
-    finish_confirmation(rows, sa.alpha)
-    for r in rows:
-        r["verdict"] = "forward test passed" if r["confirmed"] else "forward test failed"
+    for accounting in ("weights", "shares"):
+        block = []
+        for name, p in {"SA2-M": prices, "SA2-L": subset(prices, LIQUID_6C)}.items():
+            row = confirm_strategy(p, sa, groups, "SA2", REGIONS_6C[name], costs, win, accounting)
+            row["strategy"] = f"{name} ({accounting})"
+            block.append(row)
+        finish_confirmation(block, sa.alpha)
+        rows += block
+    for r in rows:  # D56: a strategy passes only if it passes under both accountings
+        name = r["strategy"].split(" ")[0]
+        both = [x for x in rows if x["strategy"].startswith(name + " ")]
+        r["confirmed_both"] = all(x["confirmed"] for x in both)
+        r["verdict"] = "forward test passed" if r["confirmed_both"] else "forward test failed"
     out_json.write_text(
         json.dumps(_clean({"window": [str(w) for w in win], "rows": rows}), indent=2)
     )

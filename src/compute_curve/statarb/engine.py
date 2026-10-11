@@ -101,3 +101,44 @@ def run_book(
     w = weight_matrix(trades, len(closes), symbols)
     r = book_returns(w, opens.to_numpy(float), closes.to_numpy(float), costs, symbols)
     return pd.Series(r, index=closes.index)
+
+
+def run_book_shares(
+    trades: list[Trade], opens: pd.DataFrame, closes: pd.DataFrame, costs: Costs
+) -> pd.Series:
+    """Net daily returns holding **fixed shares** per trade, set at the entry open (D56).
+
+    The default engine resets each position to its target weight at every open
+    and close for free; this version holds the shares bought at entry until the
+    exit open, nets them across trades, and charges costs on the dollar value
+    actually traded. Capital is 1.
+    """
+    o, c = opens.to_numpy(float), closes.to_numpy(float)
+    symbols = list(closes.columns)
+    col = {s: j for j, s in enumerate(symbols)}
+    n, k = c.shape
+    shares = np.zeros((n, k))
+    for t in trades:
+        a, b = max(t.start, 0), min(t.end, n)
+        if a >= b:
+            continue
+        for sym, w in t.weights.items():
+            j = col[sym]
+            shares[a:b, j] += w / o[t.start, j]
+    oz, cz = np.nan_to_num(o), np.nan_to_num(c)
+    prev_s = np.vstack([np.zeros((1, k)), shares[:-1]])
+    prev_c = np.vstack([np.zeros((1, k)), cz[:-1]])
+    gross = (prev_s * (oz - prev_c)).sum(axis=1) + (shares * (cz - oz)).sum(axis=1)
+    side = costs.side(symbols)
+    traded = (shares - prev_s) * oz
+    cost = (np.abs(traded) * side).sum(axis=1) + np.clip(-traded, 0, None).sum(axis=1) * (
+        costs.sell_fee
+    )
+    cost += np.clip(-shares * oz, 0, None).sum(axis=1) * costs.borrow_annual / TRADING_DAYS
+    out = gross - cost
+    if n:
+        final = shares[-1] * cz[-1]
+        out[-1] -= float(
+            (np.abs(final) * side).sum() + np.clip(final, 0, None).sum() * costs.sell_fee
+        )
+    return pd.Series(out, index=closes.index)

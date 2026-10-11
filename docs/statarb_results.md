@@ -181,3 +181,32 @@ Corwin-Schultz had overstated these by 10 to 70 times.
   automatically and evaluates when 60 sessions after 2026-10-06 exist
   (about the end of December). No orders are sent. Paper trading would need
   the owner's approval and a risk gate.
+
+### Independent audit (2026-10-11, D56)
+
+An agent reviewed the code adversarially. It reproduced the report exactly.
+
+**Verified, with no issue found:**
+
+- no look-ahead: truncation tests on real data gave zero mismatches;
+- execution timing and P&L, costs (hand-checked to the basis point), the
+  hedge sign, exits, pooling and the statistics;
+- placebo with random trade signs: −0.25 ± 1.80 bps a day, against
+  +12.8 real.
+
+**One upward bias found:** constant-weight accounting, where rebalancing is
+free.
+
+| Under fixed shares | Mean | Holm p | Verdict |
+|---|---|---|---|
+| SA2-M | 10.36 bps a day | 0.020 | still passes |
+| SA2-L | 4.66 bps a day | 0.058 | **fails** |
+
+**Updated verdict.**
+
+- **SA2-M:** confirmed, and robust to accounting, Newey-West lag (10 to 30)
+  and 2× costs.
+- **SA2-L:** borderline. Its p is above 0.05 at other lags, at 1.5× costs,
+  and under fixed shares.
+- **Forward test:** both strategies must now pass under both accountings
+  (D56).

@@ -904,3 +904,38 @@ Details, quotes and counts are in docs/data_sources.md.
 
 **Status.** Not a hypothesis test and not a trading signal. D26 still
 holds. It is logged as one descriptive variant.
+
+## D56. Claim 6c: fixed-share accounting audit; the forward test must pass under both accountings (2026-10-11)
+
+**Finding.** An independent code audit of claim 6c found no look-ahead and no
+bug in costs, pooling or statistics. It did find one simplification in
+`statarb.engine.book_returns`:
+
+- Positions are reset to their target weight at every open and close, at no
+  cost. A real book holds fixed shares.
+- `run_book_shares` (fixed shares set at the entry open, netted, with exact
+  dollar P&L) now implements the realistic version. It reproduces the audit.
+
+**Effect on the one-shot confirmation (recorded, not re-decided).**
+
+| | Engine (weights) | Fixed shares |
+|---|---|---|
+| SA2-M | 10.56 bps a day, Holm p 0.023: pass | 10.36 bps, Holm p 0.020: pass |
+| SA2-L | 4.93 bps, Holm p 0.049: pass | 4.66 bps, Holm p 0.058: **fail** |
+
+**SA2-L is fragile in other ways too.** Its p is above 0.05 at Newey-West
+lags 5, 15 and 20, and at 1.5× costs. **SA2-M** stays below 0.03 at 2× costs
+and at lags 10 to 30.
+
+**Decision.**
+
+- **Pre-registered verdict kept as recorded.** The verdict was made with the
+  engine accounting.
+- **SA2-L reported as borderline, not confirmed.**
+- **Stricter forward test.** It requires C1 and C2 under **both**
+  accountings, with Holm applied within each. This is stricter than plan 3,
+  section 6, and is fixed now, before any forward-session statistic is
+  computed (4 forward sessions exist; none has been evaluated).
+- **Universe note.** The universe has 21 names, not 20. CBRS (first bar
+  2026-05-14) has no measured spread, so it would fall back to the flat
+  15 bps. It made no trades in the confirmation.

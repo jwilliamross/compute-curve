@@ -176,9 +176,17 @@ about 0.1% a day after costs.
 - Paper trading with simulated money would need the owner's approval
   afterwards.
 
-**Checks so far.** A reversed version of the strategy loses about as much
-as the real one makes, which suggests the result is not a bookkeeping
-error. An independent review of the code is under way.
+**Checks so far.**
+
+- **Placebo.** A reversed version of the strategy loses about as much as
+  the real one makes.
+- **Independent code review.** It found no cheating with future data and no
+  cost or maths errors. It found one bookkeeping shortcut that slightly
+  flattered results.
+  - With realistic bookkeeping, the all-stock version still passes.
+  - The ten-stock version falls just short (p 0.058). It is now called
+    borderline.
+  - The live check must pass under both bookkeeping methods.
 
 ## A price model for the futures (11 October 2026)
 

@@ -87,3 +87,97 @@ edge.**
 - **Rebalancing approximation.** Weights are target weights each session.
   Drift between rebalances is not charged as turnover, which is a small
   approximation.
+
+## Claim 6b: residual reversal with measured costs (2026-10-11)
+
+Plan: docs/statarb_plan2.md (commit a583c5d). Full tables:
+reports/statarb/claim6b_exploration.md.
+
+**Result: nothing survives, so the confirmation set is still unspent.**
+
+| | SA2-M (all 20, measured costs) | SA2-L (10 lowest-spread names) |
+|---|---|---|
+| Pooled net Sharpe (SE) | −0.15 (0.81) | +0.21 (0.81) |
+| 95% bootstrap CI of the Sharpe | [−1.41, 0.95] | [−1.07, 1.23] |
+| Deflated Sharpe (K = 45) | 0.01 | 0.03 |
+| Break-even, as a multiple of the measured costs | 0.8× | 1.4× |
+| Random-entry Monte Carlo: share of null Sharpes below the real one | 1.00 | 0.98 |
+| Max drawdown, 95th percentile (bootstrap) | 23% | 7% |
+
+**The measured costs are unreliable, and too high for large caps.**
+
+- The Corwin-Schultz estimator, applied to these daily bars, gives median
+  spreads of 13 to 156 bps. NVDA's is 53 bps.
+- NVDA's real quoted spread is about one cent on a share price near $180,
+  under 1 bp.
+- The estimator is known to overstate spreads for highly volatile stocks: it
+  attributes part of the intraday range to the spread (Corwin and Schultz
+  2012, section IV; Abdi and Ranaldo 2017, *Review of Financial Studies*).
+- So claim 6b is a valid test, as pre-registered, but its costs are too
+  harsh for the large caps.
+- The timing signal again beats random entry, as in claim 6. Still, no cost
+  assumption so far makes the pooled strategy pass the deflated Sharpe.
+
+**What would settle it.** Costs from **real quoted spreads** (NBBO) instead
+of an estimate, and one shot on the unspent confirmation set, with no
+further exploration. See docs/statarb_plan3.md if written.
+
+## Claim 6c: quoted-spread costs, one-shot confirmation (2026-10-11)
+
+Plan: docs/statarb_plan3.md (commit 64c270c), written before any quote was
+fetched and before any confirmation-set return. Report:
+reports/statarb/claim6c_confirmation.md.
+
+**Result: both strategies passed the pre-registered one-shot confirmation**
+(sessions 2026-02-20 to 10-05, 157 sessions, never used before). This is
+the first strategy in the project to pass a pre-registered out-of-sample
+test.
+
+| | SA2-M (all 20) | SA2-L (10 liquid) |
+|---|---|---|
+| Mean daily net return, 95% CI | 10.6 bps [3.0, 18.1] | 4.9 bps [−1.4, 10.8] |
+| Annualized net Sharpe (SE), bootstrap CI | 1.80 (1.13), [0.53, 3.20] | 1.73 (1.16), [−0.46, 4.22] |
+| One-sided Newey-West p, Holm | 0.011, **0.023** | 0.049, **0.049** |
+| Mean at stress costs (2× costs, 10% borrow) | +7.4 bps | +3.6 bps |
+| Trades | 1,194 | 365 |
+
+**Measured quoted spreads.** Alpaca NBBO, sampled on the exploration set;
+only the medians are stored (D29).
+
+- Large caps: 0.75 bp (NVDA) to about 4 bps.
+- Small miners and power names: 7 to 18 bps.
+- TLN: 39 bps; WYFI: 55 bps.
+
+Corwin-Schultz had overstated these by 10 to 70 times.
+
+### Robustness (POST-HOC, descriptive; not part of the pre-registered test)
+
+| Check | SA2-M | SA2-L |
+|---|---|---|
+| Gross vs net return | 12.1 vs 10.6 bps | 5.5 vs 4.9 bps |
+| Without the 5 best days (of 157) | 1.1 bps, Sharpe 0.22 | 1.0 bps, Sharpe 0.39 |
+| Long-stock trades / short-stock trades | +4.1 / +6.3 bps | +1.0 / +3.9 bps |
+| Profitable months | 6 of 9 | 6 of 9 |
+| Share of profit from the top 3 names | 63% (SMCI, CIFR, NBIS) | over 100% (SMCI, MU, TLN; VRT loses) |
+| Correlation with XLK | 0.07 | −0.21 |
+
+**Reading.**
+
+- **The result is fragile.** The pre-registered test passed, but the profit
+  comes from a few large reversals in a few volatile names. Without the five
+  best days, little is left.
+- **Both legs earn and market exposure is low.** That is consistent with
+  real mean reversion, not a hidden market bet.
+- **Ways it could be overstated:**
+  - trading at the open, where spreads are wider than at the midday quotes
+    sampled (market-on-open orders avoid the spread but face impact);
+  - borrow costs for hard-to-borrow small names (WYFI, CIFR, WULF), which
+    can exceed the 10% stress;
+  - the universe chosen in 2026 for its AI exposure;
+  - this being the third test of SA2. The confirmation set was used once,
+    but the decision to try quoted costs followed two failures, and K = 45
+    cells is counted.
+- **Next.** The 60-session forward shadow test (plan section 6) runs
+  automatically and evaluates when 60 sessions after 2026-10-06 exist
+  (about the end of December). No orders are sent. Paper trading would need
+  the owner's approval and a risk gate.

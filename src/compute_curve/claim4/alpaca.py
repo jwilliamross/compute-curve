@@ -281,3 +281,27 @@ class AlpacaDataClient(_BaseClient):
             token = page.get("next_page_token")
             if not token:
                 return out
+
+    def quotes_window(
+        self, symbols: list[str], start: str, end: str, feed: str = "sip"
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Historical NBBO quotes for ``symbols`` between RFC 3339 ``start`` and ``end``."""
+        out: dict[str, list[dict[str, Any]]] = {s: [] for s in symbols}
+        token: str | None = None
+        while True:
+            params: dict[str, Any] = {
+                "symbols": ",".join(symbols),
+                "start": start,
+                "end": end,
+                "feed": feed,
+                "limit": 10000,
+                "sort": "asc",
+            }
+            if token:
+                params["page_token"] = token
+            page = self.request("GET", "/v2/stocks/quotes", params=params)
+            for sym, quotes in (page.get("quotes") or {}).items():
+                out.setdefault(sym, []).extend(quotes)
+            token = page.get("next_page_token")
+            if not token:
+                return out

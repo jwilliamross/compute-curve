@@ -30,10 +30,23 @@ class Costs:
     sell_fee: float
     borrow_annual: float
     etf: str = "XLK"
+    per_symbol: tuple[tuple[str, float], ...] = ()  # measured per-side cost, overrides stock_side
 
     def scaled(self, k: float, borrow_annual: float) -> Costs:
         return Costs(
-            self.stock_side * k, self.etf_side * k, self.sell_fee * k, borrow_annual, self.etf
+            self.stock_side * k,
+            self.etf_side * k,
+            self.sell_fee * k,
+            borrow_annual,
+            self.etf,
+            tuple((s, c * k) for s, c in self.per_symbol),
+        )
+
+    def side(self, symbols: list[str]) -> np.ndarray:
+        """Per-side cost for each symbol (ETF, measured, or the flat stock cost)."""
+        measured = dict(self.per_symbol)
+        return np.array(
+            [self.etf_side if s == self.etf else measured.get(s, self.stock_side) for s in symbols]
         )
 
 
@@ -67,7 +80,7 @@ def book_returns(
     overnight, intraday = np.nan_to_num(overnight), np.nan_to_num(intraday)
     prev = np.vstack([np.zeros((1, w.shape[1])), w[:-1]])
     gross = (prev * overnight).sum(axis=1) + (w * intraday).sum(axis=1)
-    side = np.array([costs.etf_side if s == costs.etf else costs.stock_side for s in symbols])
+    side = costs.side(symbols)
     trade = w - prev
     cost = (np.abs(trade) * side).sum(axis=1) + (np.clip(-trade, 0, None).sum(axis=1)) * (
         costs.sell_fee

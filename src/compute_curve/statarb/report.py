@@ -11,6 +11,8 @@ from compute_curve.config import StatArbConfig
 LABEL = {
     "SA1": ("pairs (cointegration)", "lookback L", "entry |z|"),
     "SA2": ("residual reversal vs XLK (Avellaneda-Lee)", "window W", "entry |s|"),
+    "SA2-M": ("residual reversal, all names, measured costs", "window W", "entry |s|"),
+    "SA2-L": ("residual reversal, 10 lowest-spread names, measured costs", "window W", "entry |s|"),
 }
 
 

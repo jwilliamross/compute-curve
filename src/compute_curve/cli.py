@@ -77,7 +77,15 @@ def _parser() -> argparse.ArgumentParser:
     ex.add_argument("round", choices=["round1", "round2", "round3", "round4"])
     ex.add_argument(
         "stage",
-        choices=["exploration", "freeze", "confirmation", "shadow", "replicate", "mechanism"],
+        choices=[
+            "exploration",
+            "freeze",
+            "confirmation",
+            "shadow",
+            "replicate",
+            "mechanism",
+            "r402",
+        ],
     )
     fv = sub.add_parser("fairvalue", help="Monte Carlo fair-value strip on proxies (D55)")
     fv.add_argument("--months", type=int, default=12)
@@ -118,7 +126,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore import round2 as r2
     from compute_curve.explore import round3 as r3
     from compute_curve.explore.mechanism import run_mechanism
-    from compute_curve.explore.round4 import run_confirmation4
+    from compute_curve.explore.round4 import run_confirmation4, run_r402
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -137,7 +145,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
             "confirmation": r3.run_confirmation3,
             "mechanism": run_mechanism,
         },
-        "round4": {"confirmation": run_confirmation4},
+        "round4": {"confirmation": run_confirmation4, "r402": run_r402},
     }
     run = stages[round_].get(stage_name)
     if run is None:

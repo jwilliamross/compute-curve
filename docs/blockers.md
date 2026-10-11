@@ -148,3 +148,25 @@ instead, and what would unblock it. Newest entries at the bottom.
   total, leased and utilization since about 2024-10) is not usable.
 - **Owner action:** optionally ask Overclock Labs for written permission
   for non-commercial research use.
+
+## B14. No usable GPU availability (scarcity) measure
+
+- **Evidence (2026-10-11, availability fields only; no price outcomes
+  looked at):**
+  - FastGPU's `available_count` is blank on 95% of rows. The rest are zeros
+    for one provider (Hyperstack).
+  - The Hugging Face history's `available` flag is always true.
+  - gpurentalprices.com gives a stock status on about 100 of about 5,000
+    H100/B200 rows; the rest are "unknown".
+  - Round 1's offer-count test (H07) already failed for lack of a real
+    availability measure.
+- **Impact:** a supply/demand test, whether scarcity predicts price rises,
+  cannot be run.
+- **Ways to fix:**
+  - Vast.ai research data licence (data@vast.ai). Their API has offer counts
+    and rentable machines.
+  - Akash Console availability history: ask Overclock Labs for permission
+    (B13).
+  - Lium hourly `pricing.json`, which robots.txt describes as hourly. This
+    would need an hourly scheduler and gives one provider only.
+  - AWS spot prices as an indirect scarcity proxy: R4-02, pre-registered.

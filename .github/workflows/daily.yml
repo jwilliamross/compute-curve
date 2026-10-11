@@ -92,7 +92,7 @@ jobs:
         id: xconfirm4
         if: ${{ steps.tests.outcome == 'success' }}
         continue-on-error: true
-        run: uv run compute-curve explore round4 confirmation
+        run: uv run compute-curve explore round4 confirmation && uv run compute-curve explore round4 r402
 
       - name: Claim 4 evaluation and validation gate
         id: c4eval

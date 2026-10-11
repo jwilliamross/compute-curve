@@ -344,6 +344,46 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         2,
     ),
+    Variant(
+        "statarb.SA1",
+        "statarb",
+        "Pairs trading on cointegrated within-group pairs, grid L x entry (9 cells)",
+        "2026-10-10",
+        True,
+        9,
+    ),
+    Variant(
+        "statarb.SA2",
+        "statarb",
+        "Avellaneda-Lee residual reversal vs XLK, grid W x entry (12 cells)",
+        "2026-10-10",
+        True,
+        12,
+    ),
+    Variant(
+        "statarb.confirm",
+        "statarb",
+        "One-shot confirmation of <= 2 pooled-region survivors (C1 Holm, C2 double costs)",
+        "2026-10-10",
+        True,
+        2,
+    ),
+    Variant(
+        "statarb.null_valid",
+        "statarb",
+        "Post-hoc diagnostic: SA2 random-entry null with placements inside listing periods",
+        "2026-10-10",
+        False,
+        1,
+    ),
+    Variant(
+        "statarb.forward",
+        "statarb",
+        "Forward shadow test of a confirmed stat-arb strategy, 60 sessions",
+        "2026-10-10",
+        True,
+        1,
+    ),
 )
 
 

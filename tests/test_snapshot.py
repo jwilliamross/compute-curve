@@ -158,3 +158,27 @@ def test_zenodo_archive_backfill_is_md5_checked_and_idempotent(tmp_path):
         "gpurentalprices_hist_20260705T070000Z.parquet",
         "gpurentalprices_hist_20260706T070000Z.parquet",
     ]
+
+
+def test_robots_fetch_is_retried_after_a_network_error():
+    calls = {"n": 0}
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise httpx.ConnectError("reset", request=request)
+            return httpx.Response(200, text="User-agent: *\nAllow: /\n")
+        return httpx.Response(200, text="ok")
+
+    c = PoliteClient(user_agent="test", transport=httpx.MockTransport(flaky), sleep=lambda s: None)
+    assert c.robots_allows("https://flaky.example/data.csv")
+    assert calls["n"] == 2
+
+
+def test_robots_unreachable_after_retries_means_disallow():
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("reset", request=request)
+
+    c = PoliteClient(user_agent="test", transport=httpx.MockTransport(down), sleep=lambda s: None)
+    assert not c.robots_allows("https://down.example/data.csv")

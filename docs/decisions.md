@@ -711,3 +711,154 @@ quotes are in docs/data_sources.md.
   2026-10-10.
 - First run (2026-10-10): 84 rows from 24 providers (H100 37, H200 26,
   B200 21). 20 rows were dropped: 5 Vast.ai and 15 RunPod.
+
+## D52. An eighth skill, sharpe-ratio-non-iid-corrections, vendored with edits (2026-10-10)
+
+The owner asked for skills that improve advanced quantitative work. A search
+agent screened skills and repositories for statistical arbitrage, OU
+mean reversion, Kalman hedge ratios, Monte Carlo of average-price settlement,
+forward curves, regime detection, microstructure and robust backtest
+statistics. One skill was clearly worth vendoring: terrylica/cc-skills
+`sharpe-ratio-non-iid-corrections` (MIT) at commit
+`b592ad8d044a8c301a8998e58e66746a819cf19a`.
+
+It covers what `quant-research` lacks. That skill's deflated Sharpe ignores
+skew, kurtosis and autocorrelation (D47). This one gives the Sharpe-estimate
+variance with skew, kurtosis and AR(1) terms, after López de Prado, Lipton and
+Zoonekynd (2026), and from it:
+
+- PSR and the minimum track record length;
+- power, pFDR and oFDR;
+- the deflated Sharpe and the SFDR threshold.
+
+Our return series are short and autocorrelated, so these corrections matter
+most here.
+
+**Review.** SKILL.md and the equation tracker were read in full. The Exhibit 1
+values were recomputed with numpy and scipy, and all agree to three decimals.
+The SFDR example's 0.760 could not be reproduced: the stated inputs give 0.862.
+It is corrected, with a note. All changes are listed in the folder's
+`PROVENANCE.md`:
+
+- removed `allowed-tools`;
+- removed the "Self-Evolving Skill" and "Post-Execution Reflection" blocks,
+  which tell the agent to rewrite the skill file during use;
+- removed the upstream crypto project's default (SFDR for unrecoverable
+  searches). Here K is known from `docs/variants_log.md`, so DSR is the
+  default;
+- left out the Numba script (numba is not in the stack), the paper PDF, and a
+  full transcription of the paper, whose licence is not stated;
+- marked the paper title as unverified, because the authors' replication
+  repository titles SSRN 5520741 differently.
+
+No code and no dependency is added. A function built from these formulas goes
+into `compute_curve`, using numpy and scipy only, with the Exhibit 1 values as
+test vectors. It is not reported as a finding until it is derived in `docs/`.
+
+**Considered and not installed:**
+
+- agiprolabs/claude-trading-skills `cointegration-analysis`,
+  `mean-reversion`, `regime-detection` and `walk-forward-validation` (MIT).
+  - Crypto-first.
+  - Factual errors: the Johansen `det_order` meanings are wrong;
+    `statsmodels coint` is described as Phillips-Ouliaris; the DSR mixes
+    annualized and per-period Sharpe, and its expected maximum is unscaled.
+  - Full-sample z-scores and CUSUM statistics, which are look-ahead.
+  - Scripts that fetch from keyed crypto APIs.
+- HKUDS/Vibe-Trading `correlation-analysis`, `quant-statistics` and
+  `market-microstructure` (MIT).
+  - Written around that project's own `src.quantlib` library.
+  - The Kalman spread uses the updated state rather than the one-step-ahead
+    prediction.
+  - Kept as reading material only.
+- tradermonty `pair-trade-screener` (MIT). Its scripts call a keyed market
+  data API.
+- No public skill covers Monte Carlo of average-price (Asian-style) settlement,
+  forward-curve models or OU optimal thresholds well enough to vendor. Those
+  stay as derivations in `docs/` with citations.
+
+## D53. Claim 6 random-entry null: placements only inside listing periods (2026-10-10)
+
+**Decision.** The Monte Carlo random-entry null for claim 6 redraws a random
+start (up to 50 times) until every leg of the trade has prices over the whole
+holding period.
+
+**Reasoning.** The first exploration run (reports/statarb/exploration.md)
+could place a null trade before a stock listed (CRWV, WYFI, CBRS). Such a
+trade earns nothing but still pays costs, which biases the null downward. A
+post-hoc diagnostic with valid placements is logged as variant
+`statarb.null_valid`. The SA2 conclusion held: real timing beat 99.3% of
+random placements before costs.
+
+The null is descriptive and is not a survival rule. Neither strategy
+survived the pre-registered rules, and this fix changes no verdict. The frozen
+exploration report is kept as written.
+
+## D54. GPU Price Tracker (Hugging Face) imported as `gpuprices_hf`, verifiable snapshots only (2026-10-11)
+
+**Decision.** Import Alex Hubbard's GPU Price Tracker dataset
+(`afhubbard/gpu-prices` on Hugging Face, CC BY 4.0) once, as the listing
+source `gpuprices_hf`. Command:
+`compute-curve backfill gpuprices-hf --start 2026-01-12 --end 2026-10-10`.
+Only snapshot files that the hub already held by the end of the next UTC day
+are imported. Earlier-stamped history is **skipped, not imported with a
+flag**. The source is not added to `index.history_sources` or
+`index.source_priority`, and no index, exploration or claim code changes.
+Details, quotes and counts are in docs/data_sources.md.
+
+**Reasoning.**
+
+- The licence is clear. The dataset card says `license: cc-by-4.0`, and the
+  upstream `DATA_LICENSE` puts "the Hugging Face Datasets repository" under
+  CC BY 4.0. huggingface.co/robots.txt allows everything. No key is sent.
+- Provenance decides what is imported. The repository was created on
+  2026-05-07, and the commit history shows when each file arrived:
+  - the 51 snapshots stamped 2026-01-12 to 03-09 came in the first upload,
+    2 to 4 months after their stamps;
+  - the 85 CI snapshots of 2026-05-08 to 07-07 came on 2026-07-08, up to
+    61 days late;
+  - every other file arrived within 13.5 hours (median 13 seconds).
+
+  The late files may well have been collected on time: the CI files'
+  `emitted_at_utc` metadata says so. But that is the publisher's own claim,
+  and the upstream GitHub history is not reachable from here. A flag in
+  `raw_json` would not protect anything, because no index code reads it: the
+  headline index takes every listing source. So unverifiable files are left
+  out. The rule (on the hub at the last commit before day + 2, 00:00 UTC) is
+  checked from the hub's commit history on every run. It keeps 237 files and
+  skips 134.
+- Rows kept and dropped:
+  - kept: H100, H200 and B200 rows with `quality = 'ok'` (A100 has no model in
+    our schema);
+  - dropped: Vast.ai and RunPod (D13), and also Oracle and Vultr, whose
+    direct collection was rejected on their terms. This is the conservative
+    choice: their prices reach us here through a third-party scrape;
+  - the per-GPU price is `price_per_hour / gpu_count`. The publisher
+    documents that the price is for the full SKU, and the data confirm it.
+- Time stamps follow the project rule. `ts_source` is the snapshot
+  `timestamp` and `ts_observed` is our download time (2026-10-11). Each
+  upstream snapshot keeps its own `snapshot_id`. One immutable Parquet per
+  partition day is stamped with the day's latest snapshot time, as in D48.
+  Stored days, the current day and unverifiable files make no download
+  request.
+- Two upgraded files were compared with their versions before the schema
+  v1.1 in-place upgrade. All original columns were identical.
+
+**Effect on earlier rounds.** None.
+
+- Exploration rounds 1 to 3, claim 4 and the history-panel series read
+  `history_sources` only, so they are unchanged.
+- The headline series reads every source. With these rows it is unchanged on
+  every day that meets coverage. It gains 112 uncovered rows (2026-05-07 to
+  07-04, one or two providers), and one uncovered value changes (B200,
+  2026-07-05). Evaluations use covered days only.
+
+**Imported.**
+
+- 148 days, 2026-05-07 to 2026-10-10, 4.9 MB in total.
+- 183,929 rows: H100 127,927, H200 26,218, B200 29,784. Hyperscalers are
+  most of them (gcp, azure, aws); lambda 35,238 and verda 18,460.
+- Dropped: Oracle 28,908, RunPod 8,540, Vast.ai 4,026.
+- The data are listings scraped with `gpuhunt`. Some spot rows are
+  implausible (Nebius H200 at 0.79 USD), and `available` is always true.
+  Neither has been checked against another source (unverified).

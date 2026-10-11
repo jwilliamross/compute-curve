@@ -16,13 +16,16 @@ import json
 import logging
 import re
 import zipfile
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import duckdb
 import httpx
 
+from compute_curve.collectors import gpuprices_hf as hf
 from compute_curve.collectors.azure_retail import AzureRetailCollector
 from compute_curve.collectors.base import CollectedBatch, Collector
 from compute_curve.collectors.cgi import SKUS as CGI_SKUS
@@ -46,6 +49,7 @@ from compute_curve.collectors.provider_pages import (
 from compute_curve.collectors.vast import VastCollector
 from compute_curve.config import Config
 from compute_curve.http import PoliteClient, RobotsDisallowedError
+from compute_curve.schema import PriceObservation
 from compute_curve.storage.raw_store import (
     INDICES,
     LISTINGS,
@@ -67,7 +71,9 @@ LICENCE_REQUIRED: frozenset[str] = frozenset({"vast"})
 @dataclass(frozen=True)
 class SnapshotOutcome:
     source: str
-    status: str  # written | skipped_exists | error | empty | refused_licence
+    # written | skipped_exists | error | empty | refused_licence |
+    # skipped_incomplete | skipped_unverified
+    status: str
     paths: tuple[str, ...]
     n_listings: int
     n_indices: int
@@ -378,6 +384,164 @@ def backfill_gpurentalprices_zenodo(
             outcomes.append(SnapshotOutcome(src, "empty", (), 0, 0, 0, f"{d} not in archive"))
         _log_outcome(cfg, reg, outcomes[-1], utc_now())
     return outcomes
+
+
+# ---------------------------------------------------------------------------
+# Backfill: GPU Price Tracker on Hugging Face (CC BY 4.0, D54)
+# ---------------------------------------------------------------------------
+HF_SOURCE = "gpuprices_hf"
+HF_MIN_INTERVAL_S = 3.0
+
+
+def make_hf_client(cfg: Config) -> PoliteClient:
+    """Polite client with at least ``HF_MIN_INTERVAL_S`` between requests."""
+    return PoliteClient(
+        user_agent=cfg.http.user_agent,
+        min_interval_s=max(cfg.http.min_interval_s, HF_MIN_INTERVAL_S),
+        timeout_s=cfg.http.timeout_s,
+        max_retries=cfg.http.max_retries,
+    )
+
+
+def _stored_as(raw_dir: Path, source: str, d: date) -> bool:
+    folder = raw_dir / LISTINGS / source / f"{d:%Y}" / f"{d:%m}"
+    return folder.exists() and any(folder.glob(f"{source}_{d:%Y%m%d}T*.parquet"))
+
+
+def backfill_gpuprices_hf(
+    cfg: Config,
+    start: date,
+    end: date,
+    client: PoliteClient | None = None,
+    today: date | None = None,
+) -> list[SnapshotOutcome]:
+    """Import the dataset's daily partitions in ``start..end`` not stored yet.
+
+    Requests, at least 3 s apart: one tree listing, the commit history
+    (50 commits per page), then per day the partition's tree at the last
+    commit before ``hf.publication_cutoff(day)`` and one download per file it
+    held. Files the hub did not hold by then are skipped as unverified (D54).
+    Each partition day becomes one immutable Parquet stamped with the day's
+    latest snapshot time; every row keeps its own snapshot time as
+    ``ts_source`` and its own ``snapshot_id``. Days already stored, and days
+    not yet complete (``today`` or later, UTC), make no request.
+    """
+    raw_dir = cfg.path("data") / "raw"
+    src = HF_SOURCE
+    reg = registry(cfg)
+    today = today or utc_now().date()
+    excluded = frozenset(cfg.collectors.excluded_providers)
+    days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
+    done: dict[date, SnapshotOutcome] = {}
+    for d in days:
+        if _stored_as(raw_dir, src, d):
+            done[d] = SnapshotOutcome(src, "skipped_exists", (), 0, 0, 0, f"{d} stored")
+        elif d >= today:
+            done[d] = SnapshotOutcome(src, "skipped_incomplete", (), 0, 0, 0, f"{d} not complete")
+    todo = [d for d in days if d not in done]
+    if not todo:
+        return [done[d] for d in days]
+    own_client = client is None
+    client = client or make_hf_client(cfg)
+    try:
+        try:
+            resp = client.get(hf.TREE)
+            resp.raise_for_status()
+            files = hf.partition_files(resp.json())
+            commits = _hf_commits(client)
+        except RobotsDisallowedError as exc:
+            err = SnapshotOutcome(src, "error", (), 0, 0, 0, f"robots: {exc}")
+            return [*done.values(), err]
+        except (httpx.HTTPError, ValueError) as exc:
+            err = SnapshotOutcome(src, "error", (), 0, 0, 0, type(exc).__name__)
+            return [*done.values(), err]
+        for d in todo:
+            done[d] = _hf_day(client, raw_dir, d, files.get(d, []), commits, excluded)
+            _log_outcome(cfg, reg, done[d], utc_now())
+    finally:
+        if own_client:
+            client.close()
+    return [done[d] for d in days]
+
+
+def _hf_commits(client: PoliteClient, max_pages: int = 50) -> list[tuple[datetime, str]]:
+    """The dataset's full commit history (time, id), oldest first."""
+    url: str | None = hf.COMMITS
+    commits: list[Any] = []
+    for _ in range(max_pages):
+        if not url:
+            break
+        resp = client.get(url)
+        resp.raise_for_status()
+        commits.extend(resp.json())
+        url = resp.links.get("next", {}).get("url")
+    else:
+        if url:
+            raise ValueError(f"commit history longer than {max_pages} pages")
+    return hf.commit_times(commits)
+
+
+def _hf_published(client: PoliteClient, d: date, commits: list[tuple[datetime, str]]) -> set[str]:
+    """Files of partition ``d`` the hub held before ``hf.publication_cutoff(d)``."""
+    rev = hf.revision_at(commits, hf.publication_cutoff(d))
+    if rev is None:
+        return set()
+    resp = client.get(hf.PARTITION_AT.format(rev=rev, day=d.isoformat()))
+    if resp.status_code == 404:
+        return set()
+    resp.raise_for_status()
+    return {p for ps in hf.partition_files(resp.json()).values() for p in ps}
+
+
+def _hf_day(
+    client: PoliteClient,
+    raw_dir: Path,
+    d: date,
+    paths: list[str],
+    commits: list[tuple[datetime, str]],
+    excluded: frozenset[str],
+) -> SnapshotOutcome:
+    """Check publication, then download, filter and store one day (all or nothing)."""
+    src = HF_SOURCE
+    if not paths:
+        return SnapshotOutcome(src, "empty", (), 0, 0, 0, f"{d}: no partition")
+    try:
+        published = _hf_published(client, d, commits)
+    except RobotsDisallowedError as exc:
+        return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: robots {exc}")
+    except (httpx.HTTPError, ValueError) as exc:
+        return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: {type(exc).__name__}")
+    verified = [p for p in paths if p in published]
+    skipped = len(paths) - len(verified)
+    if not verified:
+        detail = json.dumps({"day": str(d), "files": 0, "skipped_unverified": skipped})
+        return SnapshotOutcome(src, "skipped_unverified", (), 0, 0, 0, detail)
+    rows: list[PriceObservation] = []
+    drops: Counter[str] = Counter()
+    for path in verified:
+        try:
+            resp = client.get(hf.RESOLVE.format(path=path))
+            resp.raise_for_status()
+            ts_obs = utc_now()  # when we received the file
+            frame = hf.read_snapshot_bytes(resp.content)
+        except RobotsDisallowedError as exc:
+            return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: robots {exc}")
+        except (httpx.HTTPError, duckdb.Error, ValueError) as exc:
+            return SnapshotOutcome(src, "error", (), 0, 0, 0, f"{d}: {type(exc).__name__}")
+        batch, dropped = hf.normalize_frame(frame, ts_obs, src, path, excluded)
+        rows.extend(batch.listings)
+        drops.update(dropped)
+    detail = json.dumps(
+        {"day": str(d), "files": len(verified), "skipped_unverified": skipped, **drops},
+        sort_keys=True,
+    )
+    if not rows:
+        return SnapshotOutcome(src, "empty", (), 0, 0, sum(drops.values()), detail)
+    stamp = max(r.ts_source for r in rows if r.ts_source is not None)
+    path_out = write_snapshot(raw_dir / LISTINGS, src, stamp, observations_to_frame(rows))
+    return SnapshotOutcome(
+        src, "written", (str(path_out),), len(rows), 0, sum(drops.values()), detail
+    )
 
 
 def backfill_cgi(

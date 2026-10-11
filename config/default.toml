@@ -329,3 +329,42 @@ jump_threshold = 0.0025             # 25 bp 15-minute log change
 descriptive_thresholds = [0.001, 0.005]
 min_points = 120
 min_channel_windows = 10
+
+# ---------------------------------------------------------------------------
+# Claim 6: statistical arbitrage on compute-linked equities (docs/statarb_plan.md).
+# Fixed before any strategy return was computed.
+# ---------------------------------------------------------------------------
+[statarb]
+explore = [2024-09-03, 2026-02-19]
+confirm = [2026-02-20, 2026-10-05]
+min_history = 60                    # sessions of a name's own history before it trades
+stock_side_bps = 15.0               # ASSUMPTION (as claim 4)
+etf_side_bps = 3.0                  # ASSUMPTION (as claim 4)
+sell_fee_bps = 1.0                  # ASSUMPTION (as claim 4)
+borrow_annual = 0.03                # ASSUMPTION: short borrow cost per year
+stress_multiplier = 2.0             # C2: costs x2 and borrow 10%/yr
+stress_borrow_annual = 0.10
+max_positions = 10
+max_hold = 20
+hac_lag = 10
+alpha = 0.05
+dsr_min = 0.90
+min_effective_n = 30
+n_null = 1000
+n_boot_paths = 10000
+boot_block = 20
+
+[statarb.pairs]
+lookbacks = [60, 120, 250]
+entries = [1.5, 2.0, 2.5]
+exit_z = 0.5
+stop_z = 4.0
+reform_every = 20
+coint_p = 0.05
+half_life = [1.0, 20.0]
+
+[statarb.residual]
+windows = [40, 60, 90]
+entries = [1.0, 1.25, 1.5, 2.0]
+close_long = -0.5
+close_short = 0.75

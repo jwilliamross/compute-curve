@@ -14,6 +14,7 @@ claim5     claim 5 (AWS GPU spot prices lead equities): fetch | evaluate
 explore    exploration rounds: round1 exploration | freeze | confirmation | shadow;
            round2 exploration | replicate | confirmation;
            round3 exploration | confirmation | mechanism
+statarb    claim 6: exploration | confirmation (docs/statarb_plan.md)
            (docs/exploration_plan.md; the confirmation runs once; shadow logs
            candidates' forecasts daily and never sends an order)
 claim4     claim 4 (index leads equities): check | evaluate | daily. Alpaca
@@ -46,7 +47,9 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--force", action="store_true", help="append another snapshot today")
 
     bf = sub.add_parser("backfill", help="one-off backfill of archived source history")
-    bf.add_argument("source", choices=["gpurentalprices", "gpurentalprices-zenodo", "cgi"])
+    bf.add_argument(
+        "source", choices=["gpurentalprices", "gpurentalprices-zenodo", "gpuprices-hf", "cgi"]
+    )
     bf.add_argument("--start", type=date.fromisoformat, required=True)
     bf.add_argument("--end", type=date.fromisoformat, required=True)
 
@@ -75,6 +78,8 @@ def _parser() -> argparse.ArgumentParser:
         "stage",
         choices=["exploration", "freeze", "confirmation", "shadow", "replicate", "mechanism"],
     )
+    sab = sub.add_parser("statarb", help="claim 6: stat arb on compute-linked equities")
+    sab.add_argument("stage", choices=["exploration", "confirmation"])
     return p
 
 
@@ -158,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
         from compute_curve.snapshot import (
             backfill_cgi,
+            backfill_gpuprices_hf,
             backfill_gpurentalprices,
             backfill_gpurentalprices_zenodo,
         )
@@ -168,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
                 datetime.combine(args.start, time(0, 0), tzinfo=UTC),
                 datetime.combine(args.end, time(23, 45), tzinfo=UTC),
             )
+        elif args.source == "gpuprices-hf":
+            outs = backfill_gpuprices_hf(cfg, args.start, args.end)
         elif args.source == "gpurentalprices-zenodo":
             outs = backfill_gpurentalprices_zenodo(cfg, args.start, args.end)
         else:
@@ -207,6 +215,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"files: {len(man['files'])}; wrote {c5p.paths(cfg)['daily_csv']}")
             return 0
         print(f"wrote {c5p.run_evaluation(cfg)}")
+        return 0
+    if args.command == "statarb":
+        from compute_curve.statarb import pipeline as sp
+
+        run = {"exploration": sp.run_exploration, "confirmation": sp.run_confirmation}
+        print(f"wrote {run[args.stage](cfg)}")
         return 0
     if args.command == "explore":
         return _explore(args.round, args.stage, cfg)

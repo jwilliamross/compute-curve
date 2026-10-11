@@ -100,12 +100,19 @@ instead, and what would unblock it. Newest entries at the bottom.
   calls the data proprietary.
 - **Unblock:** written confirmation from team@flopsindex.com.
 
-## B10. Ornn Compute Price Index is unreachable here
+## B10. Ornn Compute Price Index: reachable, but its terms forbid collection
 
-- **Evidence:** `data.ornn.com` is blocked by this environment's egress
-  policy.
-- **Unblock:** review it manually; add the host to the allowlist only if its
-  terms permit collection.
+- **Evidence (updated 2026-10-10):** `data.ornn.com` is now reachable. Its
+  terms ban "scrape, crawl ... cache, download in bulk" on the free tier.
+  - Premium costs $500 a month and includes all-time daily history and an
+    API.
+  - Data must be deleted when Premium ends.
+  - A free 72-hour "Research Grant" exists.
+  - Details: docs/data_costs.md section 1.2.
+- **Owner action:** email data@ornn.com. Ask for:
+  - the research grant;
+  - written permission to keep the history;
+  - the "earlier, sparser history" offered for backtesting.
 
 ## B11. github.com is restricted to this repository
 

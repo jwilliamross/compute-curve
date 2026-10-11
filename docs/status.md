@@ -3,6 +3,30 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Claim 6: stock statistical arbitrage (2026-10-10)
+
+**Bottom line.** No significant edge after costs. Details are in
+`docs/statarb_results.md`.
+
+- **What was tested.** Pairs trading (cointegration) and Avellaneda-Lee
+  residual reversal against XLK, on the 20 compute-linked stocks.
+  - Pre-registered: docs/statarb_plan.md, c86c7ec.
+  - A 21-cell grid, with a pooled region instead of the best cell.
+  - Deflated Sharpe, Monte Carlo nulls, a drawdown bootstrap and a cost
+    break-even.
+- **Pairs: Sharpe −1.55.** It loses before costs. AI stocks trended apart on
+  news.
+- **Residual reversal: Sharpe +0.18**, CI −1.05 to 1.25, deflated Sharpe
+  0.07.
+  - Its entry timing beats random timing (99% of Monte Carlo draws), but the
+    edge is below costs.
+  - Break-even cost is 23 bps per side, against 15 assumed.
+- **Confirmation set unspent.** Nothing survived, so the 2026-02-20 to 10-05
+  set is untouched.
+- **Skill.** `sharpe-ratio-non-iid-corrections` was added (D52). Its formulas
+  are implemented in `compute_curve.statarb.evaluate` and tested against the
+  paper's Exhibit 1.
+
 ## Exploration round 3, interim (2026-10-10)
 
 **Bottom line.** Round 3 asks what drives the CGI reversal. It has no
@@ -27,6 +51,11 @@ finding yet. Details are in `docs/exploration_round3.md`.
     CC BY 4.0, Vast.ai and RunPod rows dropped, D51). First run: 480 and
     84 rows.
   - The remaining candidate sources are listed in docs/data_sources.md.
+  - 2026-10-11: one-off backfill `gpuprices_hf` (GPU Price Tracker on
+    Hugging Face, CC BY 4.0, D54). 148 days from 2026-05-07, 183,929
+    H100/H200/B200 rows. Snapshots that reached the hub late are skipped,
+    including all of January to March. Not in `history_sources`, so the
+    rounds are unchanged.
 - **Automatic confirmation.** The daily workflow runs `explore round3
   confirmation` once the window is complete (on or after 2027-01-01 05:55
   UTC).

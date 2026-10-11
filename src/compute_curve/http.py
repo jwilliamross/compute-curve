@@ -82,12 +82,18 @@ class PoliteClient:
         parts = urlsplit(url)
         origin = f"{parts.scheme}://{parts.netloc}"
         if origin not in self._robots:
-            self._throttle(parts.netloc)
             robots_url = f"{origin}/robots.txt"
-            try:
-                resp = self._http().get(robots_url)
-            except httpx.HTTPError as exc:
-                log.warning("robots.txt fetch failed for %s: %s", origin, type(exc).__name__)
+            resp = None
+            for attempt in range(self.max_retries + 1):
+                self._throttle(parts.netloc)
+                try:
+                    resp = self._http().get(robots_url)
+                    break
+                except httpx.HTTPError as exc:
+                    log.warning("robots.txt fetch failed for %s: %s", origin, type(exc).__name__)
+                    if attempt < self.max_retries:
+                        self.sleep(self.min_interval_s * (2**attempt))
+            if resp is None:
                 self._robots[origin] = None
                 return False
             if resp.status_code in (404, 410):

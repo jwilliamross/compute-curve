@@ -386,6 +386,48 @@ class Round3Config(_Strict):
     min_channel_windows: int = Field(default=10, ge=1)
 
 
+class PairsConfig(_Strict):
+    lookbacks: list[int] = [60, 120, 250]
+    entries: list[float] = [1.5, 2.0, 2.5]
+    exit_z: float = 0.5
+    stop_z: float = 4.0
+    reform_every: int = Field(default=20, ge=1)
+    coint_p: float = Field(default=0.05, gt=0, lt=1)
+    half_life: tuple[float, float] = (1.0, 20.0)
+
+
+class ResidualConfig(_Strict):
+    windows: list[int] = [40, 60, 90]
+    entries: list[float] = [1.0, 1.25, 1.5, 2.0]
+    close_long: float = -0.5
+    close_short: float = 0.75
+
+
+class StatArbConfig(_Strict):
+    """Claim 6: statistical arbitrage on compute-linked equities (docs/statarb_plan.md)."""
+
+    explore: tuple[date, date]
+    confirm: tuple[date, date]
+    min_history: int = Field(default=60, ge=10)
+    stock_side_bps: float = Field(default=15.0, ge=0)
+    etf_side_bps: float = Field(default=3.0, ge=0)
+    sell_fee_bps: float = Field(default=1.0, ge=0)
+    borrow_annual: float = Field(default=0.03, ge=0)
+    stress_multiplier: float = Field(default=2.0, ge=1)
+    stress_borrow_annual: float = Field(default=0.10, ge=0)
+    max_positions: int = Field(default=10, ge=1)
+    max_hold: int = Field(default=20, ge=1)
+    hac_lag: int = Field(default=10, ge=0)
+    alpha: float = Field(default=0.05, gt=0, lt=1)
+    dsr_min: float = Field(default=0.90, gt=0, lt=1)
+    min_effective_n: int = Field(default=30, ge=1)
+    n_null: int = Field(default=1000, ge=10)
+    n_boot_paths: int = Field(default=10000, ge=100)
+    boot_block: int = Field(default=20, ge=1)
+    pairs: PairsConfig = PairsConfig()
+    residual: ResidualConfig = ResidualConfig()
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -405,6 +447,7 @@ class Config(_Strict):
     exploration: ExplorationConfig | None = None
     exploration2: Round2Config | None = None
     exploration3: Round3Config | None = None
+    statarb: StatArbConfig | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

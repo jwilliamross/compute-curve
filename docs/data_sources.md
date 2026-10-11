@@ -23,6 +23,7 @@ was created, and no key was sent to any source.
 | Verda (DataCrunch) | On-demand and spot list prices | HTML | Bans only "malicious automated use" | **Collector `verda`** |
 | Azure Retail Prices API | Azure H100 and H200 VM prices by region: on-demand, spot, and 1- or 3-year reservations | Keyless JSON API (`prices.azure.com`), OData filter, paged | Microsoft documents unauthenticated use for "internal analysis and price comparison"; no robots.txt (404) | **Collector `azure_retail`** from 2026-10-10 (D50). Hyperscaler, so `index.exclude_providers` keeps it out of our index |
 | FastGPU open dataset | Live offers from about 29 providers (neoclouds, marketplaces, hyperscalers): per-GPU price, GPUs per instance, `available_count` | Keyless CSV file `/api/v1/dataset/gpu-prices-current.csv` | Dataset files CC BY 4.0; robots.txt allows `/api/v1/dataset/`; site terms forbid automated collection from the rest of the site | **Collector `fastgpu`** from 2026-10-10 (D51). Vast.ai and RunPod rows dropped |
+| GPU Price Tracker (Alex Hubbard), Hugging Face `afhubbard/gpu-prices` | Twice-daily listings scraped with `gpuhunt` from 13 providers (hyperscalers, Lambda, Verda, Nebius, Cudo, CloudRift, Daytona, TensorDock, Vast.ai, RunPod, Oracle, Vultr): SKU price, GPUs per SKU, spot flag, region | Hive-partitioned Parquet on huggingface.co (`prices/dt=YYYY-MM-DD/`); keyless | Data CC BY 4.0 (dataset card and upstream `DATA_LICENSE`); huggingface.co robots.txt allows `/` | **One-off backfill `gpuprices_hf`** (D54). Only snapshots the hub held by the end of the next UTC day: 2026-05-07 onward, with gaps. Vast.ai, RunPod, Oracle and Vultr rows dropped. Not in `history_sources` |
 | Vast.ai | Marketplace offers; public 90-day feed | Keyless API and feed | **Terms prohibit automated collection and any index or benchmark use**; feed licence requires a data licence | **Not collected** (B5). Collector code kept behind a licence flag |
 | RunPod | List prices | Public page; API needs a key | **Terms prohibit automated access and building a database** | **Not collected** (B6) |
 | Together AI | On-demand, spot and reserved prices | HTML | Terms on its Services ban "competitive analysis or benchmarking" | **Not collected directly** (conservative; D16). Its prices still arrive through CGI and gpurentalprices.com |
@@ -81,6 +82,7 @@ Audited 2026-10-06 for claim 5 (docs/claim5_plan.md).
 | GetDeploying | CC BY 4.0 | "GetDeploying, GPU rental price history, https://getdeploying.com/gpus, CC BY 4.0" |
 | gpurentalprices.com | CC BY 4.0 | "GPU rental price data by gpurentalprices.com, CC BY 4.0" |
 | FastGPU open dataset | CC BY 4.0 | "Data: FastGPU GPU cloud pricing dataset (https://fastgpu.co/dataset), CC BY 4.0." Credit FastGPU with a link, and say the data was filtered by compute-curve |
+| GPU Price Tracker (Hugging Face) | CC BY 4.0 | "GPU Price Tracker by Alex Hubbard, CC BY 4.0" (https://huggingface.co/datasets/afhubbard/gpu-prices; code and methodology at https://github.com/alex-hubbard/gpu_price_tracker). Say the data was filtered and converted to per-GPU prices by compute-curve |
 | Azure Retail Prices API | Microsoft public retail prices; no data licence stated | "Microsoft Azure Retail Prices API, https://prices.azure.com/api/retail/prices". These are Microsoft retail prices without discount |
 | Provider list prices (Lium, Nebius, Lambda, CoreWeave, Hyperstack, Verda) | Public list prices | Cite the provider page |
 
@@ -126,6 +128,12 @@ All of it is under `data/raw/` as immutable Parquet. The collection log is
 - **FastGPU rows enter the headline index**, not the fixed-panel history
   series, from 2026-10-10, at the lowest source priority (D51). Its region
   column was blank on every H100/H200/B200 row on 2026-10-10.
+- **GPU Price Tracker spot rows look odd for some providers.** Nebius
+  spot rows on 2026-10-10 include H200 at 0.79 and B200 at 0.99 USD per
+  GPU-hour, far below every other source. Azure H200 spot equals on-demand,
+  as in `azure_retail`. Stored as published (`gpuprices_hf`); check them
+  before using spot rows from this source. Every kept row has
+  `available = true`, so its availability carries no information.
 - **List prices are sticky.** Our H100 history-panel index is unchanged on
   88% of days. Daily list-price changes are rare; the settlement index's
   methodology (basis adjustment, provider means, weekly recalibration) moves
@@ -194,6 +202,104 @@ The API listed no B200 or B300 SKU on 2026-10-10.
 | Columns | provider, provider_label, gpu_model, gpu_slug, vram_gb, offer_type, region, price_usd_hr (per GPU), min_gpu_count, available_count, interconnect, source_url, fetched_at. No host-identifying fields |
 | Kept | H100, H200 and B200 rows (GB200, GH200 and B300 are out of scope). Vast.ai and RunPod rows are dropped (D13), and so are serverless offers and rows without a price. `available_count` is kept in `raw_json`: 0 maps to `unavailable`, a positive count to `available`, and a blank to `unknown` |
 | Price basis | The publisher's per-GPU rate. The dataset notes that Modal, Cudo Compute, TensorDock and Daytona price the GPU alone; their rows get `price_basis = gpu_only` |
+
+## GPU Price Tracker on Hugging Face (`gpuprices_hf`, reviewed 2026-10-11, D54)
+
+Reviewed first-hand on 2026-10-11. Requests made for the review, at least
+4 seconds apart:
+
+- huggingface.co: robots.txt, the dataset card (`README.md`), the dataset
+  API record, the commit history (5 pages, 240 commits), the `prices/` tree
+  at main and at each of the 240 commits, 8 current and 2 older sample
+  files;
+- raw.githubusercontent.com: `methodology.md`, `README.md`, `LICENSE`,
+  `DATA_LICENSE`, `CITATION.cff` and `.github/workflows/daily_update.yml` of
+  `alex-hubbard/gpu_price_tracker` (main).
+
+github.com and api.github.com are blocked by this environment's proxy (403),
+so the upstream repository's own commit history could not be read.
+
+| Item | Finding |
+|---|---|
+| Licence, verbatim | Dataset card front matter: `license: cc-by-4.0`; its "License" section: "CC BY 4.0." Upstream `DATA_LICENSE`: "The pricing dataset published by this project (the contents of s3://hubbard-gpu-price-data/prices/ and any mirror, including the Hugging Face Datasets repository) is made available under the Creative Commons Attribution 4.0 International License (CC BY 4.0)." Suggested attribution: "Hubbard, A. (2026). GPU Price Tracker dataset. https://github.com/alex-hubbard/gpu_price_tracker (CC BY 4.0)." Code is MIT |
+| robots.txt | `https://huggingface.co/robots.txt`: `User-agent: *` / `Allow: /`. raw.githubusercontent.com has no robots.txt (404). File downloads redirect to Hugging Face's CDN |
+| How the publisher collects | "collected twice daily since January 2026 by scraping provider pricing surfaces via the [`gpuhunt`] library" (card). Methodology: a GitHub Actions cron at about 09:00 and 21:00 UTC; snapshots are "append-only Parquet files with names containing the snapshot timestamp". The README also describes a local twice-daily scheduler writing to SQLite. The data hold both: CI files (stamped about 09:00 and 21:00, with `git_sha` and `gpuhunt_version` in the file metadata) and local files (irregular stamps, more rows including CPU-only SKUs) |
+| Columns | timestamp, provider, instance_type, gpu_type, gpu_count, gpu_memory_gb, vcpus, ram_gb, region, price_per_hour, is_spot, available, availability_zone, quality, region_canonical, country, region_lat, region_lon, region_group. No host-identifying fields, except that Vast.ai `instance_type` values are offer ids (Vast.ai rows are dropped) |
+| Price basis | Card: "`price_per_hour` ... USD/hr for the full SKU"; "Compute `price_per_gpu_hour = price_per_hour / gpu_count`". Confirmed in the data: Lambda `gpu_8x_h100_sxm5` is 31.92 and `gpu_1x_h100_sxm5` 4.29 on 2026-10-10; Daytona 8x H100 is 48.0068 = 8 x 6.0008 |
+| Schema v1.1 in-place upgrade | Methodology: "All previously published snapshot files were upgraded in place to v1.1 ... upgraded files carry `backfilled = true`". Every pre-2026-07-08 local file carries `backfilled = true` and `emitted_at_utc` 2026-07-08T22:0x. Two upgraded files (2026-05-08T10:20 and 2026-06-22T14:39) were compared with their versions at commit `7c784c66` (2026-07-08T11:05, before the upgrade): identical rows on provider, instance_type, gpu_type, gpu_count, region, price_per_hour, is_spot and available (49,999 and 50,956 rows). The upgrade added columns only, in these two files |
+| Coverage on the hub | 371 snapshot files in 202 partitions, 2026-01-12 to 2026-10-10. Gaps: 2026-01-19, 2026-03-10 to 05-06 and isolated days. 85.7 MB in total for all GPUs |
+
+### Provenance: when each file reached the hub
+
+The repository was created on 2026-05-07T20:17:55Z (API `createdAt`). For each
+of the 240 commits the `prices/` tree was listed, giving the first commit that
+held each file:
+
+| Files | Stamped | First on the hub | Lag |
+|---|---|---|---|
+| 51 local files | 2026-01-12T19:14 to 2026-03-09T09:43 | all in the first upload, 2026-05-07T20:26:07Z | 2 to 4 months |
+| 85 CI files | 2026-05-08T09:00 to 2026-07-07T21:00 | all on 2026-07-08T22:31Z (the day the card was updated and `CITATION.cff` released v1.1) | 25 hours to 61 days |
+| 235 others (local files from 2026-05-07T20:40, all files from 2026-07-08) | 2026-05-07 to 2026-10-10 | usually the sync commit of the same run | at most 13.5 hours (median 13 seconds) |
+
+The CI files carry an `emitted_at_utc` a few hours after their stamp, which
+points to contemporaneous collection with a late upload to Hugging Face (the
+workflow also syncs to S3). That metadata is the publisher's own statement and
+cannot be checked here.
+
+**Rule applied.** A file is imported only if the hub held it at the last
+commit before the end of the next UTC day (`publication_cutoff`: day + 2 at
+00:00 UTC). It keeps 237 files: the 235 published within 13.5 hours, and the
+two CI files of 2026-07-07 (lags 37.5 and 25.5 hours, uploaded before
+2026-07-09 00:00). It skips 134. The 2026-01-12 to 03-09 history is therefore
+**not imported**, and neither are the CI files of 2026-05-08 to 07-06. Local
+files from those days are imported, so most of them still have one snapshot.
+The check runs on every backfill (one tree request per day at the chosen
+commit).
+
+### Imported (2026-10-11)
+
+Command: `compute-curve backfill gpuprices-hf --start 2026-01-12 --end 2026-10-10`.
+
+| Item | Count |
+|---|---|
+| Days written | 148, 2026-05-07 to 2026-10-10 (one Parquet per day, 4.9 MB in total) |
+| Days skipped | 54 partition days with no verifiable file (51 in January to March, 3 in May and June); 70 calendar days with no partition |
+| Snapshot files | 237 downloaded, 134 skipped as unverified |
+| Rows kept | 183,929: H100 127,927, H200 26,218, B200 29,784 |
+| By provider | gcp 68,725; azure 39,199; lambda 35,238; verda 18,460; aws 15,889; nebius 5,688; daytona 672; cudo 58 |
+| Rows dropped | Oracle 28,908; RunPod 8,540; Vast.ai 4,026; Vultr 0 (no H100/H200/B200 rows); quality not `ok` 0 |
+
+**Effect on our index (checked 2026-10-11).** With the defaults the
+fixed-panel history series is unchanged (it reads `history_sources` only).
+The headline series is unchanged on every day that meets coverage: Lambda,
+the main neocloud in this source, is already reported on those days by a
+higher-priority source, and the source's other neoclouds list mostly outside
+the US. It gains 112 rows on 2026-05-07 to 07-04, none of which meets
+coverage, and one uncovered value changes (B200 on 2026-07-05).
+
+### What is kept
+
+- H100, H200 and B200 rows (`gpu_type` H100, H100NVL, H200, H200NVL, B200)
+  with `quality = 'ok'`. GB200, GH200, B300 and other families are out of
+  scope. A100 is not kept: the schema has no A100 model.
+- Dropped providers: Vast.ai and RunPod (D13); Oracle (`oci`) and Vultr,
+  because their direct collection was rejected on terms (above).
+  Hyperscaler rows (aws, azure, gcp) are kept; `index.exclude_providers`
+  keeps them out of our index.
+- `term`: spot if `is_spot`, else on-demand. The methodology warns that spot
+  semantics differ by provider.
+- `availability` from `available` (true, false, null). It was true on every
+  kept row checked; the methodology calls it best-effort.
+- `region`: the publisher's ISO `country` where given, else the coarse code
+  from the raw region (`normalize_region`). The raw region, canonical region
+  and region group stay in `raw_json`, with the source file path (`hf_path`).
+- `gpu_variant`: NVL for the NVL types, else from the SKU name (Lambda
+  `sxm5`, `pcie`; Nebius `sxm`), else UNKNOWN.
+- `price_usd_per_gpu_hour = price_per_hour / gpu_count`;
+  `price_basis = instance_hour_list_div_gpus`.
+- `ts_source` is the row's `timestamp`; `ts_observed` is when we downloaded
+  the file (2026-10-11). Each upstream snapshot keeps its own `snapshot_id`,
+  so the index takes the latest snapshot of a day.
 
 ## Candidates (2026-10-10, not collected yet)
 

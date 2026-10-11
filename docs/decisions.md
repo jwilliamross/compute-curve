@@ -793,3 +793,72 @@ random placements before costs.
 The null is descriptive and is not a survival rule. Neither strategy
 survived the pre-registered rules, and this fix changes no verdict. The frozen
 exploration report is kept as written.
+
+## D54. GPU Price Tracker (Hugging Face) imported as `gpuprices_hf`, verifiable snapshots only (2026-10-11)
+
+**Decision.** Import Alex Hubbard's GPU Price Tracker dataset
+(`afhubbard/gpu-prices` on Hugging Face, CC BY 4.0) once, as the listing
+source `gpuprices_hf`. Command:
+`compute-curve backfill gpuprices-hf --start 2026-01-12 --end 2026-10-10`.
+Only snapshot files that the hub already held by the end of the next UTC day
+are imported. Earlier-stamped history is **skipped, not imported with a
+flag**. The source is not added to `index.history_sources` or
+`index.source_priority`, and no index, exploration or claim code changes.
+Details, quotes and counts are in docs/data_sources.md.
+
+**Reasoning.**
+
+- The licence is clear. The dataset card says `license: cc-by-4.0`, and the
+  upstream `DATA_LICENSE` puts "the Hugging Face Datasets repository" under
+  CC BY 4.0. huggingface.co/robots.txt allows everything. No key is sent.
+- Provenance decides what is imported. The repository was created on
+  2026-05-07, and the commit history shows when each file arrived:
+  - the 51 snapshots stamped 2026-01-12 to 03-09 came in the first upload,
+    2 to 4 months after their stamps;
+  - the 85 CI snapshots of 2026-05-08 to 07-07 came on 2026-07-08, up to
+    61 days late;
+  - every other file arrived within 13.5 hours (median 13 seconds).
+
+  The late files may well have been collected on time: the CI files'
+  `emitted_at_utc` metadata says so. But that is the publisher's own claim,
+  and the upstream GitHub history is not reachable from here. A flag in
+  `raw_json` would not protect anything, because no index code reads it: the
+  headline index takes every listing source. So unverifiable files are left
+  out. The rule (on the hub at the last commit before day + 2, 00:00 UTC) is
+  checked from the hub's commit history on every run. It keeps 237 files and
+  skips 134.
+- Rows kept and dropped:
+  - kept: H100, H200 and B200 rows with `quality = 'ok'` (A100 has no model in
+    our schema);
+  - dropped: Vast.ai and RunPod (D13), and also Oracle and Vultr, whose
+    direct collection was rejected on their terms. This is the conservative
+    choice: their prices reach us here through a third-party scrape;
+  - the per-GPU price is `price_per_hour / gpu_count`. The publisher
+    documents that the price is for the full SKU, and the data confirm it.
+- Time stamps follow the project rule. `ts_source` is the snapshot
+  `timestamp` and `ts_observed` is our download time (2026-10-11). Each
+  upstream snapshot keeps its own `snapshot_id`. One immutable Parquet per
+  partition day is stamped with the day's latest snapshot time, as in D48.
+  Stored days, the current day and unverifiable files make no download
+  request.
+- Two upgraded files were compared with their versions before the schema
+  v1.1 in-place upgrade. All original columns were identical.
+
+**Effect on earlier rounds.** None.
+
+- Exploration rounds 1 to 3, claim 4 and the history-panel series read
+  `history_sources` only, so they are unchanged.
+- The headline series reads every source. With these rows it is unchanged on
+  every day that meets coverage. It gains 112 uncovered rows (2026-05-07 to
+  07-04, one or two providers), and one uncovered value changes (B200,
+  2026-07-05). Evaluations use covered days only.
+
+**Imported.**
+
+- 148 days, 2026-05-07 to 2026-10-10, 4.9 MB in total.
+- 183,929 rows: H100 127,927, H200 26,218, B200 29,784. Hyperscalers are
+  most of them (gcp, azure, aws); lambda 35,238 and verda 18,460.
+- Dropped: Oracle 28,908, RunPod 8,540, Vast.ai 4,026.
+- The data are listings scraped with `gpuhunt`. Some spot rows are
+  implausible (Nebius H200 at 0.79 USD), and `available` is always true.
+  Neither has been checked against another source (unverified).

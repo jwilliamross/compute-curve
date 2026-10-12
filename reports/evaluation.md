@@ -1,6 +1,6 @@
 # Evaluation of the three claims (real data only)
 
-Generated 2026-10-12T01:33:50.232989+00:00. Variants declared project-wide: 66.
+Generated 2026-10-12T02:37:20.761863+00:00. Variants declared project-wide: 66.
 No synthetic data is used in this report.
 
 ## Bottom line
@@ -24,8 +24,8 @@ Annualized volatility of log changes (calendar days for daily series, weeks for 
 | own headline | B200 | 2026-07-06 | 2026-10-12 | 99 | 6.840 | 0.582 | 0.567 | 0.423 | 0.688 |
 | own history panel | H100 | 2026-08-04 | 2026-10-11 | 69 | 3.490 | 0.838 | 0.481 | 0.185 | 0.718 |
 | own history panel | B200 | 2026-08-04 | 2026-10-11 | 69 | 7.877 | 0.662 | 0.315 | 0.042 | 0.480 |
-| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-12 | 44 | 3.702 | 0.000 | 0.206 | 0.164 | 0.237 |
-| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-12 | 44 | 7.312 | 0.000 | 0.145 | 0.070 | 0.214 |
+| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-12 | 44 | 3.702 | 0.000 | 0.207 | 0.166 | 0.239 |
+| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-12 | 44 | 7.312 | 0.000 | 0.145 | 0.071 | 0.214 |
 | GetDeploying weekly median | H100 | 2025-10-06 | 2026-10-05 | 53 | 3.409 | 0.250 | 0.238 | 0.161 | 0.298 |
 | GetDeploying weekly median | B200 | 2025-10-06 | 2026-10-05 | 53 | 7.035 | 0.385 | 0.359 | 0.218 | 0.485 |
 

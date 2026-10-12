@@ -1,6 +1,6 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-10-12T01:35:23.329690+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
+Generated 2026-10-12T02:38:54.567034+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
 Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `ec2ca3bc82891a8f...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 

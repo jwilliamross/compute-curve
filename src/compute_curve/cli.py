@@ -87,6 +87,9 @@ def _parser() -> argparse.ArgumentParser:
             "r402",
         ],
     )
+    wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")
+    wbp.add_argument("--dry-run", action="store_true", help="count captures only; no API calls")
+    wbp.add_argument("--provider", action="append", help="limit to provider (repeatable)")
     fv = sub.add_parser("fairvalue", help="Monte Carlo fair-value strip on proxies (D55)")
     fv.add_argument("--months", type=int, default=12)
     fv.add_argument("--paths", type=int, default=20000)
@@ -105,6 +108,22 @@ def _parser() -> argparse.ArgumentParser:
         ],
     )
     return p
+
+
+def _wayback(cfg: Config, dry_run: bool, providers: list[str] | None) -> int:
+    import json
+
+    from compute_curve.collectors.wayback import backfill_wayback, render_summary
+    from compute_curve.timeutil import utc_now
+
+    end = f"{utc_now():%Y%m%d}"
+    summary = backfill_wayback(cfg, end, dry_run, frozenset(providers) if providers else None)
+    out = cfg.path("reports") / "wayback"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "backfill.json").write_text(json.dumps(summary, indent=2))
+    (out / "backfill.md").write_text(render_summary(summary))
+    print(render_summary(summary))
+    return 0
 
 
 def _statarb(cfg: Config, stage: str) -> int:
@@ -267,6 +286,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "statarb":
         return _statarb(cfg, args.stage)
+    if args.command == "wayback":
+        return _wayback(cfg, args.dry_run, args.provider)
     if args.command == "explore":
         return _explore(args.round, args.stage, cfg)
     if args.command == "backtest":

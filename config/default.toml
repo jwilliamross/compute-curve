@@ -371,3 +371,28 @@ windows = [40, 60, 90]
 entries = [1.0, 1.25, 1.5, 2.0]
 close_long = -0.5
 close_short = 0.75
+
+# Archived provider pricing pages, Claude-assisted extraction (D58,
+# docs/wayback_backfill.md). Runs only from the manual GitHub workflow
+# (web.archive.org is unreachable from the agent sandbox). Prices are the
+# Anthropic list prices for the model as of 2026-10-12; recheck on any change.
+[wayback]
+model = "claude-opus-5-5"
+effort = "low"
+max_tokens = 8000
+input_per_mtok = 4.0
+output_per_mtok = 20.0
+budget_total_usd = 20.0      # owner-approved cap (2026-10-12) of a USD 100 credit
+budget_run_usd = 20.0
+max_chars = 60000
+min_interval_s = 4.0          # Wayback's own rate limit is unverified
+start = "2023"
+targets = [
+  { provider = "lambda", url = "lambda.ai/pricing" },
+  { provider = "lambda", url = "lambdalabs.com/service/gpu-cloud" },
+  { provider = "coreweave", url = "coreweave.com/pricing" },
+  { provider = "nebius", url = "nebius.com/prices" },
+  { provider = "hyperstack", url = "hyperstack.cloud/gpu-pricing" },
+  { provider = "verda", url = "verda.com/pricing" },
+  { provider = "verda", url = "datacrunch.io/products" },
+]

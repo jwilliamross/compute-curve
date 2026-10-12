@@ -343,3 +343,19 @@ The Wayback Machine could not be reached from this environment.
    account and drop them in `data/manual/cme_settlements/`.
 5. Done 2026-10-10 (D48): the Zenodo record 21435394 (gpurentalprices.com,
    2026-07-05 to 2026-07-18, CC BY 4.0) was imported in one request.
+
+## Wayback Machine archived pricing pages (`wayback_<provider>`, D58, 2026-10-12)
+
+- **What.** Dated captures of the live pricing pages approved above: Lambda,
+  CoreWeave, Nebius, Hyperstack and Verda. Only captures with distinct
+  content (CDX `collapse=digest`) are fetched, at least 4 s apart, with a
+  robots.txt check.
+- **Extraction.** Claude proposes prices. Only rows whose verbatim quote and
+  price are found on the page are kept. Details: docs/wayback_backfill.md.
+- **Storage.** `data/raw/archive/`, research-only, never in the own index
+  without pre-registration. No host-identifying fields.
+- **Terms.** The Internet Archive's use condition (non-infringing or fair
+  use; docs/data_costs.md §7) plus each provider's own terms, which were
+  already accepted for the live pages. Never Vast.ai, RunPod or Together.
+- **Reachability.** Not reachable from the agent sandbox; runs from GitHub
+  Actions only.

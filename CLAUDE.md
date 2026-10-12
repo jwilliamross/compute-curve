@@ -36,6 +36,7 @@ uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_pl
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
 uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
+uv run compute-curve wayback --dry-run    # archived pricing pages: count captures (D58; real runs via the manual workflow)
 uv run compute-curve explore round1 exploration   # exploration sets only (docs/exploration_plan.md)
 uv run compute-curve explore round1 shadow        # daily: candidates' shadow forecasts, no orders
 ```
@@ -93,6 +94,7 @@ uv run compute-curve explore round1 shadow        # daily: candidates' shadow fo
 config/                 TOML configs (contract specs, costs, limits, models)
 data/raw/listings/      immutable listing snapshots (Parquet, committed)
 data/raw/indices/       immutable third-party index snapshots (Parquet, committed)
+data/raw/archive/       research-only rows from archived pricing pages (D58; not in the index)
 data/manual/            files the user downloads by hand (CME settlements,
                         published index values); read-only inputs
 var/                    git-ignored local state (DuckDB warehouse, paper ledger)

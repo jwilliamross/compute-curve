@@ -434,6 +434,27 @@ class StatArbConfig(_Strict):
     residual: ResidualConfig = ResidualConfig()
 
 
+class WaybackTarget(_Strict):
+    provider: str
+    url: str
+
+
+class WaybackConfig(_Strict):
+    """Archived pricing pages, Claude-assisted extraction (D58)."""
+
+    model: str = "claude-opus-5-5"
+    effort: Literal["low", "medium", "high"] = "low"
+    max_tokens: int = Field(default=8000, ge=1000)
+    input_per_mtok: float = Field(gt=0)
+    output_per_mtok: float = Field(gt=0)
+    budget_total_usd: float = Field(gt=0)
+    budget_run_usd: float = Field(gt=0)
+    max_chars: int = Field(default=60000, ge=5000)
+    min_interval_s: float = Field(default=4.0, ge=3.0)
+    start: str = "2023"
+    targets: list[WaybackTarget] = []
+
+
 class Config(_Strict):
     project: ProjectConfig = ProjectConfig()
     http: HttpConfig = HttpConfig()
@@ -455,6 +476,7 @@ class Config(_Strict):
     exploration3: Round3Config | None = None
     statarb: StatArbConfig | None = None
     exploration4: Round4Config | None = None
+    wayback: WaybackConfig | None = None
 
     def path(self, kind: Literal["data", "var", "reports"]) -> Path:
         raw = {

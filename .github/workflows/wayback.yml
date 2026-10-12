@@ -1,0 +1,73 @@
+name: wayback-backfill
+
+# Manual only. Lists archived captures of the approved provider pricing pages
+# (Wayback Machine CDX) and, unless dry_run, sends each new capture's text to
+# Claude to propose H100/H200/B200 prices; only rows whose verbatim quote and
+# price are found on the page are kept (D58, docs/wayback_backfill.md).
+# Spend is metered in data/llm_spend.jsonl and hard-capped by [wayback] in
+# config/default.toml (owner-approved: USD 20 total). Needs the repository
+# secret ANTHROPIC_API_KEY for a real run; a dry run needs no key and costs nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: count captures only, no Claude API calls"
+        type: boolean
+        default: true
+      provider:
+        description: "Limit to one provider (blank = all configured)"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wayback-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Backfill archived pricing pages
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PROVIDER: ${{ inputs.provider }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ -n "$PROVIDER" ]; then args+=(--provider "$PROVIDER"); fi
+          uv run compute-curve wayback "${args[@]}"
+
+      - name: Commit data, spend ledger and report
+        if: ${{ always() }}
+        run: |
+          git config user.name "compute-curve-bot"
+          git config user.email "compute-curve-bot@users.noreply.github.com"
+          git add data/raw/archive data/llm_spend.jsonl reports/wayback 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit."
+            exit 0
+          fi
+          git commit -m "Wayback backfill $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4; do
+            if git pull --rebase --quiet && git push --quiet; then exit 0; fi
+            sleep $((attempt * 15))
+          done
+          echo "Push failed after 4 attempts." >&2
+          exit 1

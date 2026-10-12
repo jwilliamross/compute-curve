@@ -22,6 +22,10 @@ _Last updated: 2026-10-10, exploration round 3 (interim). Branch
   - Under fixed-share accounting SA2-M still passes (Holm p 0.020) and
     SA2-L fails (0.058), so SA2-L is now **borderline**.
   - The forward test must pass under both accountings.
+- **Out-of-universe replication (claim 6d).** It **failed**: frozen SA2-M on
+  20 large-cap tech names gives Sharpe −0.55, p 0.80. The edge, if real, is
+  specific to volatile AI names. Confidence is lower; the forward test
+  decides.
 - **Paper-trading readiness (proposal; nothing executed).**
   - All names are shortable on Alpaca except WYFI. Without WYFI shorts the
     strategy makes 9.5 bps a day, p 0.018.

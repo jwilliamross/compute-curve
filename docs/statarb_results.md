@@ -210,3 +210,28 @@ free.
   and under fixed shares.
 - **Forward test:** both strategies must now pass under both accountings
   (D56).
+
+## Claim 6d: out-of-universe replication (2026-10-12)
+
+Plan: docs/statarb_plan4.md (commit 200065d), written before any of these
+stocks' data was fetched. Report: reports/statarb/claim6d.md.
+
+**Result: frozen SA2-M does not replicate** on 20 large-cap US tech names
+outside the universe (AAPL, MSFT, … PANW), over 2024-09-03 to 2026-10-05
+(524 sessions, 2,741 trades), with quoted-spread costs.
+
+| Accounting | Mean daily net | Sharpe (bootstrap CI) | One-sided p | At stress costs |
+|---|---|---|---|---|
+| Weights | −1.9 bps | −0.55 [−1.86, 0.72] | 0.80 | −3.4 bps |
+| Fixed shares | −2.2 bps | −0.60 [−1.92, 0.61] | 0.82 | −3.7 bps |
+
+**Reading, as fixed in the plan.** The edge, if real, is not a general
+property of tech stocks. Two explanations fit:
+
+- it is specific to the volatile, retail-heavy AI names of the original
+  universe, which matches the profit's concentration in SMCI, CIFR and NBIS;
+- the original result was partly luck.
+
+This lowers confidence in SA2-M. The 60-session forward test on the
+original universe stays the deciding test, and the paper-trading proposal
+still requires it to pass.

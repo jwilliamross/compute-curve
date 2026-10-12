@@ -187,6 +187,10 @@ about 0.1% a day after costs.
   - The ten-stock version falls just short (p 0.058). It is now called
     borderline.
   - The live check must pass under both bookkeeping methods.
+- **Different stocks.** The same frozen strategy, run on 20 large tech
+  companies outside the original list (Apple, Microsoft, Intel and others),
+  **lost money**. So any edge is specific to volatile AI stocks, or was
+  partly luck. The live check on the original stocks decides.
 
 ## A price model for the futures (11 October 2026)
 

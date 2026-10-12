@@ -61,7 +61,7 @@ def _clean(v: Any) -> Any:
 
 def run_confirmation4(cfg: Config, today: date | None = None) -> Path:  # pragma: no cover
     """Count days until the window closes; then run R4-01 once."""
-    from compute_curve.explore.data import load_round1  # noqa: PLC0415
+    from compute_curve.explore.data import load_index_inputs  # noqa: PLC0415
     from compute_curve.timeutil import utc_now  # noqa: PLC0415
 
     ecfg, r4 = cfg.exploration, cfg.exploration4
@@ -74,7 +74,7 @@ def run_confirmation4(cfg: Config, today: date | None = None) -> Path:  # pragma
     if out_json.exists():
         lines.append("\nDone earlier; see round4_confirmation.json.")
     else:
-        data = load_round1(cfg)
+        data = load_index_inputs(cfg)
         win = in_window(data.listings, r4.h01_forward)
         n_days = win["as_of_date"].nunique() if len(win) else 0
         if not window_complete(r4, today):
@@ -172,14 +172,14 @@ def confirm_r402(
 
 
 def r402_inputs(cfg: Config) -> dict[str, pd.Series]:  # pragma: no cover - reads local data
-    from compute_curve.explore.data import load_round1  # noqa: PLC0415
+    from compute_curve.explore.data import load_index_inputs  # noqa: PLC0415
     from compute_curve.fairvalue import daily_log_close  # noqa: PLC0415
 
     aws = pd.read_csv(cfg.path("reports") / "claim5" / "aws_spot_daily.csv")
     aws = aws.loc[aws["gpu"] == "H100"].set_index("day")["median_usd_per_gpu_hour"]
     own = pd.read_csv(cfg.path("reports") / "own_index.csv")
     own = own.loc[(own["series"] == "history_panel") & (own["gpu_model"] == "H100")]
-    cgi = daily_log_close(load_round1(cfg).cgi, "H100")
+    cgi = daily_log_close(load_index_inputs(cfg).cgi, "H100")
     return {
         "aws": log_series(aws),
         "cgi": pd.Series(cgi.to_numpy(float), index=list(cgi.index)).sort_index(),

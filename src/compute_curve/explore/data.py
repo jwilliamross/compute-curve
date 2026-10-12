@@ -161,6 +161,31 @@ def gd_weekly(ref: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(rows, ignore_index=True)[GD_COLUMNS]
 
 
+def load_index_inputs(cfg: Config) -> Round1Data:  # pragma: no cover - reads local data
+    """Listings, CGI and GetDeploying only (committed raw data); no AWS or equity bars.
+
+    Works on CI, where the git-ignored AWS archive and bar caches are absent.
+    """
+    from compute_curve.pipeline import paths as main_paths  # noqa: PLC0415
+    from compute_curve.storage import warehouse as wh  # noqa: PLC0415
+
+    con = wh.connect(None)
+    try:
+        wh.register_observations(con, main_paths(cfg)["raw"])
+        wh.register_reference_indices(con, main_paths(cfg)["raw"])
+        obs = wh.observations_frame(con)
+        ref = wh.reference_indices_frame(con)
+    finally:
+        con.close()
+    return Round1Data(
+        listings=listing_prices(obs, cfg.index),
+        cgi=cgi_values(ref),
+        gd=gd_weekly(ref),
+        aws=pd.DataFrame(columns=AWS_COLUMNS),
+        bars=pd.DataFrame(columns=BAR_COLUMNS),
+    )
+
+
 def load_round1(cfg: Config) -> Round1Data:  # pragma: no cover - reads local data
     """Load every round-1 input from local files. Nothing is fetched."""
     from compute_curve.claim4.market_data import cache_path  # noqa: PLC0415

@@ -7,6 +7,7 @@ from compute_curve import llm_extract as lx
 from compute_curve.collectors.wayback import (
     Capture,
     cdx_query,
+    coverage_order,
     has_gpu_text,
     page_text,
     parse_cdx,
@@ -131,3 +132,14 @@ def test_ledger_caps_and_done_digests(tmp_path: Path) -> None:
     assert lx.within_budget(entries, "r2", 2.0, total=20.0, per_run=20.0)
     assert not lx.within_budget(entries, "r2", 2.5, total=20.0, per_run=20.0)
     assert not lx.within_budget(entries, "r1", 1.0, total=100.0, per_run=18.5)
+
+
+def test_coverage_order_spreads_months_and_targets_first() -> None:
+    def cap(y: int, m: int, d: int, tag: str) -> Capture:
+        return Capture(datetime(y, m, d, tzinfo=UTC), "u", tag)
+
+    a = [cap(2024, 1, 5, "a1"), cap(2024, 1, 20, "a2"), cap(2024, 2, 3, "a3")]
+    b = [cap(2024, 1, 9, "b1"), cap(2024, 3, 1, "b2")]
+    order = [c.digest for _, c in coverage_order([a, b])]
+    assert order == ["a1", "b1", "a3", "b2", "a2"]
+    assert [i for i, _ in coverage_order([a, b])][:2] == [0, 1]

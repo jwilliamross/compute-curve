@@ -205,7 +205,6 @@ class _Run:
     raw_dir: Any
     pricing: Any
     worst: float
-    stop: bool = False
 
 
 def _captures(run: _Run, url: str, end: str) -> tuple[list[Capture], str]:  # pragma: no cover
@@ -301,12 +300,30 @@ def _process(
     )
 
 
-def _target(
-    run: _Run, provider: str, url: str, end: str, dry_run: bool
-) -> dict[str, Any]:  # pragma: no cover
+def coverage_order(queues: list[list[Capture]]) -> list[tuple[int, Capture]]:
+    """(target index, capture) in the order that spreads a fixed budget widely.
+
+    First the earliest capture of each calendar month of every target, months
+    oldest first and targets interleaved; then each month's second capture;
+    and so on. A run stopped by the spend cap has covered every target and
+    month it reached instead of one target in full.
+    """
+    keyed = []
+    for i, caps in enumerate(queues):
+        seen: dict[str, int] = {}
+        for c in sorted(caps, key=lambda c: c.ts):
+            month = f"{c.ts:%Y-%m}"
+            rank = seen.get(month, 0)
+            seen[month] = rank + 1
+            keyed.append(((rank, month, i, c.ts), (i, c)))
+    return [v for _, v in sorted(keyed, key=lambda kv: kv[0])]
+
+
+def _list_target(
+    run: _Run, provider: str, url: str, end: str
+) -> tuple[dict[str, Any], list[Capture]]:  # pragma: no cover
     from compute_curve import llm_extract as lx  # noqa: PLC0415
 
-    wb = run.cfg.wayback
     row: dict[str, Any] = {
         "provider": provider,
         "url": url,
@@ -316,22 +333,29 @@ def _target(
         "rows_kept": 0,
         "note": "",
     }
-    if run.stop:
-        row["note"] = "budget reached earlier"
-        return row
     caps, row["note"] = _captures(run, url, end)
     done = lx.done_digests(lx.read_ledger(run.ledger))
     todo = [c for c in caps if (provider, c.digest) not in done]
     row["captures"], row["new"] = len(caps), len(todo)
-    for cap in [] if dry_run else todo:
+    return row, todo
+
+
+def _drain(
+    run: _Run, rows: list[dict[str, Any]], queues: list[list[Capture]]
+) -> None:  # pragma: no cover
+    from compute_curve import llm_extract as lx  # noqa: PLC0415
+
+    wb = run.cfg.wayback
+    for i, cap in coverage_order(queues):
         entries = lx.read_ledger(run.ledger)
         if not lx.within_budget(
             entries, run.run_id, run.worst, wb.budget_total_usd, wb.budget_run_usd
         ):
-            row["note"], run.stop = "stopped: spend cap", True
-            break
-        _process(run, provider, cap, row)
-    return row
+            for r in rows:
+                if r["new"] > r["pages_sent"]:
+                    r["note"] = "stopped: spend cap"
+            return
+        _process(run, rows[i]["provider"], cap, rows[i])
 
 
 def backfill_wayback(  # pragma: no cover - network and Claude API
@@ -377,7 +401,10 @@ def backfill_wayback(  # pragma: no cover - network and Claude API
             pricing,
             pricing.cost(wb.max_chars // 3, wb.max_tokens),
         )
-        rows = [_target(run, t.provider, t.url, end, dry_run) for t in targets]
+        listed = [_list_target(run, t.provider, t.url, end) for t in targets]
+        rows, queues = [r for r, _ in listed], [q for _, q in listed]
+        if not dry_run:
+            _drain(run, rows, queues)
     entries = lx.read_ledger(ledger)
     return {
         "run_id": run.run_id,

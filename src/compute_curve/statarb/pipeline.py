@@ -695,18 +695,28 @@ def run_claim6c(cfg: Config) -> Path:  # pragma: no cover - reads local data, ca
 # ---------------------------------------------------------------------------
 FORWARD_START = date(2026, 10, 6)
 FORWARD_SESSIONS = 60
+EXTENDED_SESSIONS = 250  # D57: SA2-M only, docs/statarb_forward_power.md
+EXTENDED_STRATEGY = "SA2-M"
 
 
-def forward_window(sessions: pd.DatetimeIndex) -> tuple[date, date] | None:
-    """(first, 60th) session on or after FORWARD_START, or None while fewer exist."""
+def forward_window(
+    sessions: pd.DatetimeIndex, n: int = FORWARD_SESSIONS
+) -> tuple[date, date] | None:
+    """(first, n-th) session on or after FORWARD_START, or None while fewer exist."""
     fwd = [t.date() for t in sessions if t.date() >= FORWARD_START]
-    if len(fwd) < FORWARD_SESSIONS:
+    if len(fwd) < n:
         return None
-    return fwd[0], fwd[FORWARD_SESSIONS - 1]
+    return fwd[0], fwd[n - 1]
 
 
-def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, reads local data
-    """Count forward sessions daily; evaluate once when 60 exist. Never sends an order."""
+def run_forward(
+    cfg: Config, n_sessions: int = FORWARD_SESSIONS
+) -> Path:  # pragma: no cover - calls Alpaca data, reads local data
+    """Count forward sessions daily; evaluate once when ``n_sessions`` exist. Never orders.
+
+    ``n_sessions`` is 60 for the declared test (statarb_plan3.md sections 6 and 7) or
+    ``EXTENDED_SESSIONS`` for the extension (D57), whose verdict counts for SA2-M only.
+    """
     from datetime import timedelta  # noqa: PLC0415
 
     from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
@@ -719,9 +729,12 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
     if sa is None or c4 is None:
         raise RuntimeError("[statarb] and [claim4] config are required")
     d = paths(cfg)["dir"]
-    out_json, out_md = d / "claim6c_forward.json", d / "claim6c_forward.md"
+    extended = n_sessions != FORWARD_SESSIONS
+    stem = f"claim6c_forward{n_sessions}" if extended else "claim6c_forward"
+    title = f"Claim 6c {'extended ' if extended else ''}forward test"
+    out_json, out_md = d / f"{stem}.json", d / f"{stem}.md"
     if out_json.exists():
-        out_md.write_text("# Claim 6c forward test\n\nDone earlier; see claim6c_forward.json.\n")
+        out_md.write_text(f"# {title}\n\nDone earlier; see {stem}.json.\n")
         return out_md
     symbols = [*c4.universe.members(), c4.benchmark]
     last = utc_now().date() - timedelta(days=1)
@@ -736,13 +749,13 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
             end_param=f"{last.isoformat()}T23:59:00Z",
         )
     prices = wide_prices(bars, symbols, dict(c5.member_start), sa.min_history)
-    win = forward_window(prices.closes.index)
+    win = forward_window(prices.closes.index, n_sessions)
     n_fwd = int((prices.closes.index.date >= FORWARD_START).sum())
     if win is None:
         out_md.write_text(
-            "# Claim 6c forward test\n\n"
-            f"Forward sessions so far: {n_fwd} of {FORWARD_SESSIONS} (from {FORWARD_START}). "
-            "No statistic is computed until all 60 exist. No orders.\n"
+            f"# {title}\n\n"
+            f"Forward sessions so far: {n_fwd} of {n_sessions} (from {FORWARD_START}). "
+            f"No statistic is computed until all {n_sessions} exist. No orders.\n"
         )
         return out_md
     spreads = pd.Series(
@@ -764,6 +777,8 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
         both = [x for x in rows if x["strategy"].startswith(name + " ")]
         r["confirmed_both"] = all(x["confirmed"] for x in both)
         r["verdict"] = "forward test passed" if r["confirmed_both"] else "forward test failed"
+        if extended and name != EXTENDED_STRATEGY:
+            r["verdict"] = "descriptive only (the extension's verdict is for SA2-M, D57)"
     out_json.write_text(
         json.dumps(_clean({"window": [str(w) for w in win], "rows": rows}), indent=2)
     )
@@ -771,7 +786,7 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
         render_confirmation(rows, sa)
         .replace(
             "# Claim 6: statistical arbitrage, one-shot confirmation",
-            f"# Claim 6c forward shadow test, sessions {win[0]} to {win[1]}",
+            f"# {title} (shadow), sessions {win[0]} to {win[1]}",
         )
         .replace(_costs_line(sa), QUOTED_COST_NOTE)
     )

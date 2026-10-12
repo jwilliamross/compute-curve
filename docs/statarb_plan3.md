@@ -93,3 +93,15 @@ C1 and C2 under **both** accountings:
 
 Holm is applied within each accounting. This only makes the test stricter.
 It was fixed before any forward-session statistic was computed.
+
+## 8. Addendum (2026-10-12): power and a 250-session extension (D57)
+
+A power calculation (docs/statarb_forward_power.md) shows the 60-session test
+passes only about 28% of the time even if SA2-M's full edge persists. Fixed
+before any forward statistic is computed:
+
+- The 60-session test runs unchanged. A fail is reported as "not confirmed
+  at 60 sessions", with its power.
+- SA2-M only: the same rule on the first 250 forward sessions
+  (`statarb forward-extended`). SA2-L is not extended.
+- Variants: +2 (project total 297).

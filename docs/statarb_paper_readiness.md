@@ -8,10 +8,15 @@ money._
 
 ## 1. Preconditions
 
-1. **Forward test passes.** The 60-session forward shadow test
-   (docs/statarb_plan3.md sections 6 and 7) passes C1 and C2 under **both**
-   accountings, the engine's weights and fixed shares (D56). Expected around
-   the end of December 2026.
+1. **Forward test passes.** SA2-M passes C1 and C2 under **both**
+   accountings, the engine's weights and fixed shares (D56), in either:
+   - the 60-session forward shadow test (docs/statarb_plan3.md sections 6
+     and 7), expected around the end of December 2026; or
+   - the 250-session extension (D57), expected around 2027-10-01.
+
+   The 60-session test has low power: about 0.28 even if the full edge
+   persists (docs/statarb_forward_power.md). A fail there is likely even if
+   the edge is real, so the extension decides in that case.
 2. **Shortability check.** Every name traded short must be `shortable` and
    `easy_to_borrow` on Alpaca on the day of the trade.
    - On 2026-10-11 every universe name met this **except WYFI**, which is

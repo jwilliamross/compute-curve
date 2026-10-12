@@ -1,7 +1,36 @@
 # Status
 
-_Last updated: 2026-10-10, exploration round 3 (interim). Branch
+_Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## Claim 6c forward test: power check (2026-10-12)
+
+- **Finding.** The 60-session forward test is badly underpowered. Even if
+  SA2-M's full confirmation edge persists, it passes only about 28% of the
+  time; at half the edge, about 9%. With no edge it passes about 1.5%.
+  Details: docs/statarb_forward_power.md.
+- **Caveat.** The confirmation's significance leans on negative serial
+  correlation in the daily P&L (iid t 1.42 against Newey-West 2.30).
+  Block-mean t-statistics agree with Newey-West, but whether that
+  dependence persists is unverified.
+- **Decision (D57), before any forward statistic.** The 60-session test runs
+  unchanged; a fail there is reported as "not confirmed", not as "no edge".
+  SA2-M also runs a 250-session extension (to about 2027-10-01, power about
+  0.85 at the full edge). Variants: 297.
+
+## Operations (2026-10-12)
+
+- **Scheduled run green.** The first scheduled run after the fix (run 8,
+  2026-10-12) ended success.
+
+
+- **What was wrong.** The nightly workflow had ended "failure" every night
+  since launch. Data was still collected and committed. The cause was
+  R2-04 reading the local-only AWS archive (PR 19).
+- **Fix.** R2-04 now waits on CI and confirms locally after `claim5 fetch`.
+  Round 4 reads committed data only.
+- **Check.** Every exploration step was run with `var/` absent, then the
+  workflow was triggered manually.
 
 ## Claim 6c: stock stat-arb passes its one-shot confirmation (2026-10-11)
 

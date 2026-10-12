@@ -105,6 +105,8 @@ confirmations and 1 descriptive quoted-spread measurement. The project total
 is now 292. The descriptive paper-readiness diagnostics
 (docs/statarb_paper_readiness.md) bring it to 293. Claim 6d
 (docs/statarb_plan4.md, out-of-universe replication) adds 2: 295.
+The forward-test power calculation (descriptive) and the 250-session SA2-M
+extension (1 test, D57, docs/statarb_forward_power.md) add 2: 297.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

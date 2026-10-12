@@ -92,9 +92,37 @@ def _parser() -> argparse.ArgumentParser:
     fv.add_argument("--paths", type=int, default=20000)
     sab = sub.add_parser("statarb", help="claim 6: stat arb on compute-linked equities")
     sab.add_argument(
-        "stage", choices=["exploration", "confirmation", "claim6b", "claim6c", "forward", "claim6d"]
+        "stage",
+        choices=[
+            "exploration",
+            "confirmation",
+            "claim6b",
+            "claim6c",
+            "forward",
+            "forward-extended",
+            "claim6d",
+            "power",
+        ],
     )
     return p
+
+
+def _statarb(cfg: Config, stage: str) -> int:
+    from compute_curve.statarb import pipeline as sp
+    from compute_curve.statarb.power import write_power
+
+    run = {
+        "exploration": sp.run_exploration,
+        "confirmation": sp.run_confirmation,
+        "claim6b": sp.run_claim6b,
+        "claim6c": sp.run_claim6c,
+        "forward": sp.run_forward,
+        "forward-extended": lambda c: sp.run_forward(c, sp.EXTENDED_SESSIONS),
+        "claim6d": sp.run_claim6d,
+        "power": write_power,
+    }
+    print(f"wrote {run[stage](cfg)}")
+    return 0
 
 
 def _claim4(cfg: Config, action: str) -> int:
@@ -238,18 +266,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote {run_fairvalue(cfg, args.months, args.paths)}")
         return 0
     if args.command == "statarb":
-        from compute_curve.statarb import pipeline as sp
-
-        run = {
-            "exploration": sp.run_exploration,
-            "confirmation": sp.run_confirmation,
-            "claim6b": sp.run_claim6b,
-            "claim6c": sp.run_claim6c,
-            "forward": sp.run_forward,
-            "claim6d": sp.run_claim6d,
-        }
-        print(f"wrote {run[args.stage](cfg)}")
-        return 0
+        return _statarb(cfg, args.stage)
     if args.command == "explore":
         return _explore(args.round, args.stage, cfg)
     if args.command == "backtest":

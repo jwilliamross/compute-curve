@@ -550,7 +550,16 @@ def run_confirmation2(cfg: Config, now: pd.Timestamp | None = None) -> Path:  # 
             res = confirm_cgi(values, frozen["R2-03"], ecfg, r2cfg)
             res["point_in_time"] = counts
         else:
-            aws = read_pool_daily(c5paths(cfg)["pool_daily"])
+            pool = c5paths(cfg)["pool_daily"]
+            if not pool.exists():
+                # The AWS archive (3.5 GB) lives only in a local var/ (never committed);
+                # on CI it is absent, so R2-04 waits until it is fetched locally.
+                lines.append(
+                    "- R2-04: waiting; the AWS spot archive is not on this machine "
+                    "(run `claim5 fetch` locally after adding 2026-10..12 to [claim5].months)."
+                )
+                continue
+            aws = read_pool_daily(pool)
             if not aws_window_complete(aws):
                 lines.append(
                     "- R2-04: waiting for the AWS 2026-12 month (add it to [claim5].months)."

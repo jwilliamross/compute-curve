@@ -103,7 +103,8 @@ confirmations and 1 descriptive spread estimation. The project total is now
 289. Claim 6c (docs/statarb_plan3.md) declares 3 more: 2 one-shot
 confirmations and 1 descriptive quoted-spread measurement. The project total
 is now 292. The descriptive paper-readiness diagnostics
-(docs/statarb_paper_readiness.md) bring it to 293.
+(docs/statarb_paper_readiness.md) bring it to 293. Claim 6d
+(docs/statarb_plan4.md, out-of-universe replication) adds 2: 295.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

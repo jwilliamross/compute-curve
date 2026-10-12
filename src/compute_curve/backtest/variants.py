@@ -472,6 +472,22 @@ REGISTERED: tuple[Variant, ...] = (
         False,
         1,
     ),
+    Variant(
+        "statarb.6d.replication",
+        "statarb",
+        "Frozen SA2-M on an out-of-universe set of 20 large-cap tech names, one shot",
+        "2026-10-11",
+        True,
+        1,
+    ),
+    Variant(
+        "statarb.6d.quotes",
+        "statarb",
+        "Quoted NBBO spreads for universe B (descriptive)",
+        "2026-10-11",
+        False,
+        1,
+    ),
 )
 
 

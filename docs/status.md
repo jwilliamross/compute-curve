@@ -3,6 +3,16 @@
 _Last updated: 2026-10-10, exploration round 3 (interim). Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Operations (2026-10-12)
+
+- **What was wrong.** The nightly workflow had ended "failure" every night
+  since launch. Data was still collected and committed. The cause was
+  R2-04 reading the local-only AWS archive (PR 19).
+- **Fix.** R2-04 now waits on CI and confirms locally after `claim5 fetch`.
+  Round 4 reads committed data only.
+- **Check.** Every exploration step was run with `var/` absent, then the
+  workflow was triggered manually.
+
 ## Claim 6c: stock stat-arb passes its one-shot confirmation (2026-10-11)
 
 - **The test.** Residual reversal (Avellaneda-Lee) on the compute-linked

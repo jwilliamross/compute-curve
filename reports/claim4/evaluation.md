@@ -1,6 +1,6 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-10-11T02:09:38.512980+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 54.
+Generated 2026-10-12T02:38:54.567034+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
 Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `ec2ca3bc82891a8f...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 
@@ -200,11 +200,11 @@ corr(signal at session t, basket excess return of session t+k). k < 0: returns r
 
 | k | level_b200 | level_h100 |
 |---|---|---|
-| -5 | -0.05 [-0.26, 0.25] | 0.15 [-0.16, 0.33] |
-| -4 | -0.03 [-0.28, 0.18] | -0.19 [-0.37, 0.01] |
-| -3 | -0.19 [-0.37, 0.24] | -0.18 [-0.42, 0.04] |
-| -2 | -0.19 [-0.43, 0.04] | -0.20 [-0.40, 0.21] |
-| -1 | -0.09 [-0.37, 0.23] | -0.34 [-0.47, 0.07] |
+| -5 | -0.06 [-0.26, 0.24] | 0.15 [-0.16, 0.33] |
+| -4 | -0.02 [-0.24, 0.21] | -0.19 [-0.37, 0.01] |
+| -3 | -0.18 [-0.37, 0.20] | -0.18 [-0.42, 0.04] |
+| -2 | -0.21 [-0.44, 0.02] | -0.20 [-0.40, 0.21] |
+| -1 | -0.09 [-0.36, 0.23] | -0.34 [-0.47, 0.07] |
 | 0 | -0.34 [-0.60, -0.01] | -0.40 [-0.59, 0.11] |
 | 1 | 0.04 [-0.32, 0.46] | -0.07 [-0.30, 0.47] |
 | 2 | 0.09 [-0.27, 0.36] | 0.07 [-0.30, 0.37] |

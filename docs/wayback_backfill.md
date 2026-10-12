@@ -72,6 +72,29 @@ Only pages whose live versions we already collect under their terms
   - Cache tokens are metered at the full input price, which is
     conservative.
 - **Repeat runs.** A capture already processed is never sent again.
+- **Order: coverage first.** Pages are processed in this order:
+  - the earliest capture of every calendar month for every page, months
+    oldest first and pages interleaved;
+  - then each month's second capture;
+  - and so on.
+
+  A run stopped by the cap has covered as many provider-months as it could.
+  It has not spent everything on one provider.
+- **Dry run, 2026-10-12** ([run 38316386448](https://github.com/jwilliamross/compute-curve/actions/runs/38316386448)).
+  It found 454 distinct captures, from 2023 to now:
+
+  | Page | Captures |
+  |---|---|
+  | lambda.ai/pricing | 90 |
+  | lambdalabs.com/service/gpu-cloud | 102 |
+  | coreweave.com/pricing | 114 |
+  | nebius.com/prices | 55 |
+  | hyperstack.cloud/gpu-pricing | 49 |
+  | verda.com/pricing | 21 |
+  | datacrunch.io/products | 23 |
+
+  All 454 at the worst case would cost about USD 109. So USD 20 covers at
+  least about 82 pages, and likely more at typical cost (unverified).
 - **Typical page.** Probably USD 0.03 to 0.10 (unverified until the first
   run).
 

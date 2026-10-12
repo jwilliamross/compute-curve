@@ -59,7 +59,9 @@ jobs:
         run: |
           git config user.name "compute-curve-bot"
           git config user.email "compute-curve-bot@users.noreply.github.com"
-          git add data/raw/archive data/llm_spend.jsonl reports/wayback 2>/dev/null || true
+          for p in data/raw/archive data/llm_spend.jsonl reports/wayback; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
           if git diff --cached --quiet; then
             echo "Nothing new to commit."
             exit 0

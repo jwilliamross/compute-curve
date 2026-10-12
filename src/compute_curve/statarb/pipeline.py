@@ -776,3 +776,95 @@ def run_forward(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, r
         .replace(_costs_line(sa), QUOTED_COST_NOTE)
     )
     return out_md
+
+
+# ---------------------------------------------------------------------------
+# Claim 6d: out-of-universe replication of frozen SA2-M (docs/statarb_plan4.md)
+# ---------------------------------------------------------------------------
+UNIVERSE_6D = [
+    "AAPL", "MSFT", "ORCL", "CRM", "ADBE", "CSCO", "INTC", "QCOM", "TXN", "AMAT",
+    "LRCX", "KLAC", "ADI", "NXPI", "ON", "MCHP", "IBM", "NOW", "INTU", "PANW",
+]  # fmt: skip
+WINDOW_6D = (date(2024, 9, 3), date(2026, 10, 5))
+
+
+def run_claim6d(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data, reads local data
+    """Frozen SA2-M on universe B, one shot, under both accountings."""
+    from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
+    from compute_curve.claim4.market_data import fetch_bars_cached  # noqa: PLC0415
+    from compute_curve.claim5.pipeline import claim5_cfg  # noqa: PLC0415
+
+    sa, c4, c5 = cfg.statarb, cfg.claim4, claim5_cfg(cfg)
+    if sa is None or c4 is None:
+        raise RuntimeError("[statarb] and [claim4] config are required")
+    d = paths(cfg)["dir"]
+    out_json, sp_path = d / "claim6d.json", d / "claim6d_spreads.json"
+    if out_json.exists():
+        raise RuntimeError(f"{out_json} exists; claim 6d runs once")
+    symbols = [*UNIVERSE_6D, ETF]
+    with AlpacaDataClient() as client:
+        bars = fetch_bars_cached(
+            client,
+            symbols,
+            c5.bars_start.isoformat(),
+            WINDOW_6D[1].isoformat(),
+            cfg.path("var") / "market_data",
+            feed=c4.feed,
+            end_param=f"{WINDOW_6D[1].isoformat()}T23:59:00Z",
+        )
+    prices = wide_prices(bars, symbols, {}, sa.min_history)
+    if sp_path.exists():
+        spreads = pd.Series(json.loads(sp_path.read_text())["median_quoted_spread"], dtype=float)
+    else:
+        idx = prices.closes.index
+        sessions = [
+            t.date() for t in idx if pd.Timestamp(sa.explore[0]) <= t <= pd.Timestamp(sa.explore[1])
+        ]
+        spreads = fetch_quoted_spreads(cfg, sessions, symbols)
+        sp_path.write_text(
+            json.dumps(
+                {"median_quoted_spread": spreads.to_dict(), "note": "derived medians only (D29)"},
+                indent=2,
+            )
+        )
+    costs = quoted_costs(sa, spreads)
+    groups = {"B": UNIVERSE_6D}
+    rows = []
+    for accounting in ("weights", "shares"):
+        row = confirm_strategy(
+            prices, sa, groups, "SA2", REGIONS_6C["SA2-M"], costs, WINDOW_6D, accounting
+        )
+        row["strategy"] = f"SA2-M on universe B ({accounting})"
+        row["p_holm"] = row["hac_p_one_sided"]  # a single test per accounting
+        row["c1"] = bool(row["hac_p_one_sided"] <= sa.alpha and row["moments"]["mean"] > 0)
+        row["confirmed"] = row["c1"] and row["c2"]
+        rows.append(row)
+    replicates = all(r["confirmed"] for r in rows)
+    for r in rows:
+        r["verdict"] = "replicates" if replicates else "does not replicate"
+    out_json.write_text(json.dumps(_clean({"rows": rows, "replicates": replicates}), indent=2))
+    from compute_curve.statarb.report import render_confirmation  # noqa: PLC0415
+
+    md = (
+        render_confirmation(rows, sa)
+        .replace(
+            "# Claim 6: statistical arbitrage, one-shot confirmation",
+            "# Claim 6d: frozen SA2-M on out-of-universe stocks (universe B), one shot",
+        )
+        .replace(_costs_line(sa), QUOTED_COST_NOTE)
+        .replace(
+            f"Sessions {sa.confirm[0]} to {sa.confirm[1]}",
+            f"Sessions {WINDOW_6D[0]} to {WINDOW_6D[1]}",
+        )
+    )
+    lines = [
+        md,
+        "## Quoted spreads, universe B (Alpaca NBBO, sampled sessions)",
+        "",
+        "| Symbol | Median quoted spread (bps) |",
+        "|---|---|",
+        *[f"| {s} | {v * 1e4:.2f} |" for s, v in spreads.sort_values().items()],
+    ]
+    out = d / "claim6d.md"
+    out.write_text("\n".join(lines) + "\n")
+    return out

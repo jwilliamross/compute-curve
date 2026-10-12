@@ -112,6 +112,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve statarb forward
 
+      - name: Claim 6c SA2-M extended forward test (evaluates once after 250 sessions; no orders)
+        id: sa_forward_ext
+        if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
+        continue-on-error: true
+        run: uv run compute-curve statarb forward-extended
+
       - name: Commit and push data and reports
         if: ${{ always() }}
         run: |
@@ -141,7 +147,8 @@ jobs:
                    "explore2-confirm:${{ steps.xconfirm2.outcome }}" \
                    "explore3-confirm:${{ steps.xconfirm3.outcome }}" \
                    "explore4-confirm:${{ steps.xconfirm4.outcome }}" \
-                   "statarb-forward:${{ steps.sa_forward.outcome }}"; do
+                   "statarb-forward:${{ steps.sa_forward.outcome }}" \
+                   "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

@@ -939,3 +939,30 @@ and at lags 10 to 30.
 - **Universe note.** The universe has 21 names, not 20. CBRS (first bar
   2026-05-14) has no measured spread, so it would fall back to the flat
   15 bps. It made no trades in the confirmation.
+
+## D57. Claim 6c forward test: power calculation and a 250-session SA2-M extension (2026-10-12)
+
+**Finding (design calculation on spent data, docs/statarb_forward_power.md).**
+A joint block bootstrap of the confirmation series, under the frozen forward
+rule, gives:
+
+- SA2-M passes the 60-session test with probability about 0.28 if its full
+  confirmation edge persists, about 0.09 at half the edge, and about 0.015
+  with no edge.
+- At 250 sessions: about 0.85, 0.22 and 0.004.
+- SA2-L's 60-session test passes about 5.7% of the time with no edge, above
+  the nominal 5%.
+
+**Decision.** Fixed before any forward-session statistic is computed (4
+forward sessions exist; none evaluated).
+
+- The 60-session test runs and is reported unchanged. A fail is reported as
+  "not confirmed at 60 sessions", with its power, not as evidence of no edge.
+- SA2-M only: the same frozen rule on the first 250 forward sessions
+  (`statarb forward-extended`, about 2027-10-01). SA2-L is not extended.
+- Paper trading needs SA2-M to pass at 60 **or** at 250, plus the owner's
+  written approval. The no-edge chance of either is at most about 1.9%.
+
+**Why conservative.** Nothing already declared is loosened. The extension
+adds a second, longer look at one strategy whose combined false-pass rate
+stays far below 5%, and it is recorded before any forward data is seen.

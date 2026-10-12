@@ -5,6 +5,7 @@ description = "Research and paper-trading codebase for CME compute futures (GPU1
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=1.13.0",
     "duckdb>=1.5.6",
     "httpx>=0.28.1",
     "matplotlib>=3.11.2",

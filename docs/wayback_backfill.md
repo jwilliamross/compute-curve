@@ -1,0 +1,85 @@
+# Wayback backfill: archived pricing pages read by Claude (D58)
+
+_2026-10-12. Data collection, not a hypothesis test._
+
+## 1. Why
+
+Our own provider-level price history starts in 2026. The provider-gap test
+(H01, R4-01) needs at least 5 providers per day, and the term-structure work
+needs years, not months. Paid histories are pending (GetDeploying,
+docs/data_costs.md). The Wayback Machine holds dated copies of the public
+pricing pages we already collect today, back to 2023 or earlier.
+
+## 2. What it does
+
+1. **List captures.** For each approved page, the CDX API lists captures
+   with HTTP 200 and **distinct content** (`collapse=digest`). An unchanged
+   page is fetched once, not once per crawl.
+2. **Fetch the original HTML** (`<timestamp>id_/<url>`), at least 4 s apart.
+   robots.txt is checked as for every other source.
+3. **Reduce to visible text.** If a page is longer than 60,000 characters,
+   only price-like lines and their neighbours are kept, and the ledger
+   records the truncation.
+4. **Claude proposes rows** (structured output: GPU name, GPUs per unit,
+   price, per GPU or per instance, term, verbatim quote). Model
+   `claude-opus-5-5`, effort `low`. Only H100, H200 and B200.
+5. **The code verifies every row** (`collectors.wayback.verify_row`). A row
+   is kept only if:
+   - its quote appears verbatim on the page (whitespace-normalized);
+   - its price appears as a number in that quote;
+   - the GPU is named in the quote or in the 400 characters before it;
+   - the per-GPU price is between USD 0.05 and 100.
+
+   A model mistake can therefore drop a real price, but it cannot add a
+   price that is not on the page.
+6. **Store.** One immutable Parquet per capture under
+   `data/raw/archive/wayback_<provider>/`. `ts_observed` is the capture
+   time; the quote, digest, model and extraction time are kept in
+   `raw_json`.
+
+## 3. Status of the data: research-only
+
+- **Not in the own index.** The rows sit outside `data/raw/listings`, so the
+  own index and every existing test ignore them.
+- **Use needs pre-registration.** Any use in a test must be declared first.
+- **Sparse dates.** Captures are irregular, so the data dates list-price
+  changes. It is not a daily series.
+
+## 4. Sources
+
+Only pages whose live versions we already collect under their terms
+(docs/data_sources.md): Lambda, CoreWeave, Nebius, Hyperstack and Verda
+(formerly DataCrunch). Never Vast.ai, RunPod or Together.
+
+**Unverified:**
+- The older URLs: `lambdalabs.com/service/gpu-cloud` and
+  `datacrunch.io/products`. A wrong URL simply returns no captures.
+- Wayback's own rate limit.
+- Whether "noncommercial" is still in the Internet Archive's terms. Use here
+  is non-commercial research either way (docs/data_costs.md §7).
+
+## 5. Cost and spending limit
+
+- **Price.** USD 4 per million input tokens and USD 20 per million output
+  tokens (Anthropic list price for `claude-opus-5-5`, 2026-10-12).
+- **Owner-approved cap.** USD 20 in total and USD 20 per run, from the
+  owner's USD 100 credit (2026-10-12).
+- **How the cap is enforced:**
+  - Every call is metered into `data/llm_spend.jsonl` (committed;
+    append-only; no secrets).
+  - A call is made only if the worst case (about USD 0.24: 20,000 input
+    and 8,000 output tokens) still fits under both caps.
+  - Cache tokens are metered at the full input price, which is
+    conservative.
+- **Repeat runs.** A capture already processed is never sent again.
+- **Typical page.** Probably USD 0.03 to 0.10 (unverified until the first
+  run).
+
+## 6. How to run
+
+1. **Dry run (free).** Actions → `wayback-backfill` → Run workflow, with
+   `dry_run` ticked. This counts captures per page and calls no API.
+2. **Real run.** Needs the repository secret `ANTHROPIC_API_KEY`. Untick
+   `dry_run`. It stops at the cap.
+3. **Where it runs.** The agent sandbox cannot reach `web.archive.org`
+   (docs/data_costs.md §7), so it runs only from GitHub Actions.

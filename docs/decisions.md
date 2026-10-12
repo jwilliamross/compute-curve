@@ -966,3 +966,35 @@ forward sessions exist; none evaluated).
 **Why conservative.** Nothing already declared is loosened. The extension
 adds a second, longer look at one strategy whose combined false-pass rate
 stays far below 5%, and it is recorded before any forward data is seen.
+
+## D58. Wayback backfill with Claude-assisted extraction; `anthropic` dependency; USD 20 cap (2026-10-12)
+
+**Context.** The owner received USD 100 of Claude API credit and asked that
+it be used to gather more data. Our provider-level history is short. The
+Wayback Machine holds dated copies of the public pricing pages we already
+collect.
+
+**Decision.**
+
+- **Collector.** `collectors.wayback` lists distinct captures (CDX,
+  `collapse=digest`). `llm_extract` asks `claude-opus-5-5` (effort low,
+  structured output) for H100/H200/B200 rows, each with a verbatim quote.
+  `verify_row` keeps a row only if the quote is on the page, the price is in
+  the quote and the GPU is named nearby. Details: docs/wayback_backfill.md.
+- **Research-only.** Rows are stored under `data/raw/archive/`, outside the
+  listings the own index reads. `ts_observed` is the capture time: the
+  archive shows the price was public then. Any use in a test is
+  pre-registered first.
+- **Spending.** Metered per call in `data/llm_spend.jsonl` and hard-capped
+  in config: USD 20 total and USD 20 per run. The owner chose USD 20 for a
+  first batch on 2026-10-12. Raising the cap needs the owner's approval.
+- **Where it runs.** Manual GitHub workflow only (`wayback-backfill`, dry
+  run by default). The key comes from the repository secret
+  `ANTHROPIC_API_KEY` and is never logged.
+- **Dependency.** `anthropic` (the official Claude SDK) is added to the core
+  stack, because the SDK is the supported way to call the API: structured
+  outputs, typed errors and retries.
+
+**Why conservative.** The model cannot add a number that is not on the page;
+at worst it misses one. The data cannot leak into any existing test. Spend
+cannot exceed the owner's cap.

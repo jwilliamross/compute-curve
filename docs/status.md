@@ -3,6 +3,19 @@
 _Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Wayback backfill with Claude (2026-10-12, D58)
+
+- **What.** Archived copies of the provider pricing pages we already
+  collect (Lambda, CoreWeave, Nebius, Hyperstack, Verda), back to 2023.
+  Claude proposes H100/H200/B200 prices, and the code keeps a row only if
+  its verbatim quote and price are on the page. Research-only:
+  `data/raw/archive/`, not in the index.
+- **Spending limit.** USD 20 total, approved by the owner, metered in
+  `data/llm_spend.jsonl`.
+- **To run.** The repository secret `ANTHROPIC_API_KEY`, then the manual
+  `wayback-backfill` workflow. A dry run is free and needs no key.
+  docs/wayback_backfill.md.
+
 ## Claim 6c forward test: power check (2026-10-12)
 
 - **Finding.** The 60-session forward test is badly underpowered. Even if

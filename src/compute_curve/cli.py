@@ -85,6 +85,7 @@ def _parser() -> argparse.ArgumentParser:
             "replicate",
             "mechanism",
             "r402",
+            "archive",
         ],
     )
     wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")

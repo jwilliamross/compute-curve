@@ -36,6 +36,7 @@ uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_pl
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
 uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
+uv run compute-curve index-gap            # claim 1b: our index vs Silicon Data's (licensed SD CSVs; B7)
 uv run compute-curve futures-premium      # claim 7: GPU1/GPU2 premium shadow log (manual CME CSVs; no orders)
 uv run compute-curve wayback --dry-run    # archived pricing pages: count captures (D58; real runs via the manual workflow)
 uv run compute-curve explore round1 exploration   # exploration sets only (docs/exploration_plan.md)

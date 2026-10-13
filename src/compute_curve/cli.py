@@ -88,6 +88,9 @@ def _parser() -> argparse.ArgumentParser:
             "archive",
         ],
     )
+    sub.add_parser(
+        "index-gap", help="claim 1b: our index vs Silicon Data's (needs licensed SD history)"
+    )
     sub.add_parser("futures-premium", help="claim 7: GPU1/GPU2 premium shadow log (no orders)")
     wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")
     wbp.add_argument("--dry-run", action="store_true", help="count captures only; no API calls")
@@ -110,6 +113,13 @@ def _parser() -> argparse.ArgumentParser:
         ],
     )
     return p
+
+
+def _index_gap(cfg: Config) -> int:
+    from compute_curve.index.gap import run_gap
+
+    print(f"wrote {run_gap(cfg)}")
+    return 0
 
 
 def _futures_premium(cfg: Config) -> int:
@@ -299,8 +309,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "statarb":
         return _statarb(cfg, args.stage)
-    if args.command == "futures-premium":
-        return _futures_premium(cfg)
+    if args.command in ("futures-premium", "index-gap"):
+        return _futures_premium(cfg) if args.command == "futures-premium" else _index_gap(cfg)
     if args.command == "wayback":
         return _wayback(cfg, args.dry_run, args.provider)
     if args.command == "explore":

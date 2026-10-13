@@ -3,6 +3,23 @@
 _Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Claim 1b: our index vs Silicon Data's (2026-10-13, built; waiting for SD history, B7)
+
+- **The idea (owner).** Use the gap between our index and Silicon Data's.
+  The futures settle on Silicon Data's numbers, so being "more accurate"
+  does not pay by itself. Only predicting Silicon Data's next move does.
+- **GAP-1, lead-lag.** Do our last 5 business-day changes predict SD's next
+  5?
+- **GAP-2, error correction.** Does SD close an unusually wide gap?
+- **Method.** Walk-forward, against a random walk, Clark-West, Holm over 2.
+  Windows around SD's known restatement and membership changes are
+  excluded.
+- **Timing.** It runs once 60 out-of-sample predictions exist. Our panel
+  starts 2026-08-04, so about January 2027, if SD history is obtained.
+- **Data.** Needs licensed SDH100RT/SDB200RT daily history. The best route
+  is a Bloomberg terminal: SMU's Sobey MFin workspace has Bloomberg
+  Professional. docs/index_gap_plan.md, `compute-curve index-gap`.
+
 ## Claim 7: GPU1/GPU2 futures risk premium (2026-10-13, built; waiting for listing)
 
 - **Idea.** GPU-hours cannot be stored, so futures can trade above or

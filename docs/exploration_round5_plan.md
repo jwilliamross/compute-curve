@@ -1,6 +1,6 @@
 # Round 5: provider gaps and the price trend in archived list prices (plan)
 
-_Written 2026-10-13 at about 03:50 UTC. The Wayback backfill (D58) pilot was
+_Written 2026-10-13, committed 03:39:54 UTC. The Wayback backfill (D58) pilot was
 running and **no archived row had been read by anyone**. This plan is
 committed before any archived price is looked at. Simulation and research
 only._

@@ -113,6 +113,8 @@ Round 6 (docs/exploration_round6_plan.md) adds 5: R6-01 to R6-03 (tests, Holm
 over 3) and two descriptive measures. Total 304.
 Claim 7, the futures premium (docs/futures_premium_plan.md), adds 3: FP-A, FP-B
 and the descriptive premium series. Total 307.
+Claim 1b, the index gap (docs/index_gap_plan.md), adds 2: GAP-1 (lead-lag) and
+GAP-2 (error correction). Total 309.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

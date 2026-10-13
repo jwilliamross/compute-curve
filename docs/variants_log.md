@@ -109,6 +109,8 @@ The forward-test power calculation (descriptive) and the 250-session SA2-M
 extension (1 test, D57, docs/statarb_forward_power.md) add 2: 297.
 Round 5 on archived list prices (docs/exploration_round5_plan.md) adds 2:
 R5-01 (monthly provider-gap test) and R5-02 (descriptive trend). Total 299.
+Round 6 (docs/exploration_round6_plan.md) adds 5: R6-01 to R6-03 (tests, Holm
+over 3) and two descriptive measures. Total 304.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

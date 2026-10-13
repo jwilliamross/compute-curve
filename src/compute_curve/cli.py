@@ -74,7 +74,7 @@ def _parser() -> argparse.ArgumentParser:
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
-    ex.add_argument("round", choices=["round1", "round2", "round3", "round4", "round5"])
+    ex.add_argument("round", choices=["round1", "round2", "round3", "round4", "round5", "round6"])
     ex.add_argument(
         "stage",
         choices=[
@@ -178,6 +178,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore.mechanism import run_mechanism
     from compute_curve.explore.round4 import run_confirmation4, run_r402
     from compute_curve.explore.round5 import run_round5
+    from compute_curve.explore.round6 import run_round6
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -198,6 +199,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
         },
         "round4": {"confirmation": run_confirmation4, "r402": run_r402},
         "round5": {"archive": run_round5},
+        "round6": {"archive": run_round6},
     }
     run = stages[round_].get(stage_name)
     if run is None:

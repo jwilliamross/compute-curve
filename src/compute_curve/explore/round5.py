@@ -29,10 +29,10 @@ TREND_MIN_PROVIDERS = 3
 TREND_BLOCK = 6
 
 
-def capture_prices(rows: pd.DataFrame) -> pd.DataFrame:
-    """One price per (provider, capture): the median verified H100 on-demand per-GPU price."""
+def capture_prices(rows: pd.DataFrame, gpu: str = "H100") -> pd.DataFrame:
+    """One price per (provider, capture): the median verified on-demand per-GPU price."""
     r = rows.loc[
-        (rows["gpu_model"] == "H100")
+        (rows["gpu_model"] == gpu)
         & (rows["term"] == "on_demand")
         & rows["provider"].isin(PROVIDERS)
         & ~rows.get("is_synthetic", pd.Series(False, index=rows.index)).astype(bool)

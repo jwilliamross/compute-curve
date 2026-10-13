@@ -3,6 +3,18 @@
 _Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Round 6 on archived prices (2026-10-13): no tradable signal
+
+Pre-registered, one-shot, Holm over 3 (docs/exploration_round6.md):
+
+- **R6-01.** B200/H100 ratio mean reversion: p 0.30 (12 months).
+- **R6-02.** H100 list-price change → next-month compute-stock excess:
+  wrong sign, p 0.79 (24 months).
+- **R6-03.** AR(1) vs random walk for monthly H100 changes: the random walk
+  wins.
+- **Implication.** Model GPU1's underlying as a driftless random walk.
+  List prices change in only about 1 month in 6. Variants: 304.
+
 ## Round 5 on archived prices (2026-10-13): no new edge
 
 - **Backfill finished.** USD 18.01 of the USD 20 cap. 3,358 verified H100,

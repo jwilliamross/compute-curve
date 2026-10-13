@@ -1,0 +1,27 @@
+{
+  "run_id": "20261013T032848Z",
+  "dry_run": false,
+  "targets": [
+    {
+      "provider": "verda",
+      "url": "verda.com/pricing",
+      "captures": 21,
+      "new": 21,
+      "pages_sent": 17,
+      "rows_kept": 206,
+      "note": "some pages failed (ConnectError)"
+    },
+    {
+      "provider": "verda",
+      "url": "datacrunch.io/products",
+      "captures": 23,
+      "new": 23,
+      "pages_sent": 17,
+      "rows_kept": 339,
+      "note": "some pages failed (ConnectError)"
+    }
+  ],
+  "spent_run_usd": 1.6515,
+  "spent_total_usd": 1.6515,
+  "worst_case_per_page_usd": 0.24
+}

@@ -158,7 +158,8 @@ def to_observation(
         ts_observed=cap.ts,
         provider=provider,
         gpu_model=model,
-        config=f"{row.gpus_per_unit}x {row.gpu_name}",
+        config=f"{row.gpus_per_unit}x {row.gpu_name}"
+        + (f" [{row.qualifier.strip()}]" if row.qualifier.strip() else ""),
         price_usd_per_gpu_hour=per_gpu,
         term=term,
         region=None,
@@ -168,12 +169,13 @@ def to_observation(
         ts_source=cap.ts,
         gpu_variant=gpu_variant(row.gpu_name),
         gpus_per_instance=row.gpus_per_unit,
-        listing_id=f"{provider}:{row.gpu_name}:{row.gpus_per_unit}:{row.term}",
+        listing_id=f"{provider}:{row.gpu_name}:{row.gpus_per_unit}:{row.term}:{row.qualifier.strip()}",
         source_url=cap.archive_url,
         price_basis=("instance_hour_list_div_gpus" if row.unit == "per_instance_hour" else "list"),
         raw_json=json.dumps(
             {
                 "quote": row.quote,
+                "qualifier": row.qualifier,
                 "unit": row.unit,
                 "price_usd": row.price_usd,
                 "digest": cap.digest,

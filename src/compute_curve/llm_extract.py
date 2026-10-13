@@ -28,7 +28,10 @@ SYSTEM = (
     "(on_demand, spot or reserved; a commitment or contract price is reserved); and "
     "`quote`, an exact, contiguous copy of the shortest page text that contains the "
     "price. Copy the quote character for character; never paraphrase, reformat or "
-    "combine separate lines. If a price is ambiguous, not in US dollars, 'contact "
+    "combine separate lines. When the page lists more than one price for the same GPU "
+    "and unit (for example per location, region, section or plan), set `qualifier` to "
+    "the page's own label for this price, copied verbatim; otherwise leave it empty. "
+    "If a price is ambiguous, not in US dollars, 'contact "
     "sales', or you are unsure which GPU it belongs to, leave it out. An empty list "
     "is a correct answer for a page without such prices."
 )
@@ -41,6 +44,7 @@ class PriceRow(BaseModel):
     unit: Literal["per_gpu_hour", "per_instance_hour"]
     term: Literal["on_demand", "spot", "reserved"]
     quote: str
+    qualifier: str
 
 
 class PageExtraction(BaseModel):

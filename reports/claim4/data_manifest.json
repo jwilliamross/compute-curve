@@ -1,123 +1,123 @@
 {
   "adjustment": "all",
   "benchmark": "XLK",
-  "end": "2026-10-09",
+  "end": "2026-10-12",
   "feed": "sip",
   "note": "Prices are not stored in the repository (docs/decisions.md D29).",
   "provider": "Alpaca market data API (data.alpaca.markets)",
-  "rows": 2024,
-  "sha256": "ec2ca3bc82891a8f2729a6aa0fc7bf74f72e329a3549be88bd8dd575b9b1397c",
+  "rows": 2046,
+  "sha256": "7c1b4142b8831624282ae4099de062b88de04b8d4d6995a48fe2c1f333d32a1d",
   "start": "2026-06-01",
   "symbols": {
     "AMD": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "APLD": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "AVGO": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "BE": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "CBRS": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "CEG": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "CIFR": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "CORZ": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "CRWV": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "IREN": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "MRVL": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "MU": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "NBIS": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "NVDA": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "SMCI": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "TLN": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "TSM": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "VRT": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "VST": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "WULF": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "WYFI": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     },
     "XLK": {
-      "bars": 92,
+      "bars": 93,
       "first": "2026-06-01",
-      "last": "2026-10-09"
+      "last": "2026-10-12"
     }
   },
   "universe": {

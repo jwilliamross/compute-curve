@@ -35,6 +35,7 @@ def _row(**kw: object) -> lx.PriceRow:
         "unit": "per_gpu_hour",
         "term": "on_demand",
         "quote": "$2.49 per GPU-hour",
+        "qualifier": "",
     }
     base.update(kw)
     return lx.PriceRow.model_validate(base)
@@ -103,6 +104,15 @@ def test_page_text_truncates_to_price_lines() -> None:
     text, truncated = page_text(f"<html>{filler}{PAGE}</html>", 5000)
     assert truncated and len(text) <= 5000 and "$2.49 per GPU-hour" in text
     assert has_gpu_text(text) and not has_gpu_text("A100 only")
+
+
+def test_qualifier_separates_two_prices_for_the_same_gpu() -> None:
+    a = _row(qualifier="Location A")
+    b = _row(qualifier="")
+    oa = to_observation(a, GpuModel.H100, 2.49, "verda", CAP, "m", CAP.ts)
+    ob = to_observation(b, GpuModel.H100, 2.49, "verda", CAP, "m", CAP.ts)
+    assert oa.listing_id != ob.listing_id and "[Location A]" in oa.config
+    assert "[" not in ob.config
 
 
 def test_observation_carries_capture_time_and_quote() -> None:

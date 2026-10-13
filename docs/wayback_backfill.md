@@ -106,3 +106,21 @@ Only pages whose live versions we already collect under their terms
    `dry_run`. It stops at the cap.
 3. **Where it runs.** The agent sandbox cannot reach `web.archive.org`
    (docs/data_costs.md §7), so it runs only from GitHub Actions.
+
+## 7. Pilot (2026-10-13, Verda only)
+
+- **Volume and cost.** 44 captures, 34 sent to Claude, 5 with no GPU text.
+  545 rows were proposed, and all 545 were verified. Cost USD 1.65, about
+  USD 0.05 per page (6,100 input and 1,200 output tokens on average).
+- **Cross-check against the live collector.** The archived 2026-10-05
+  capture gives H100 on-demand USD 3.77 and spot USD 1.89. That is exactly
+  what our live `verda` collector recorded that day.
+- **Two prices per page.** Recent Verda pages list two H100 price sets about
+  10% apart (for example USD 3.89 and 4.28 on 2026-10-09). Both are on the
+  page, so the extraction is faithful. The live collector takes the first.
+- **Fix for later pages.** The pilot rows carry no label telling the two
+  apart. From now on Claude also returns `qualifier`, the page's own label
+  for such a price (location, section or plan). It is stored in `config`,
+  `listing_id` and `raw_json`.
+- **Round 5 unchanged.** The plan, frozen beforehand, uses the median over
+  a capture's rows. That stays as written.

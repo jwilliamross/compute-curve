@@ -126,10 +126,13 @@ def r502(panel: pd.DataFrame, seed: int, n_boot: int = 2000) -> dict[str, Any]:
 
 
 def load_archive(data_dir: Path) -> pd.DataFrame:  # pragma: no cover - reads committed data
-    files = sorted((data_dir / "raw" / "archive").glob("wayback_*/**/*.parquet"))
-    if not files:
+    import duckdb  # noqa: PLC0415
+
+    folder = data_dir / "raw" / "archive"
+    if not any(folder.glob("wayback_*/**/*.parquet")):
         return pd.DataFrame()
-    return pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
+    pattern = (folder / "wayback_*" / "**" / "*.parquet").as_posix()
+    return duckdb.read_parquet(pattern, union_by_name=True).df()
 
 
 def render(r: dict[str, Any]) -> str:

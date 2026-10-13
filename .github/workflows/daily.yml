@@ -118,6 +118,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve statarb forward-extended
 
+      - name: Claim 7 futures premium shadow log (derived numbers only; no orders)
+        id: fp_shadow
+        if: ${{ always() }}
+        continue-on-error: true
+        run: uv run compute-curve futures-premium
+
       - name: Commit and push data and reports
         if: ${{ always() }}
         run: |
@@ -148,7 +154,8 @@ jobs:
                    "explore3-confirm:${{ steps.xconfirm3.outcome }}" \
                    "explore4-confirm:${{ steps.xconfirm4.outcome }}" \
                    "statarb-forward:${{ steps.sa_forward.outcome }}" \
-                   "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}"; do
+                   "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}" \
+                   "futures-premium:${{ steps.fp_shadow.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

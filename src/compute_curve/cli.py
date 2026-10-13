@@ -88,6 +88,7 @@ def _parser() -> argparse.ArgumentParser:
             "archive",
         ],
     )
+    sub.add_parser("futures-premium", help="claim 7: GPU1/GPU2 premium shadow log (no orders)")
     wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")
     wbp.add_argument("--dry-run", action="store_true", help="count captures only; no API calls")
     wbp.add_argument("--provider", action="append", help="limit to provider (repeatable)")
@@ -109,6 +110,13 @@ def _parser() -> argparse.ArgumentParser:
         ],
     )
     return p
+
+
+def _futures_premium(cfg: Config) -> int:
+    from compute_curve.futures_premium import run_shadow
+
+    print(f"wrote {run_shadow(cfg, utc_now().date())}")
+    return 0
 
 
 def _wayback(cfg: Config, dry_run: bool, providers: list[str] | None) -> int:
@@ -291,6 +299,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "statarb":
         return _statarb(cfg, args.stage)
+    if args.command == "futures-premium":
+        return _futures_premium(cfg)
     if args.command == "wayback":
         return _wayback(cfg, args.dry_run, args.provider)
     if args.command == "explore":

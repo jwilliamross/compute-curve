@@ -21,3 +21,7 @@ var/
 # Local copies of third-party papers (copyright; keep out of git)
 references/
 .claude/worktrees/
+
+# Manual market data: licence unverified (CME) or storage forbidden without consent (Silicon Data). D59.
+data/manual/cme_settlements/*.csv
+data/manual/published_index/*.csv

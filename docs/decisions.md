@@ -998,3 +998,25 @@ collect.
 **Why conservative.** The model cannot add a number that is not on the page;
 at worst it misses one. The data cannot leak into any existing test. Spend
 cannot exceed the owner's cap.
+
+## D59. Manual CME settlement and published-index CSVs are git-ignored; logs keep derived numbers only (2026-10-13)
+
+**Context.** Claim 7 (docs/futures_premium_plan.md) reads CME settlements
+and Silicon Data index values that the owner downloads by hand.
+
+- CME's redistribution terms for settlement data are unverified here.
+- Silicon Data's terms forbid storing site content without consent (B7).
+
+**Decision.**
+
+- `data/manual/cme_settlements/*.csv` and
+  `data/manual/published_index/*.csv` are git-ignored. They stay on the
+  owner's machine, as Alpaca data stays in `var/` (D29).
+- The claim-7 shadow log and reports store only derived quantities: log
+  premia, positions and USD P&L, never a price.
+- If the owner confirms that a licence allows committing them, this can be
+  reversed.
+
+**Consequence.** Claim 7 runs where the CSVs are, the owner's machine or
+this session's container; not in GitHub Actions unless the owner adds the
+files there.

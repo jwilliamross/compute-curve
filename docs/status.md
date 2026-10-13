@@ -3,6 +3,29 @@
 _Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Claim 7: GPU1/GPU2 futures risk premium (2026-10-13, built; waiting for listing)
+
+- **Idea.** GPU-hours cannot be stored, so futures can trade above or
+  below the expected monthly average: a risk premium, as in power markets.
+  Rounds 5 and 6 support a driftless random walk, so fair value is the
+  current index level, the same for every future month.
+- **FP-A, outright.** Sell next month's contract when it is more than 5%
+  above the published index; buy when it is more than 5% below. Needs a
+  licensed index history (B7).
+- **FP-B, calendar.** Sell the month after next and buy next month when the
+  curve slopes up by more than 3%; the reverse when it slopes down. Needs
+  futures prices only.
+- **Mechanics.**
+  - Decisions on the first business day of each month, held to final
+    settlement, existing cost assumptions.
+  - It runs nightly (`futures-premium`). Until CME settlements are dropped
+    in `data/manual/cme_settlements/` it only reports "no settlements yet".
+- **Evaluation.** Once, after 12 settled trades of a strategy or on
+  2028-01-01. Holm over 2, C2 at 2× costs. Shadow only, no orders.
+  docs/futures_premium_plan.md.
+- **Data handling.** Manual CSVs are git-ignored; logs keep derived numbers
+  only (D59). Variants: 307.
+
 ## Round 6 on archived prices (2026-10-13): no tradable signal
 
 Pre-registered, one-shot, Holm over 3 (docs/exploration_round6.md):

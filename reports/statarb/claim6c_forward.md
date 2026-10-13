@@ -1,3 +1,3 @@
 # Claim 6c forward test
 
-Forward sessions so far: 4 of 60 (from 2026-10-06). No statistic is computed until all 60 exist. No orders.
+Forward sessions so far: 5 of 60 (from 2026-10-06). No statistic is computed until all 60 exist. No orders.

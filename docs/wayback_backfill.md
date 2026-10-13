@@ -124,3 +124,24 @@ Only pages whose live versions we already collect under their terms
   `listing_id` and `raw_json`.
 - **Round 5 unchanged.** The plan, frozen beforehand, uses the median over
   a capture's rows. That stays as written.
+
+## 8. Full backfill (2026-10-13): finished
+
+- **Runs.** Three: the Verda pilot, the full run, and one retry of failed
+  pages.
+- **Spend.** USD 18.01 in total, under the USD 20 cap. About USD 2 is left
+  unspent.
+- **Pages.** 427 settled captures (sent to Claude, or with no GPU text) out
+  of 454. About 30 still fail on archive connection resets. They were not
+  retried further: diminishing value, since every reachable provider-month
+  is already covered first.
+- **Verification.** 3,374 of 3,389 proposed rows verified (99.6%), 3,358
+  rows after de-duplication.
+- **Cross-check.** For every provider, the newest archived H100 prices
+  exactly match the live collectors on nearby days:
+  - Lambda 3.99 to 4.29 (SXM) and 3.29 (PCIe);
+  - CoreWeave 6.155;
+  - Nebius 4.50;
+  - Hyperstack 3.20, 2.60 and 2.50;
+  - Verda 3.77 and 1.89.
+- **Results.** Round 5 used this data once (docs/exploration_round5.md).

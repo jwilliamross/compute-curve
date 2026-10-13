@@ -3,6 +3,19 @@
 _Last updated: 2026-10-12, claim 6c forward-test power check. Branch
 `claude/eager-archimedes-fjo2e4`._
 
+## Round 5 on archived prices (2026-10-13): no new edge
+
+- **Backfill finished.** USD 18.01 of the USD 20 cap. 3,358 verified H100,
+  H200 and B200 list prices from 5 providers, 2023 to 2026. 99.6% of the
+  proposed rows were verified, and the newest captures match the live
+  collectors exactly.
+- **R5-01 (provider gaps close?).** Slope −0.032, p 0.21: not confirmed.
+  It is the same size as the two earlier estimates (−0.036, −0.037), all
+  individually insignificant and economically tiny.
+- **R5-02 (trend).** The median H100 list price was about flat from late
+  2023 to 2026: −1.2% a year, CI [−15.6%, +11.8%]. This supports the
+  zero-drift fair-value scenario. docs/exploration_round5.md.
+
 ## Wayback backfill with Claude (2026-10-12, D58)
 
 - **What.** Archived copies of the provider pricing pages we already

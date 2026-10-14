@@ -1,7 +1,29 @@
 # Status
 
-_Last updated: 2026-10-12, claim 6c forward-test power check. Branch
+_Last updated: 2026-10-14, GetDeploying API access and round 7 plan. Branch
 `claude/eager-archimedes-fjo2e4`._
+
+## GetDeploying API and round 7 (2026-10-14, built; waiting for the key)
+
+- **Access.** GetDeploying granted free full API access until 2026-12-14.
+  Aggregate results and charts may be published, with credit.
+- **Data.** Per-provider H100/B200/H200 price history: weekly from mid-2024,
+  daily from 2026-07-30.
+- **Storage (D60).** Raw stays in git-ignored `var/`; only an encrypted
+  archive is committed.
+- **Round 7.** Pre-registered before any download, one shot, Holm over 4
+  (docs/exploration_round7_plan.md):
+  - R7-01: do provider gaps close?
+  - R7-02: does the breadth of recent price cuts predict the next month's
+    market move? This is the trading-relevant test.
+  - R7-03: AR(1) against a random walk.
+  - R7-04: B200/H100 ratio mean reversion.
+- **Owner action.**
+  1. Save the key from the share link; the link expires about 2026-10-21.
+  2. Add it as the repository secret `GETDEPLOYING_API_KEY`.
+  3. Run the `getdeploying-api` workflow: first `check`, then `download`
+     with round 7.
+- Variants: 315.
 
 ## Claim 1b: our index vs Silicon Data's (2026-10-13, built; waiting for SD history, B7)
 

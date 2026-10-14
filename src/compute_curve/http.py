@@ -120,6 +120,7 @@ class PoliteClient:
         json: Any = None,
         params: dict[str, Any] | None = None,
         check_robots: bool = True,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """Send a request after robots and rate-limit checks; retry transient errors."""
         if check_robots and not self.robots_allows(url):
@@ -129,7 +130,7 @@ class PoliteClient:
         while True:
             self._throttle(host)
             try:
-                resp = self._http().request(method, url, json=json, params=params)
+                resp = self._http().request(method, url, json=json, params=params, headers=headers)
             except httpx.TransportError as exc:
                 if attempt >= self.max_retries:
                     raise

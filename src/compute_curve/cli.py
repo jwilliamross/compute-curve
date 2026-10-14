@@ -74,7 +74,9 @@ def _parser() -> argparse.ArgumentParser:
     c5 = sub.add_parser("claim5", help="claim 5: AWS GPU spot prices vs compute-linked equities")
     c5.add_argument("action", choices=["fetch", "evaluate"])
     ex = sub.add_parser("explore", help="exploration rounds (docs/exploration_plan.md)")
-    ex.add_argument("round", choices=["round1", "round2", "round3", "round4", "round5", "round6"])
+    ex.add_argument(
+        "round", choices=["round1", "round2", "round3", "round4", "round5", "round6", "round7"]
+    )
     ex.add_argument(
         "stage",
         choices=[
@@ -86,8 +88,11 @@ def _parser() -> argparse.ArgumentParser:
             "mechanism",
             "r402",
             "archive",
+            "api",
         ],
     )
+    gdp = sub.add_parser("getdeploying-api", help="GetDeploying API history download (D60)")
+    gdp.add_argument("action", choices=["check", "download"])
     sub.add_parser(
         "index-gap", help="claim 1b: our index vs Silicon Data's (needs licensed SD history)"
     )
@@ -126,6 +131,27 @@ def _futures_premium(cfg: Config) -> int:
     from compute_curve.futures_premium import run_shadow
 
     print(f"wrote {run_shadow(cfg, utc_now().date())}")
+    return 0
+
+
+def _getdeploying_api(cfg: Config, action: str) -> int:
+    import json
+
+    from compute_curve.collectors import getdeploying_api as gd
+    from compute_curve.http import PoliteClient
+
+    with PoliteClient(
+        user_agent=cfg.http.user_agent,
+        min_interval_s=cfg.http.min_interval_s,
+        timeout_s=cfg.http.timeout_s,
+        max_retries=cfg.http.max_retries,
+    ) as client:
+        get = gd.make_get(client, gd.api_key())
+        if action == "check":
+            print(json.dumps(gd.check(get)))
+            return 0
+        man = gd.download(get, cfg.path("var") / "getdeploying_api", utc_now())
+    print(json.dumps(man))
     return 0
 
 
@@ -197,6 +223,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore.round4 import run_confirmation4, run_r402
     from compute_curve.explore.round5 import run_round5
     from compute_curve.explore.round6 import run_round6
+    from compute_curve.explore.round7 import run_round7
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -218,6 +245,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
         "round4": {"confirmation": run_confirmation4, "r402": run_r402},
         "round5": {"archive": run_round5},
         "round6": {"archive": run_round6},
+        "round7": {"api": run_round7},
     }
     run = stages[round_].get(stage_name)
     if run is None:
@@ -311,6 +339,8 @@ def main(argv: list[str] | None = None) -> int:
         return _statarb(cfg, args.stage)
     if args.command in ("futures-premium", "index-gap"):
         return _futures_premium(cfg) if args.command == "futures-premium" else _index_gap(cfg)
+    if args.command == "getdeploying-api":
+        return _getdeploying_api(cfg, args.action)
     if args.command == "wayback":
         return _wayback(cfg, args.dry_run, args.provider)
     if args.command == "explore":

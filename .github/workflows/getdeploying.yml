@@ -1,0 +1,110 @@
+name: getdeploying-api
+
+# GetDeploying API research access (free until 2026-12-14; D60,
+# docs/exploration_round7_plan.md). Needs the repository secret
+# GETDEPLOYING_API_KEY.
+#
+# - check: one cheap call, prints counts only.
+# - download: the full per-provider H100/B200/H200 history plus today's
+#   offerings. Raw JSON stays in var/ (git-ignored). Only an AES-256
+#   encrypted archive is committed (passphrase: the same secret), with a
+#   manifest of counts. Vast.ai, RunPod and Together are never requested.
+# - run_round7: the one-shot pre-registered round 7 on the new download.
+#   It commits aggregates only.
+#
+# The weekly schedule keeps vintages until access ends, then does nothing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "check or download"
+        type: choice
+        options: [check, download]
+        default: check
+      run_round7:
+        description: "After download, run round 7 once"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 6 * * 2"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: getdeploying-api
+  cancel-in-progress: false
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GETDEPLOYING_API_KEY: ${{ secrets.GETDEPLOYING_API_KEY }}
+      ACTION: ${{ inputs.action || 'download' }}
+      RUN_ROUND7: ${{ inputs.run_round7 || false }}
+    steps:
+      - name: Access window and secret
+        id: gate
+        run: |
+          if [ "$(date -u +%Y%m%d)" -gt 20261214 ]; then
+            echo "Access ended 2026-12-14; nothing to do."
+            echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ -z "$GETDEPLOYING_API_KEY" ]; then
+            echo "Repository secret GETDEPLOYING_API_KEY is not set." >&2; exit 1
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == 'true'
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        if: steps.gate.outputs.go == 'true'
+        with:
+          version: "0.8.17"
+
+      - name: Install
+        if: steps.gate.outputs.go == 'true'
+        run: uv sync --frozen
+
+      - name: Check
+        if: steps.gate.outputs.go == 'true' && env.ACTION == 'check'
+        run: uv run compute-curve getdeploying-api check
+
+      - name: Download and encrypt
+        if: steps.gate.outputs.go == 'true' && env.ACTION == 'download'
+        run: |
+          uv run compute-curve getdeploying-api download
+          vint=$(ls var/getdeploying_api | sort | tail -1)
+          mkdir -p data/private/getdeploying_api reports/getdeploying_api
+          tar -C var -czf - "getdeploying_api/$vint" \
+            | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
+                -pass env:GETDEPLOYING_API_KEY \
+                -out "data/private/getdeploying_api/$vint.tar.gz.enc"
+          cp "var/getdeploying_api/$vint/manifest.json" "reports/getdeploying_api/$vint.json"
+
+      - name: Round 7 (one shot)
+        if: steps.gate.outputs.go == 'true' && env.ACTION == 'download' && env.RUN_ROUND7 == 'true'
+        run: uv run compute-curve explore round7 api
+
+      - name: Commit encrypted archive and aggregates
+        if: steps.gate.outputs.go == 'true' && env.ACTION == 'download'
+        run: |
+          git config user.name "compute-curve-bot"
+          git config user.email "compute-curve-bot@users.noreply.github.com"
+          for p in data/private/getdeploying_api reports/getdeploying_api \
+                   reports/exploration/round7.md reports/exploration/round7.json; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
+          if git diff --cached --quiet; then echo "Nothing new to commit."; exit 0; fi
+          git commit -m "GetDeploying API download $(date -u +%Y-%m-%dT%H:%MZ) (encrypted; D60)"
+          for attempt in 1 2 3 4; do
+            if git pull --rebase --quiet && git push --quiet; then exit 0; fi
+            sleep $((attempt * 15))
+          done
+          echo "Push failed after 4 attempts." >&2
+          exit 1

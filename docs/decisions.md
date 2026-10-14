@@ -1020,3 +1020,53 @@ and Silicon Data index values that the owner downloads by hand.
 **Consequence.** Claim 7 runs where the CSVs are, the owner's machine or
 this session's container; not in GitHub Actions unless the owner adds the
 files there.
+
+## D60. GetDeploying API research access: storage, robots and scope (2026-10-14)
+
+**Context.**
+
+- On 2026-10-14 GetDeploying (Anthony) granted two months of free, full API
+  access, until 2026-12-14. In his words: "Publishing aggregate results with
+  charts is totally fine. Crediting GetDeploying among your sources would be
+  much appreciated."
+- The API page says "We do not permit the resale of raw data feeds", and its
+  best-practice notes say "Store historical data locally for trend
+  analysis".
+- The repository is public.
+- robots.txt disallows `/api/` for crawlers.
+
+**Decision.**
+
+- **Key.** The key is read from `GETDEPLOYING_API_KEY` only: a repository
+  secret for the workflow, or an environment variable in a session. It is
+  never printed, logged or committed. The share link that reveals it is not
+  recorded anywhere in the repository.
+- **Robots.** The client calls the documented, authenticated API that
+  GetDeploying granted us. It is not a crawler, so it skips the robots check
+  for `/api/` only. Requests are at least 2 s apart, a run is capped at 2,500
+  requests (the limit is 3,000 a day), and the collection runs weekly.
+- **Raw storage.**
+  - Raw responses live in git-ignored `var/getdeploying_api/<vintage>/`.
+  - The only committed copy is an AES-256 (PBKDF2, 600k iterations) archive
+    in `data/private/getdeploying_api/`, encrypted with the same secret. Only
+    the owner can read it, and it survives the end of access, when the data
+    can no longer be downloaded again.
+  - Raw rows are never published in plain form or as workflow artifacts (on
+    a public repository, artifacts can be downloaded by any signed-in user).
+  - Deleting the secret makes every committed copy unreadable.
+    Crypto-shredding is the removal route if GetDeploying asks.
+- **Publishing.** Reports carry aggregates and test statistics only, with a
+  credit line for GetDeploying.
+- **Excluded providers.** Vast.ai, RunPod (terms) and Together AI (D16) are
+  never requested, and their rows are dropped if they appear.
+- **Not in our index.** The API data is not added to our H100/B200 index:
+  access ends on 2026-12-14, which would put a structural break in the index.
+  It is research data for round 7 (docs/exploration_round7_plan.md), which
+  was pre-registered before any download.
+
+**Consequence.**
+
+- The owner must not rotate or delete `GETDEPLOYING_API_KEY` while the
+  archive is still wanted; keep a copy of the key in a password manager.
+- To decrypt an archive:
+  `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:GETDEPLOYING_API_KEY -in <file> | tar -xz -C var`.

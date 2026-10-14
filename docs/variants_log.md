@@ -115,6 +115,9 @@ Claim 7, the futures premium (docs/futures_premium_plan.md), adds 3: FP-A, FP-B
 and the descriptive premium series. Total 307.
 Claim 1b, the index gap (docs/index_gap_plan.md), adds 2: GAP-1 (lead-lag) and
 GAP-2 (error correction). Total 309.
+Round 7 on GetDeploying API per-provider history (docs/exploration_round7_plan.md)
+adds 6: R7-01 to R7-04 (tests, Holm over 4) and D7-1, D7-2 (descriptive).
+Total 315.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

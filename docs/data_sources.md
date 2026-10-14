@@ -14,6 +14,7 @@ was created, and no key was sent to any source.
 | CME GPU1/GPU2 settlements | Futures prices | cmegroup.com blocks automation; DataMine free after midnight CT with a CME login (snippet) | Automated access to cmegroup.com prohibited | **Manual CSV drop** (`data/manual/cme_settlements/`). None yet: not listed (B8) |
 | Computable GPU Index (CGI) | Independent H100/B200 index, 15-minute values, per-provider receipts | Keyless JSON API | Data CC BY-NC 4.0; not for settlement or products | **Collector `cgi`**; history backfilled from 2026-08-30 |
 | GetDeploying | Weekly medians by billing type, 53 weeks | Keyless CSV | CC BY 4.0 | **Collector `getdeploying`** (index rows) |
+| GetDeploying API | Per-provider price history (weekly from mid-2024, daily from 2026-07-30), live offerings | Bearer key (free research access to 2026-12-14) | Aggregates and charts may be published, with credit; no resale of raw feeds | **`getdeploying-api`** (D60): raw in `var/`, committed only encrypted; round 7 |
 | gpurentalprices.com | Daily per-provider offers with source URLs | Keyless JSON; archive on raw.githubusercontent.com | CC BY 4.0 | **Collector `gpurentalprices`**; archive backfilled 2026-07-19 to 2026-10-04; Zenodo archive 2026-07-05 to 07-18 (D48) |
 | Lium | Marketplace reference price plus listed/rented/idle GPUs | Keyless JSON advertised in robots.txt | No restriction found | **Collector `lium`** |
 | Nebius | List prices by platform and region | Markdown docs page | No scraping clause | **Collector `nebius`** |

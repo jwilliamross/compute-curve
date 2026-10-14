@@ -16,6 +16,8 @@ compute futures: GPU1 (Silicon Data H100 Rental Index) and GPU2 (B200).
   the paper endpoint. Paper orders only when the claim-4 validation gate
   passes; otherwise shadow mode. Never a live endpoint or real money.
 - Alpaca market data is never committed (D29); it is cached under `var/`.
+- GetDeploying API raw data is never committed in plain form (D60); only the
+  encrypted archive under `data/private/`, and aggregates in reports.
 
 ## Commands
 
@@ -38,6 +40,9 @@ uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0)
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
 uv run compute-curve index-gap            # claim 1b: our index vs Silicon Data's (licensed SD CSVs; B7)
 uv run compute-curve futures-premium      # claim 7: GPU1/GPU2 premium shadow log (manual CME CSVs; no orders)
+uv run compute-curve getdeploying-api check     # GetDeploying API key check (D60; needs GETDEPLOYING_API_KEY)
+uv run compute-curve getdeploying-api download  # full per-provider history -> var/ (encrypted copy via workflow)
+uv run compute-curve explore round7 api         # one-shot round 7 on the API history (docs/exploration_round7_plan.md)
 uv run compute-curve wayback --dry-run    # archived pricing pages: count captures (D58; real runs via the manual workflow)
 uv run compute-curve explore round1 exploration   # exploration sets only (docs/exploration_plan.md)
 uv run compute-curve explore round1 shadow        # daily: candidates' shadow forecasts, no orders
@@ -97,6 +102,7 @@ config/                 TOML configs (contract specs, costs, limits, models)
 data/raw/listings/      immutable listing snapshots (Parquet, committed)
 data/raw/indices/       immutable third-party index snapshots (Parquet, committed)
 data/raw/archive/       research-only rows from archived pricing pages (D58; not in the index)
+data/private/           encrypted archives of licensed data (D60; GetDeploying API)
 data/manual/            files the user downloads by hand (CME settlements,
                         published index values); read-only inputs
 var/                    git-ignored local state (DuckDB warehouse, paper ledger)

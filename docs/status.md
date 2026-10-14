@@ -3,35 +3,28 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
-## GetDeploying API and round 7 (2026-10-14, first vintage downloaded; round 7 not yet run)
+## Round 7 on GetDeploying per-provider history (2026-10-14): two confirmed
 
-- **Access.** GetDeploying granted free full API access until 2026-12-14.
-  Aggregate results and charts may be published, with credit.
-- **Data.** Per-provider H100/B200/H200 price history: weekly from mid-2024,
-  daily from 2026-07-30.
-- **Storage (D60).** Raw stays in git-ignored `var/`; only an encrypted
-  archive is committed.
-- **Round 7.** Pre-registered before any download, one shot, Holm over 4
-  (docs/exploration_round7_plan.md):
-  - R7-01: do provider gaps close?
-  - R7-02: does the breadth of recent price cuts predict the next month's
-    market move? This is the trading-relevant test.
-  - R7-03: AR(1) against a random walk.
-  - R7-04: B200/H100 ratio mean reversion.
-- **Blocked in GitHub Actions (B15).** Cloudflare challenges the runners'
-  IPs, so the workflow cannot reach the API. The repository secret is set.
-- **First vintage `20261014T172009Z` (cloud session, B15 route 1).**
-  - 498 requests, 113 providers requested (Vast.ai, RunPod and Together
-    excluded).
-  - History rows: H100 10,610; B200 3,916; H200 6,742.
-  - Encrypted archive in `data/private/getdeploying_api/`, decryption
-    round-trip verified. Manifest (counts only) in `reports/getdeploying_api/`.
-  - Client fix (commit 1df28da): `/providers` and `/gpus` are paginated. The first client
-    read them as lists and would have requested no history.
-- **Next step.** Round 7, one shot (`compute-curve explore round7 api`), when
-  the owner says so. Later weekly vintages need a cloud session until
-  GetDeploying answers on B15 route 2.
-- Variants: 315.
+Pre-registered one-shot test, Holm over 4 (docs/exploration_round7.md):
+
+- **R7-01 confirmed: provider gaps close** (Holm p 0.003). It is the
+  project's first confirmed GPU-price hypothesis, and it holds in all
+  robustness variants. It is slow: about 6% of a gap closes per quarter.
+- **R7-04 confirmed: the B200/H100 ratio mean-reverts** (slope −0.58 over
+  8 weeks, CI [−1.04, −0.19], Holm p 0.002). This is a candidate
+  GPU2-versus-GPU1 spread idea, untestable until the futures list and SD
+  history exists.
+- **R7-02 and R7-03 are degenerate.** The median weekly move is almost
+  always zero, because prices are sticky. They will not be re-run on the
+  same data.
+- **Silicon Data is not in the data.** The comparison with Silicon Data
+  still needs SD history: claim 1b, B7, possibly via Bloomberg at SMU.
+- **Index method alone moves the price.** The latest B200 price ranges from
+  USD 6.25 to 8.30 across constructions. The month-on-month change in the
+  monthly average has an SD of 1.9% for H100 and 8.3% for B200.
+- **Data handling.** The download was run from a cloud session, because
+  GitHub Actions is blocked (B15). It is committed only encrypted (D60).
+- Variants: 324.
 
 ## Claim 1b: our index vs Silicon Data's (2026-10-13, built; waiting for SD history, B7)
 

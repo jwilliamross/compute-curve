@@ -1,9 +1,9 @@
 # Status
 
-_Last updated: 2026-10-14, GetDeploying API access and round 7 plan. Branch
-`claude/eager-archimedes-fjo2e4`._
+_Last updated: 2026-10-14, GetDeploying API first download. Branch
+`claude/compassionate-allen-uitctg`._
 
-## GetDeploying API and round 7 (2026-10-14, built; waiting for the key)
+## GetDeploying API and round 7 (2026-10-14, first vintage downloaded; round 7 not yet run)
 
 - **Access.** GetDeploying granted free full API access until 2026-12-14.
   Aggregate results and charts may be published, with credit.
@@ -20,10 +20,17 @@ _Last updated: 2026-10-14, GetDeploying API access and round 7 plan. Branch
   - R7-04: B200/H100 ratio mean reversion.
 - **Blocked in GitHub Actions (B15).** Cloudflare challenges the runners'
   IPs, so the workflow cannot reach the API. The repository secret is set.
-- **Next step.** The owner adds the key as an environment variable in the
-  Claude cloud environment. A new session then runs the download, the
-  encryption and round 7. A note to GetDeploying asks whether GitHub Actions
-  can be allowed.
+- **First vintage `20261014T172009Z` (cloud session, B15 route 1).**
+  - 498 requests, 113 providers requested (Vast.ai, RunPod and Together
+    excluded).
+  - History rows: H100 10,610; B200 3,916; H200 6,742.
+  - Encrypted archive in `data/private/getdeploying_api/`, decryption
+    round-trip verified. Manifest (counts only) in `reports/getdeploying_api/`.
+  - Client fix (commit 1df28da): `/providers` and `/gpus` are paginated. The first client
+    read them as lists and would have requested no history.
+- **Next step.** Round 7, one shot (`compute-curve explore round7 api`), when
+  the owner says so. Later weekly vintages need a cloud session until
+  GetDeploying answers on B15 route 2.
 - Variants: 315.
 
 ## Claim 1b: our index vs Silicon Data's (2026-10-13, built; waiting for SD history, B7)

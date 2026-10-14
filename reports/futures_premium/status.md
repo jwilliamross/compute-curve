@@ -1,3 +1,3 @@
 # Claim 7 futures premium: shadow
 
-2026-10-13: no CME settlements in data/manual/cme_settlements/ yet (GPU1/GPU2 not listed, B8). Nothing computed. No orders.
+2026-10-14: no CME settlements in data/manual/cme_settlements/ yet (GPU1/GPU2 not listed, B8). Nothing computed. No orders.

@@ -21,6 +21,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pandas as pd
 
 from compute_curve.http import PoliteClient
@@ -70,14 +71,32 @@ def make_get(client: PoliteClient, key: str) -> GetJson:
     def get(path: str, params: dict[str, Any]) -> dict[str, Any] | list[Any]:
         resp = client.get(f"{BASE}{path}", params=params, check_robots=False, headers=headers)
         if resp.status_code != 200:
-            try:
-                msg = str(resp.json().get("error", ""))[:200]
-            except ValueError:
-                msg = ""
-            raise ApiError(f"{path}: HTTP {resp.status_code} {msg}".strip())
+            raise ApiError(f"{path}: HTTP {resp.status_code} {describe_error(resp)}")
         return resp.json()  # type: ignore[no-any-return]
 
     return get
+
+
+def describe_error(resp: httpx.Response) -> str:
+    """What came back on an error: the API's message, or the body type (e.g. a bot challenge)."""
+    ctype = resp.headers.get("content-type", "").split(";")[0]
+    detail = ""
+    if ctype == "application/json":
+        try:
+            body = resp.json()
+            detail = str(body.get("error") or body.get("detail") or body)[:200]
+        except (ValueError, AttributeError):
+            detail = resp.text[:200]
+    elif "cf-mitigated" in resp.headers:
+        detail = f"Cloudflare {resp.headers['cf-mitigated']}"
+    else:
+        title = (
+            resp.text.split("<title>", 1)[-1].split("</title>", 1)[0]
+            if "<title>" in resp.text
+            else ""
+        )
+        detail = title.strip()[:120]
+    return f"[{ctype or 'no content-type'}] {detail}".strip()
 
 
 @dataclass

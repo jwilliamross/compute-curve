@@ -110,7 +110,21 @@ def test_key_goes_in_the_header_and_never_in_errors(monkeypatch: pytest.MonkeyPa
     assert all(not r.url.path.endswith("robots.txt") for r in seen)
     with pytest.raises(gd.ApiError) as err:
         get("/providers", {})
-    assert "401" in str(err.value) and secret not in str(err.value)
+    assert "401" in str(err.value) and "Invalid token" in str(err.value)
+    assert secret not in str(err.value)
     monkeypatch.delenv(gd.ENV_KEY, raising=False)
     with pytest.raises(gd.ApiError):
         gd.api_key()
+
+
+def test_error_description_names_a_bot_challenge() -> None:
+    html = httpx.Response(
+        403,
+        headers={"content-type": "text/html; charset=UTF-8", "cf-mitigated": "challenge"},
+        text="<html><title>Just a moment...</title></html>",
+    )
+    assert "Cloudflare challenge" in gd.describe_error(html)
+    plain = httpx.Response(403, headers={"content-type": "text/html"}, text="<title>Denied</title>")
+    assert "Denied" in gd.describe_error(plain)
+    js = httpx.Response(403, json={"detail": "Key inactive"})
+    assert "Key inactive" in gd.describe_error(js)

@@ -18,11 +18,12 @@ _Last updated: 2026-10-14, GetDeploying API access and round 7 plan. Branch
     market move? This is the trading-relevant test.
   - R7-03: AR(1) against a random walk.
   - R7-04: B200/H100 ratio mean reversion.
-- **Owner action.**
-  1. Save the key from the share link; the link expires about 2026-10-21.
-  2. Add it as the repository secret `GETDEPLOYING_API_KEY`.
-  3. Run the `getdeploying-api` workflow: first `check`, then `download`
-     with round 7.
+- **Blocked in GitHub Actions (B15).** Cloudflare challenges the runners'
+  IPs, so the workflow cannot reach the API. The repository secret is set.
+- **Next step.** The owner adds the key as an environment variable in the
+  Claude cloud environment. A new session then runs the download, the
+  encryption and round 7. A note to GetDeploying asks whether GitHub Actions
+  can be allowed.
 - Variants: 315.
 
 ## Claim 1b: our index vs Silicon Data's (2026-10-13, built; waiting for SD history, B7)

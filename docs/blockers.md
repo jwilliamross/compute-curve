@@ -170,3 +170,21 @@ instead, and what would unblock it. Newest entries at the bottom.
   - Lium hourly `pricing.json`, which robots.txt describes as hourly. This
     would need an hourly scheduler and gives one provider only.
   - AWS spot prices as an indirect scarcity proxy: R4-02, pre-registered.
+
+## B15. GetDeploying API: Cloudflare challenge blocks GitHub Actions runners (2026-10-14)
+
+- **What happened.** Both `getdeploying-api check` runs in GitHub Actions
+  (2026-10-14) got `HTTP 403 [text/html] Cloudflare challenge` on
+  `/api/gpus`. Cloudflare answered before the key was even checked.
+- **Comparison.** From this session's container, the same endpoint answers
+  in JSON (`{"error": "Invalid token"}` for a wrong key). The API is
+  reachable; only datacenter runner IPs are challenged.
+- **Not done.** No attempt to get around the challenge. That would mean
+  evading the publisher's bot protection.
+- **Routes.**
+  1. The owner adds `GETDEPLOYING_API_KEY` as an environment variable in
+     the Claude cloud environment. A new session can then download, encrypt
+     and commit exactly as the workflow would (D60).
+  2. Ask GetDeploying whether authenticated `/api/` requests from GitHub
+     Actions can skip the challenge. The weekly workflow would then work
+     unchanged.

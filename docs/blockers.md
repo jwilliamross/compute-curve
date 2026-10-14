@@ -188,3 +188,7 @@ instead, and what would unblock it. Newest entries at the bottom.
   2. Ask GetDeploying whether authenticated `/api/` requests from GitHub
      Actions can skip the challenge. The weekly workflow would then work
      unchanged.
+- **Partly worked around (2026-10-14).** Route 1 is done: the key is set in
+  the cloud environment, and vintage `20261014T172009Z` was downloaded,
+  encrypted and committed from a session. The weekly scheduled run still
+  hits the challenge until route 2 is answered.

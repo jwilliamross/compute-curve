@@ -89,6 +89,7 @@ def _parser() -> argparse.ArgumentParser:
             "r402",
             "archive",
             "api",
+            "posthoc",
         ],
     )
     gdp = sub.add_parser("getdeploying-api", help="GetDeploying API history download (D60)")
@@ -224,6 +225,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
     from compute_curve.explore.round5 import run_round5
     from compute_curve.explore.round6 import run_round6
     from compute_curve.explore.round7 import run_round7
+    from compute_curve.explore.round7_posthoc import run_posthoc
 
     stages: dict[str, dict[str, Callable[[Config], Path]]] = {
         "round1": {
@@ -245,7 +247,7 @@ def _explore(round_: str, stage_name: str, cfg: Config) -> int:
         "round4": {"confirmation": run_confirmation4, "r402": run_r402},
         "round5": {"archive": run_round5},
         "round6": {"archive": run_round6},
-        "round7": {"api": run_round7},
+        "round7": {"api": run_round7, "posthoc": run_posthoc},
     }
     run = stages[round_].get(stage_name)
     if run is None:

@@ -38,12 +38,12 @@ class FakeApi:
 
     def __call__(self, path: str, params: dict[str, Any]) -> dict[str, Any] | list[Any]:
         self.calls.append((path, params))
-        if path == "/providers":
-            return [{"id": p} for p in ("lambda-labs", "nebius", "vast-ai", "runpod", "heroku")]
-        if path == "/gpus":
-            return [{"id": "nvidia-h100"}]
         rows: list[dict[str, Any]]
-        if path == "/gpu-offerings":
+        if path == "/providers":  # paginated, like every list endpoint of the real API
+            rows = [{"id": p} for p in ("lambda-labs", "nebius", "vast-ai", "runpod", "heroku")]
+        elif path == "/gpus":
+            rows = [{"id": "nvidia-h100"}]
+        elif path == "/gpu-offerings":
             rows = [{"provider": {"id": "vast-ai"}}, {"provider": {"id": "nebius"}}]
         else:
             rows = (
@@ -53,7 +53,12 @@ class FakeApi:
             )
         size, page = params["page_size"], params["page"]
         pc = (len(rows) + size - 1) // size
-        return {"page": page, "page_count": pc, "data": rows[(page - 1) * size : page * size]}
+        return {
+            "page": page,
+            "page_count": pc,
+            "total": len(rows),
+            "data": rows[(page - 1) * size : page * size],
+        }
 
 
 def test_download_paginates_skips_excluded_and_writes_manifest(tmp_path: Path) -> None:
@@ -71,6 +76,11 @@ def test_download_paginates_skips_excluded_and_writes_manifest(tmp_path: Path) -
     assert gd.latest_vintage(tmp_path) == vint
     with pytest.raises(FileExistsError):
         gd.download(api, tmp_path, NOW, gpus=("nvidia-h100",))
+
+
+def test_check_reports_paginated_totals() -> None:
+    out = gd.check(FakeApi())
+    assert out["ok"] and out["n_gpu_models"] == 1 and out["n_providers"] == 5
 
 
 def test_budget_stops_before_the_daily_limit(tmp_path: Path) -> None:

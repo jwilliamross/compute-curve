@@ -159,11 +159,11 @@ def download(get: GetJson, root: Path, now: datetime, gpus: Iterable[str] = GPUS
     if out.exists():
         raise FileExistsError(out)
     counted = get if isinstance(get, Counter) else Counter(get)
-    providers = counted("/providers", {})
-    gpu_list = counted("/gpus", {})
+    providers = fetch_pages(counted, "/providers", {})
+    gpu_list = fetch_pages(counted, "/gpus", {})
     _write(out / "providers.json", providers)
     _write(out / "gpus.json", gpu_list)
-    ids = provider_ids(providers if isinstance(providers, list) else [])
+    ids = provider_ids(providers)
     n_rows: dict[str, int] = {}
     for gpu in gpus:
         offers = drop_excluded(fetch_pages(counted, "/gpu-offerings", {"gpu_model": gpu}))
@@ -229,12 +229,12 @@ def load_history(vintage_dir: Path) -> pd.DataFrame:  # pragma: no cover - reads
 
 
 def check(get: GetJson) -> dict[str, Any]:
-    """One cheap call: how many GPU models and providers the key can see."""
-    gpus = get("/gpus", {})
-    provs = get("/providers", {})
+    """Two cheap calls: how many GPU models and providers the key can see (paginated totals)."""
+    gpus = get("/gpus", {"page": 1, "page_size": 1})
+    provs = get("/providers", {"page": 1, "page_size": 1})
     return {
         "ok": True,
-        "n_gpu_models": len(gpus) if isinstance(gpus, list) else None,
-        "n_providers": len(provs) if isinstance(provs, list) else None,
+        "n_gpu_models": gpus.get("total") if isinstance(gpus, dict) else None,
+        "n_providers": provs.get("total") if isinstance(provs, dict) else None,
         "checked_utc": datetime.now(UTC).isoformat(timespec="seconds"),
     }

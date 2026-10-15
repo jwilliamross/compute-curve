@@ -135,7 +135,8 @@ src/compute_curve/
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/
-.claude/skills/          agent skills: compute-curve-research (start here) plus reviewed,
-                        pinned copies of five third-party skills (D43)
+.claude/skills/          agent skills: compute-curve-research (start here), nonstorable-futures
+                        (power-market methods for GPU1/GPU2), plus reviewed, pinned copies of
+                        third-party skills (D43, D61)
 .github/workflows/daily.yml   daily cycle after the US close (default branch only)
 ```

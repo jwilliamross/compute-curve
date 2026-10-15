@@ -1070,3 +1070,31 @@ files there.
   archive is still wanted; keep a copy of the key in a password manager.
 - To decrypt an archive:
   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:GETDEPLOYING_API_KEY -in <file> | tar -xz -C var`.
+
+## D61. Three more agent skills: commodities, volatility modelling, non-storable futures (owner request, 2026-10-15)
+
+The owner asked for finance, commodities, derivatives and trading skills.
+
+| Skill | Source and commit | Licence |
+|---|---|---|
+| `commodities`, `volatility-modeling` | joellewis/finance_skills `5c498eac` | MIT |
+| `nonstorable-futures` | written here | project |
+
+- **Review.** Both upstream SKILL.md files were read in full and scanned for
+  network calls, shell execution, installs, secrets and prompt-injection
+  phrasing. Nothing was found beyond a "Running the script" section that
+  suggests `pip install`. That section was removed and `scripts/` was not
+  vendored. Each copy carries a compute-curve note. The commodities note
+  warns that cost of carry does not apply to GPU-hours.
+- **Not taken:**
+  - exchange-trading skills (Binance and Gate futures), which place live
+    orders and are forbidden by scope;
+  - stock-screening skills, which are off-topic;
+  - a separate options skill, since Black-Scholes on stocks does not fit
+    average-settled non-storable futures.
+- **Why write `nonstorable-futures`.** No reviewed skill covered
+  power-market methods. It collects the standard references (Bessembinder &
+  Lemmon 2002; Longstaff & Wang 2004; Schwartz & Smith 2000; Lucia &
+  Schwartz 2002; Kemna & Vorst 1990; Deng, Johnson & Sogomonian 2001;
+  Benth, Šaltytė Benth & Koekebakker 2008) and maps them to this repo's
+  code.

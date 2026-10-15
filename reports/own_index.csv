@@ -155,8 +155,9 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-10,H100,3.49,provider_weighted_median,37,27,True,2026-10-10 08:47:04.037000+00:00,headline
 2026-10-11,H100,3.2511,provider_weighted_median,42,31,True,2026-10-11 08:47:04.597000+00:00,headline
 2026-10-12,H100,3.2511,provider_weighted_median,60,31,True,2026-10-12 08:47:04.162000+00:00,headline
-2026-10-13,H100,3.14,provider_weighted_median,57,35,True,2026-10-13 08:47:03.394000+00:00,headline
-2026-10-14,H100,3.49,provider_weighted_median,35,29,True,2026-10-14 02:11:05.044907+00:00,headline
+2026-10-13,H100,3.14,provider_weighted_median,76,35,True,2026-10-13 08:47:03.394000+00:00,headline
+2026-10-14,H100,3.2,provider_weighted_median,44,34,True,2026-10-14 15:21:40.866481+00:00,headline
+2026-10-15,H100,3.49,provider_weighted_median,33,27,True,2026-10-15 01:46:18.368172+00:00,headline
 2026-05-07,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-07 20:40:52.292316+00:00,headline
 2026-05-08,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-08 10:20:07.949226+00:00,headline
 2026-05-09,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-09 10:01:55.591603+00:00,headline
@@ -313,8 +314,9 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-10,B200,6.84,provider_weighted_median,19,15,True,2026-10-10 08:47:04.037000+00:00,headline
 2026-10-11,B200,6.25,provider_weighted_median,21,17,True,2026-10-11 08:47:04.597000+00:00,headline
 2026-10-12,B200,6.25,provider_weighted_median,26,17,True,2026-10-12 08:47:04.162000+00:00,headline
-2026-10-13,B200,6.25,provider_weighted_median,28,18,True,2026-10-13 08:47:03.394000+00:00,headline
-2026-10-14,B200,6.470000000000001,provider_weighted_median,18,14,True,2026-10-14 02:11:05.044907+00:00,headline
+2026-10-13,B200,6.25,provider_weighted_median,33,18,True,2026-10-13 08:47:03.394000+00:00,headline
+2026-10-14,B200,6.25,provider_weighted_median,22,18,True,2026-10-14 15:21:40.866481+00:00,headline
+2026-10-15,B200,6.470000000000001,provider_weighted_median,18,14,True,2026-10-15 01:46:18.368172+00:00,headline
 2026-08-04,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-04 07:56:54.817000+00:00,history_panel
 2026-08-05,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-05 07:58:05.296000+00:00,history_panel
 2026-08-06,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-06 07:57:19.403000+00:00,history_panel
@@ -385,7 +387,8 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-10,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-10 08:47:04.037000+00:00,history_panel
 2026-10-11,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-11 08:47:04.597000+00:00,history_panel
 2026-10-12,H100,3.49,provider_weighted_median|panel12,38,12,True,2026-10-12 08:47:04.162000+00:00,history_panel
-2026-10-13,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-13 08:47:03.394000+00:00,history_panel
+2026-10-13,H100,3.49,provider_weighted_median|panel12,38,12,True,2026-10-13 08:47:03.394000+00:00,history_panel
+2026-10-14,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-14 08:47:03.582000+00:00,history_panel
 2026-08-04,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-04 07:56:54.817000+00:00,history_panel
 2026-08-05,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-05 07:58:05.296000+00:00,history_panel
 2026-08-06,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-06 07:57:19.403000+00:00,history_panel
@@ -456,4 +459,5 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-10,B200,7.803,provider_weighted_median|panel6,9,6,True,2026-10-10 08:47:04.037000+00:00,history_panel
 2026-10-11,B200,7.877,provider_weighted_median|panel6,9,6,True,2026-10-11 08:47:04.597000+00:00,history_panel
 2026-10-12,B200,7.914999999999999,provider_weighted_median|panel6,18,6,True,2026-10-12 08:47:04.162000+00:00,history_panel
-2026-10-13,B200,7.952999999999999,provider_weighted_median|panel6,9,6,True,2026-10-13 08:47:03.394000+00:00,history_panel
+2026-10-13,B200,7.952999999999999,provider_weighted_median|panel6,18,6,True,2026-10-13 08:47:03.394000+00:00,history_panel
+2026-10-14,B200,7.9915,provider_weighted_median|panel6,9,6,True,2026-10-14 08:47:03.582000+00:00,history_panel

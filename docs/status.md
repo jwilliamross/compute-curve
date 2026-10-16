@@ -3,7 +3,7 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
-## GPU1/GPU2 strategy book (2026-10-16): six pre-registered rules, launch-ready
+## GPU1/GPU2 strategy book (2026-10-16): seven pre-registered rules, launch-ready
 
 Full book: docs/strategy_book.md. Interview notes: docs/interview_guide.md.
 
@@ -31,7 +31,15 @@ Full book: docs/strategy_book.md. Interview notes: docs/interview_guide.md.
 - **Power arithmetic.**
   - FP-C would confirm in about 9 trades if mispricing is about 4%.
   - FP-D needs about 17 trades at a 10% premium, or about 180 at 5%.
-- **Variants:** 336. **Skills:** commodities, volatility-modeling and
+- **FP-K, cross-venue.** Ornn's H100 transaction index (2.79, from Kalshi
+  settlements) sits at Silicon Data's level (2.81). So GPU1 will be compared
+  with Kalshi's H100 monthly-average market (docs/crossvenue_plan.md).
+  Kalshi's implied curve is logged nightly.
+- **Basis (exploratory).** List-price indices do not track Ornn's index
+  week to week. Our own H100 index is noisy at weekly horizons (SD 10%
+  against Ornn's 3.4%).
+- **Nightly checks.** A manual daily run (38830596835) passed every new step.
+- **Variants:** 339. **Skills:** commodities, volatility-modeling and
   nonstorable-futures (D61).
 
 ## Round 7 on GetDeploying per-provider history (2026-10-14): two confirmed

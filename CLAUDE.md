@@ -18,6 +18,8 @@ compute futures: GPU1 (Silicon Data H100 Rental Index) and GPU2 (B200).
 - Alpaca market data is never committed (D29); it is cached under `var/`.
 - GetDeploying API raw data is never committed in plain form (D60); only the
   encrypted archive under `data/private/`, and aggregates in reports.
+- Kalshi market data is public and read-only: no account, no orders; raw data
+  stays in `var/kalshi/` (D62).
 
 ## Commands
 
@@ -40,6 +42,9 @@ uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0)
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
 uv run compute-curve index-gap            # claim 1b: our index vs Silicon Data's (licensed SD CSVs; B7)
 uv run compute-curve futures-premium      # claim 7: GPU1/GPU2 premium shadow log (manual CME CSVs; no orders)
+uv run compute-curve spread               # claim 8: GPU2/GPU1 spread shadow + own-index forward check (docs/spread_plan.md)
+uv run compute-curve fair-value           # GPU1/GPU2 balance-of-month fair value sheet + FP-C (docs/bom_plan.md)
+uv run compute-curve kalshi               # claim 9: Kalshi GPU binaries, public data (docs/kalshi_plan.md; D62)
 uv run compute-curve getdeploying-api check     # GetDeploying API key check (D60; needs GETDEPLOYING_API_KEY)
 uv run compute-curve getdeploying-api download  # full per-provider history -> var/ (encrypted copy via workflow)
 uv run compute-curve explore round7 api         # one-shot round 7 on the API history (docs/exploration_round7_plan.md)
@@ -132,6 +137,9 @@ src/compute_curve/
                         BH screen, one-shot confirmation, shadow forward tests
   futures_premium.py    claim 7: GPU1/GPU2 futures risk premium (outright vs index, calendar
                         spread), shadow log and one-shot evaluation (docs/futures_premium_plan.md)
+  spread.py             claim 8: GPU2/GPU1 relative value (B200/H100 ratio), shadow + SP-0
+  bom.py                balance-of-month fair value for monthly-average contracts; FP-C
+  kalshi.py             claim 9: Kalshi GPU price binaries (public API, var/kalshi only)
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/

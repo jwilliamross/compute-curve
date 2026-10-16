@@ -148,6 +148,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve carry
 
+      - name: FP-K GPU1 vs Kalshi H100 monthly average shadow (no orders)
+        id: crossvenue
+        if: ${{ always() }}
+        continue-on-error: true
+        run: uv run compute-curve crossvenue
+
       - name: Commit and push data and reports
         if: ${{ always() }}
         run: |
@@ -183,7 +189,8 @@ jobs:
                    "spread:${{ steps.sp_shadow.outcome }}" \
                    "fair-value:${{ steps.fair_value.outcome }}" \
                    "kalshi:${{ steps.kalshi.outcome }}" \
-                   "carry:${{ steps.carry.outcome }}"; do
+                   "carry:${{ steps.carry.outcome }}" \
+                   "crossvenue:${{ steps.crossvenue.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

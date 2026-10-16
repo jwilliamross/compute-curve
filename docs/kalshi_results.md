@@ -71,3 +71,45 @@ mid crosses 0.5 is the implied median of the monthly average. Snapshot of
   - A strategy here would be small, a few dollars per event.
   - Its value is as a rehearsal for GPU1/GPU2: the same kind of underlying,
     a monthly-average settlement and a real order book.
+
+## 5. Basis: a transaction index against list prices (exploratory, 2026-10-16)
+
+**Data.**
+
+- Kalshi's `expiration_value` is Ornn's index value at each weekly expiry:
+  9 weekly values, 2026-08-14 to 10-09.
+- Ornn's index is built from live spot transactions.
+- Compared with our own index and GetDeploying's provider median, both
+  built from list prices, on the same Fridays.
+
+**Results (n = 8 weekly changes, so descriptive only):**
+
+| | H100 | B200 |
+|---|---|---|
+| Level, our index ÷ Ornn (mean) | 1.11 | 0.99 |
+| Level, GetDeploying median ÷ Ornn (mean) | 1.22 | 0.95 |
+| SD of weekly log change: Ornn / ours / GetDeploying | 0.034 / 0.101 / 0.036 | 0.095 / 0.056 / 0.091 |
+| Correlation of weekly changes with Ornn: ours / GetDeploying | 0.03 / −0.49 | −0.31 / 0.40 |
+| Total change over the 8 weeks: Ornn / ours / GetDeploying | 0.0% / +17% / +0.2% | +22% / +12% / +12% |
+
+**Reading.**
+
+1. **List-price indices do not track a transaction index week to week.**
+   The correlations are near zero or unstable.
+2. **Over months the direction agrees.** B200 rose on both kinds of index;
+   H100 was flat on Ornn and on GetDeploying.
+3. **Our own H100 index is noisy at weekly horizons.** Its weekly SD of
+   10%, against Ornn's 3.4%, comes from changes in which listings are in
+   its six-provider panel.
+   - The balance-of-month sheet's proxy ranges are therefore wide.
+   - Silicon Data's own index is the right input.
+
+**Consequence for GPU1/GPU2.** Rules that need a nowcast of the settlement
+index from list prices are unlikely to work. The book therefore leans on
+three kinds of rule:
+
+- futures-only rules: FP-B, FP-D-F, SP-F;
+- rules on licensed Silicon Data values: FP-A, FP-C, FP-D-I, SP-I;
+- structural premia: FP-D.
+
+One exploratory variant (project total 337).

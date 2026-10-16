@@ -29,6 +29,7 @@ and the archives.
 | List prices did not fall over 2 years | H100 +3%/yr (CI −1% to +6%), B200 +13%/yr, H200 +25%/yr | If futures price declines, longs earn a premium (FP-D) |
 | The market prices declines | Silicon Data's forward curve is reported in backwardation | The opportunity behind FP-D |
 | Index method moves the price by up to a third | Same data: B200 USD 6.25 to 8.30 depending on construction | Basis risk: only Silicon Data's number pays |
+| List prices don't track a transaction index week to week | Ornn's weekly values (from Kalshi settlements) against list-price indices: correlations of about 0 | Nowcasting the settlement index from list prices won't work; use futures-only rules or licensed SD data |
 | Once a month has started, H100's monthly average is nearly known | Average within 0.23% of its first Monday (median) | Balance-of-month mispricing is cheap to exploit and to test (FP-C) |
 
 ## 2. The GPU1/GPU2 book (all pre-registered, all shadow, all nightly)
@@ -40,6 +41,7 @@ and the archives.
 | **FP-A** outright premium | Sell or buy next month when it is more than 5% away from the index | Forward premium | SD index + CME prices | About 80 at a 5% gap |
 | **FP-B** calendar | Month after next vs next month when the curve slopes more than 3% | Calendar spread | CME prices only | Depends on curve noise |
 | **SP-I / SP-F** GPU2 vs GPU1 | Bet the B200/H100 ratio reverts | Spark spread / inter-commodity spread | CME prices (SP-F); SD index (SP-I) | Unknown; the proxy warns it can lose |
+| **FP-K** cross-venue | Sell or buy GPU1 next month when it is more than 8% away from Kalshi's implied H100 monthly average (Ornn index, about equal to SD's level) | The same product on two exchanges | CME prices + nightly Kalshi curve log | Depends on basis; a forecast gate comes first |
 | **SP-0** forward check | Our own index's B200/H100 ratio must revert as R7-04 says | – | Nothing (running) | Evaluates 2027-07 |
 
 - **Costs everywhere:**

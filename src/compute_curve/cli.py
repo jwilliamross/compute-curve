@@ -99,6 +99,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     sub.add_parser("futures-premium", help="claim 7: GPU1/GPU2 premium shadow log (no orders)")
     sub.add_parser("spread", help="claim 8: GPU2/GPU1 spread shadow log (no orders)")
+    sub.add_parser("fair-value", help="GPU1/GPU2 balance-of-month fair value sheet and FP-C")
     wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")
     wbp.add_argument("--dry-run", action="store_true", help="count captures only; no API calls")
     wbp.add_argument("--provider", action="append", help="limit to provider (repeatable)")
@@ -130,6 +131,11 @@ def _index_gap(cfg: Config) -> int:
 
 
 def _shadow_claim(cfg: Config, command: str) -> int:
+    if command == "fair-value":
+        from compute_curve.bom import run_sheet
+
+        print(f"wrote {run_sheet(cfg, utc_now().date())}")
+        return 0
     if command == "spread":
         from compute_curve.spread import run_shadow as run_spread
 
@@ -349,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "statarb":
         return _statarb(cfg, args.stage)
-    if args.command in ("futures-premium", "index-gap", "spread"):
+    if args.command in ("futures-premium", "index-gap", "spread", "fair-value"):
         return _shadow_claim(cfg, args.command)
     if args.command == "getdeploying-api":
         return _getdeploying_api(cfg, args.action)

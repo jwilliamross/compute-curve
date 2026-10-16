@@ -3,6 +3,37 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## GPU1/GPU2 strategy book (2026-10-16): six pre-registered rules, launch-ready
+
+Full book: docs/strategy_book.md. Interview notes: docs/interview_guide.md.
+
+- **New pre-registered rules.** All run nightly in shadow mode and log
+  "waiting" until GPU1/GPU2 list:
+  - **FP-C** balance of month (docs/bom_plan.md);
+  - **FP-D** long the backwardation, a hedging-pressure carry
+    (docs/carry_plan.md);
+  - **SP-I, SP-F and SP-0**, the GPU2/GPU1 spread (docs/spread_plan.md).
+  These join FP-A and FP-B (claim 7).
+- **Fair-value sheet.** `reports/fair_value/sheet.md` values each contract
+  month the way a power desk would. It uses a proxy (our own index) until
+  Silicon Data history exists.
+- **Drift (descriptive).** List prices did not fall over 2024–26: H100
+  +3%/yr (CI −1% to +6%), B200 +13%/yr. Silicon Data's forward curve is
+  reported in backwardation. This is FP-D's thesis.
+- **Spread rule, in-sample.** On list-price proxies it loses: the ratio
+  trended up all year. The rule is unchanged, and the result is recorded as
+  a warning.
+- **Claim 9: Kalshi GPU binaries.** These settle on Ornn indices.
+  - KB-1R: too little history (37 trades over 9 dates).
+  - Calibration slope 1.57, consistent with a favourite-longshot bias.
+  - The forward test runs nightly.
+  - Kalshi's implied H100 and B200 curves slope up for Oct–Dec 2026.
+- **Power arithmetic.**
+  - FP-C would confirm in about 9 trades if mispricing is about 4%.
+  - FP-D needs about 17 trades at a 10% premium, or about 180 at 5%.
+- **Variants:** 336. **Skills:** commodities, volatility-modeling and
+  nonstorable-futures (D61).
+
 ## Round 7 on GetDeploying per-provider history (2026-10-14): two confirmed
 
 Pre-registered one-shot test, Holm over 4 (docs/exploration_round7.md):

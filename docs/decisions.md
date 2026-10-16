@@ -1098,3 +1098,21 @@ The owner asked for finance, commodities, derivatives and trading skills.
   Schwartz 2002; Kemna & Vorst 1990; Deng, Johnson & Sogomonian 2001;
   Benth, Šaltytė Benth & Koekebakker 2008) and maps them to this repo's
   code.
+
+## D62. Kalshi public market data: research use, raw data kept out of the repo (2026-10-16)
+
+- **What Kalshi offers.** Kalshi lists binary contracts on Ornn's GPU
+  compute price indices, served through its public market-data API (no key,
+  no account):
+  - weekly "at 4 PM ET" contracts for H100, B200, H200 and A100;
+  - monthly-average contracts.
+- **Robots.** The API host has no robots.txt (404).
+- **Storage.** Kalshi's terms on redistributing data were not reviewed. So,
+  as for Alpaca data (D29), raw responses stay in git-ignored `var/kalshi/`,
+  and only derived statistics are committed.
+- **Requests.** At least 2.5 s apart, with backoff on HTTP 429.
+- **No dashboard scraping.** Ornn's dashboard is a JavaScript app with no
+  published terms for automated access, so it is not collected. Ornn index
+  values are taken only from Kalshi's own `expiration_value` field.
+- **Scope.** Research only: no account, no orders. Kalshi serves US persons,
+  and the owner is in Canada.

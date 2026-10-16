@@ -18,6 +18,7 @@ from compute_curve.claim4.alpaca import (
 )
 from compute_curve.claim4.market_data import sessions_from_calendar
 from compute_curve.cli import main
+from compute_curve.config import StatArbPaperConfig
 from compute_curve.synthetic import (
     synthetic_bars_json,
     synthetic_equity_bars,
@@ -93,7 +94,9 @@ def make_world(cfg, tmp_path: Path, monkeypatch, effect: float = 0.0, positions=
         update={"var_dir": tmp_path / "var", "reports_dir": tmp_path / "reports"}
     )
     boot = cfg.bootstrap.model_copy(update={"n_boot": 100})
-    cfg = cfg.model_copy(update={"project": project, "bootstrap": boot})
+    # Claim 4's own paper logic is under test here, so SA2-M paper trading (D63) is off.
+    sa = cfg.statarb.model_copy(update={"paper": None}) if cfg.statarb else None
+    cfg = cfg.model_copy(update={"project": project, "bootstrap": boot, "statarb": sa})
     c4 = cfg.claim4
     calendar = synthetic_weekday_calendar(date(2026, 6, 1), date(2026, 12, 31))
     sessions = sessions_from_calendar(calendar)
@@ -254,3 +257,19 @@ def test_a_stale_gate_file_never_sends_orders(cfg, tmp_path, monkeypatch):
     )
     assert fake.posted == []
     assert "older than" in report.read_text()
+
+
+def test_claim4_stays_shadow_while_sa2m_paper_trades(cfg, tmp_path, monkeypatch):
+    """D63: with SA2-M paper trading enabled, claim 4 must not send orders to the shared account."""
+    cfg, fake = make_world(cfg, tmp_path, monkeypatch, effect=1.0)
+    sa = cfg.statarb.model_copy(
+        update={"paper": StatArbPaperConfig(paper_start=date(2026, 10, 16), enabled=True)}
+    )
+    cfg = cfg.model_copy(update={"statarb": sa})
+    paper, data = fake.clients()
+    c4p.run_evaluation(cfg, now=SUNDAY_EVENING, paper=paper, data=data, observations=pd.DataFrame())
+    _force_gate(cfg, "level_h100|h1")
+    report = c4p.run_daily(
+        cfg, now=SUNDAY_EVENING, paper=paper, data=data, observations=pd.DataFrame(), env={}
+    )
+    assert not fake.posted and "SHADOW" in report.read_text()

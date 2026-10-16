@@ -409,6 +409,23 @@ class ResidualConfig(_Strict):
     close_short: float = 0.75
 
 
+class StatArbPaperConfig(_Strict):
+    """SA2-M on the Alpaca paper account (owner override of the forward-test gate, D63)."""
+
+    enabled: bool = False
+    paper_start: date
+    capital_usd: float = Field(default=8600.0, gt=0)
+    max_position_usd: float = Field(default=10000.0, gt=0)
+    max_gross_usd: float = Field(default=20000.0, gt=0)
+    max_drawdown_usd: float = Field(default=1500.0, gt=0)
+    daily_loss_limit_usd: float = Field(default=1000.0, gt=0)
+    max_daily_breaches: int = Field(default=2, ge=1)
+    breach_window_sessions: int = Field(default=20, ge=1)
+    fill_cost_bps: float = Field(default=15.0, ge=0)
+    bad_fill_share: float = Field(default=0.10, gt=0, lt=1)
+    min_fills_for_check: int = Field(default=20, ge=1)
+
+
 class StatArbConfig(_Strict):
     """Claim 6: statistical arbitrage on compute-linked equities (docs/statarb_plan.md)."""
 
@@ -432,6 +449,7 @@ class StatArbConfig(_Strict):
     boot_block: int = Field(default=20, ge=1)
     pairs: PairsConfig = PairsConfig()
     residual: ResidualConfig = ResidualConfig()
+    paper: StatArbPaperConfig | None = None
 
 
 class WaybackTarget(_Strict):

@@ -124,6 +124,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve statarb signals
 
+      - name: SA2-M Alpaca PAPER orders for the next open (fake money; D63; kill switches)
+        id: sa_paper
+        if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
+        continue-on-error: true
+        run: uv run compute-curve statarb paper
+
       - name: Claim 7 futures premium shadow log (derived numbers only; no orders)
         id: fp_shadow
         if: ${{ always() }}
@@ -192,6 +198,7 @@ jobs:
                    "statarb-forward:${{ steps.sa_forward.outcome }}" \
                    "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}" \
                    "statarb-signals:${{ steps.sa_signals.outcome }}" \
+                   "statarb-paper:${{ steps.sa_paper.outcome }}" \
                    "futures-premium:${{ steps.fp_shadow.outcome }}" \
                    "spread:${{ steps.sp_shadow.outcome }}" \
                    "fair-value:${{ steps.fair_value.outcome }}" \

@@ -35,9 +35,15 @@ def with_next_session(logp: pd.DataFrame) -> pd.DataFrame:
 
 
 def target_book(
-    signal_logp: pd.DataFrame, sa: StatArbConfig, region: list[list[float]] | None = None
+    signal_logp: pd.DataFrame,
+    sa: StatArbConfig,
+    region: list[list[float]] | None = None,
+    no_short: frozenset[str] = frozenset(),
 ) -> tuple[dict[str, float], dict[str, list[int]]]:
-    """Pooled weights held into the next session across the frozen SA2-M cells."""
+    """Pooled weights held into the next session across the frozen SA2-M cells.
+
+    Trades that would short a name in ``no_short`` are dropped whole, hedge included.
+    """
     region = region or REGIONS_6C["SA2-M"]
     lp = with_next_session(signal_logp)
     n = len(lp)
@@ -57,6 +63,8 @@ def target_book(
         )
         for tr in trades:
             if tr.end != n:  # closed at or before the next open: not held
+                continue
+            if any(tr.weights.get(x, 0.0) < 0 for x in no_short):
                 continue
             for sym, w in tr.weights.items():
                 pooled[sym] = pooled.get(sym, 0.0) + w / len(region)
@@ -121,7 +129,8 @@ def render(lines: list[BookLine], scores: dict[str, float], asof: str, capital: 
     return "\n".join(out) + "\n"
 
 
-def run_signals(cfg: Any, capital: float = 10_000.0) -> Path:  # pragma: no cover - Alpaca data
+def latest_prices(cfg: Any) -> Any:  # pragma: no cover - Alpaca market data
+    """Daily bars through yesterday (cached under var/), as the forward test fetches them."""
     from datetime import timedelta  # noqa: PLC0415
 
     from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
@@ -143,8 +152,12 @@ def run_signals(cfg: Any, capital: float = 10_000.0) -> Path:  # pragma: no cove
             feed=c4.feed,
             end_param=f"{last.isoformat()}T23:59:00Z",
         )
-    prices = wide_prices(bars, symbols, dict(c5.member_start), sa.min_history)
-    pooled, votes = target_book(prices.signal_logp, sa)
+    return wide_prices(bars, symbols, dict(c5.member_start), sa.min_history)
+
+
+def run_signals(cfg: Any, capital: float = 10_000.0) -> Path:  # pragma: no cover - Alpaca data
+    prices = latest_prices(cfg)
+    pooled, votes = target_book(prices.signal_logp, cfg.statarb)
     asof = str(prices.closes.index[-1].date())
     md = render(book_lines(pooled, votes), scores_today(prices.signal_logp), asof, capital)
     out = cfg.path("reports") / "statarb" / "practice"  # weights and scores only, no prices (D29)

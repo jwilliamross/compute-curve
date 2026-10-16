@@ -372,6 +372,23 @@ entries = [1.0, 1.25, 1.5, 2.0]
 close_long = -0.5
 close_short = 0.75
 
+# SA2-M on the Alpaca PAPER account (fake money). Owner override of the
+# forward-test precondition on 2026-10-16 (D63; docs/statarb_paper_readiness.md
+# sizing and kill criteria). Set enabled = false to stop new orders.
+[statarb.paper]
+enabled = true
+paper_start = 2026-10-16
+capital_usd = 8600.0
+max_position_usd = 10000.0
+max_gross_usd = 20000.0
+max_drawdown_usd = 1500.0          # kill 1: flatten and stop
+daily_loss_limit_usd = 1000.0
+max_daily_breaches = 2             # kill 2: two daily-loss breaches in 20 sessions
+breach_window_sessions = 20
+fill_cost_bps = 15.0               # kill 4: fills worse than 3x this on >10% of orders
+bad_fill_share = 0.10
+min_fills_for_check = 20
+
 # Archived provider pricing pages, Claude-assisted extraction (D58,
 # docs/wayback_backfill.md). Runs only from the manual GitHub workflow
 # (web.archive.org is unreachable from the agent sandbox). Prices are the

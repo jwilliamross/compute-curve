@@ -790,6 +790,10 @@ def _decide(
         dec.mode = "deferred"
         return dec
     can_trade = bool(dec.selected) and dec.index_ok and not dec.risk.blocks_new_positions
+    sa_paper = cfg.statarb.paper if cfg.statarb is not None else None
+    if can_trade and sa_paper is not None and sa_paper.enabled:
+        can_trade = False  # D63: the paper account is in use by SA2-M
+        dec.gate_reasons.append("paper account in use by SA2-M paper trading (D63)")
     dec.mode = "paper" if can_trade else "shadow"
     run_stamp = ctx.now.strftime("%Y%m%dT%H%M%S")
     if dec.mode == "paper":

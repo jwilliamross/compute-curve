@@ -620,3 +620,41 @@ def synthetic_statarb_bars(
             pd.DataFrame({"symbol": sym, "session": sessions, "open": opens, "close": close})
         )
     return pd.concat(rows, ignore_index=True).assign(is_synthetic=True)
+
+
+def synthetic_modern_bars(n_days: int, n_names: int, seed: int) -> pd.DataFrame:
+    """SYNTHETIC daily bars for claim-10 tests (``is_synthetic=True``).
+
+    ``XLK`` is the market; ``S0``..``S{n-1}`` carry market beta, a common "AI"
+    factor and an OU residual (half-life 4 sessions), with lognormal volume.
+    """
+    rng = np.random.default_rng(seed)
+    sessions = pd.bdate_range("2030-01-02", periods=n_days)
+    mkt = np.cumsum(rng.normal(0.0003, 0.012, n_days))
+    fac = np.cumsum(rng.normal(0.0, 0.015, n_days))
+    phi = 0.5 ** (1.0 / 4.0)
+    rows = []
+    for k in range(n_names + 1):
+        sym = "XLK" if k == n_names else f"S{k}"
+        if sym == "XLK":
+            lp = np.log(200.0) + mkt
+        else:
+            x = np.zeros(n_days)
+            e = rng.normal(0.0, 0.03 * np.sqrt(1 - phi**2), n_days)
+            for t in range(1, n_days):
+                x[t] = phi * x[t - 1] + e[t]
+            lp = np.log(30.0 + k) + (0.8 + 0.05 * k) * mkt + 0.6 * fac + x
+        close = np.exp(lp)
+        opens = np.concatenate([[close[0]], close[:-1]]) * np.exp(rng.normal(0.0, 0.003, n_days))
+        rows.append(
+            pd.DataFrame(
+                {
+                    "symbol": sym,
+                    "session": sessions,
+                    "open": opens,
+                    "close": close,
+                    "volume": np.exp(rng.normal(13.0, 0.4, n_days)),
+                }
+            )
+        )
+    return pd.concat(rows, ignore_index=True).assign(is_synthetic=True)

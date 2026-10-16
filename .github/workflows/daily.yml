@@ -130,6 +130,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve statarb paper
 
+      - name: Claim 10 strategy lab, MX1-MX4 forward shadow next to SA2-M (no orders)
+        id: sa_lab
+        if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
+        continue-on-error: true
+        run: uv run compute-curve statarb lab
+
       - name: Claim 7 futures premium shadow log (derived numbers only; no orders)
         id: fp_shadow
         if: ${{ always() }}
@@ -199,6 +205,7 @@ jobs:
                    "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}" \
                    "statarb-signals:${{ steps.sa_signals.outcome }}" \
                    "statarb-paper:${{ steps.sa_paper.outcome }}" \
+                   "statarb-lab:${{ steps.sa_lab.outcome }}" \
                    "futures-premium:${{ steps.fp_shadow.outcome }}" \
                    "spread:${{ steps.sp_shadow.outcome }}" \
                    "fair-value:${{ steps.fair_value.outcome }}" \

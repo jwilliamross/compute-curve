@@ -72,6 +72,7 @@ and the archives.
 | Strategy | Instrument | Status | Evidence |
 |---|---|---|---|
 | **SA2-M** residual reversal | 20 compute-linked US stocks against XLK | Live forward test (7/60 sessions; 250-session extension) | Held-out: 10.6 bps a day net, Sharpe 1.80, Holm p 0.023; fragile (5 days carry it); failed on large-cap tech |
+| **MX1–MX4** modern overlays and models | Same 20 stocks against XLK | Tested 2026-10-16: none confirmed; nightly descriptive shadow (`reports/statarb/lab/`) | Vol management, volume conditioning, PCA factors and a ridge forecast all failed to beat plain SA2-M (docs/modern_results.md) |
 | **KB-1** favourite-longshot | Kalshi GPU price binaries (Ornn indices) | Forward test (needs 30 close dates, about Q1 2027) | Retrospective: too little history; market looks under-confident (logit slope 1.57, SE 0.30). Kalshi serves US persons only |
 
 ## 4. Why this is a GPU1/GPU2 strategy and not a stock strategy

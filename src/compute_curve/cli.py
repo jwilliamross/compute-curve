@@ -123,6 +123,9 @@ def _parser() -> argparse.ArgumentParser:
             "power",
             "signals",
             "paper",
+            "modern-explore",
+            "modern-confirm",
+            "lab",
         ],
     )
     return p
@@ -209,6 +212,7 @@ def _wayback(cfg: Config, dry_run: bool, providers: list[str] | None) -> int:
 
 
 def _statarb(cfg: Config, stage: str) -> int:
+    from compute_curve.statarb import modern_run as mr
     from compute_curve.statarb import pipeline as sp
     from compute_curve.statarb.paper import run_paper
     from compute_curve.statarb.power import write_power
@@ -225,6 +229,9 @@ def _statarb(cfg: Config, stage: str) -> int:
         "power": write_power,
         "signals": run_signals,
         "paper": run_paper,
+        "modern-explore": mr.run_explore,
+        "modern-confirm": mr.run_confirm,
+        "lab": mr.run_lab,
     }
     print(f"wrote {run[stage](cfg)}")
     return 0

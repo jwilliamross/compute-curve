@@ -1175,3 +1175,37 @@ and commit reviewed in D61.
   prohibit.
 - Its social-media readers scrape Discord, LinkedIn, X and Telegram.
 - None of these fits this project's source rules.
+
+## D65. Claim 10: modern strategies tested in shadow next to SA2-M (owner request, 2026-10-16)
+
+**Context.** The owner asked to "test some more innovative modern strategies while
+we trade". The paper account belongs to SA2-M (D63), so new strategies are tested
+by simulation and nightly shadow only.
+
+**Decision.**
+
+- **Pre-registration.** Four published ideas, eight variants, were written down
+  before any return was computed (docs/modern_plan.md, commit 5abf008):
+  - MX1, volatility-managed SA2-M;
+  - MX2, volume-conditioned reversal and momentum;
+  - MX3, statistical-factor residuals;
+  - MX4, a walk-forward ridge forecast.
+- **Sequence.**
+  1. A lenient exploration screen (p ≤ 0.20).
+  2. The survivors were frozen and committed.
+  3. Then a one-shot Holm confirmation.
+- **Implementation choices, made before the results:**
+  - Books are pooled weights, the way the paper account holds them.
+  - Entries are allowed from the first eligible session, with data truncated at
+    each window's end. Every decision uses data up to its close only.
+  - MX4 fills a missing s-score with the day's cross-sectional mean.
+  - MX4's baseline IC uses the z-scored 5-day residual, which has the same
+    ranks except for ties at the ±3 clip.
+- **No new dependency.** The ridge is closed-form numpy.
+- **Outcome.** Nothing was confirmed (docs/modern_results.md). Nothing changes
+  on the paper account.
+- **Nightly lab.** `statarb lab` keeps logging every MX book as a descriptive
+  forward shadow.
+- **If one is wanted later.** Trading an MX strategy with paper money would need
+  a second paper account and an owner decision.
+

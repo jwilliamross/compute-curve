@@ -129,6 +129,8 @@ Claim 9, the Kalshi GPU binaries (docs/kalshi_plan.md), adds 3: KB-1R, KB-1F and
 KB-2. Total 333.
 FP-D, long the backwardation (docs/carry_plan.md), adds 3: FP-D-I, FP-D-F and the
 descriptive list-price drift study. Total 336.
+The exploratory Ornn-vs-list-price basis comparison (docs/kalshi_results.md section 5)
+adds 1. Total 337.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

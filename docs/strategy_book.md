@@ -29,6 +29,7 @@ and the archives.
 | List prices did not fall over 2 years | H100 +3%/yr (CI −1% to +6%), B200 +13%/yr, H200 +25%/yr | If futures price declines, longs earn a premium (FP-D) |
 | The market prices declines | Silicon Data's forward curve is reported in backwardation | The opportunity behind FP-D |
 | Index method moves the price by up to a third | Same data: B200 USD 6.25 to 8.30 depending on construction | Basis risk: only Silicon Data's number pays |
+| List prices don't track a transaction index week to week | Ornn's weekly values (from Kalshi settlements) against list-price indices: correlations of about 0 | Nowcasting the settlement index from list prices won't work; use futures-only rules or licensed SD data |
 | Once a month has started, H100's monthly average is nearly known | Average within 0.23% of its first Monday (median) | Balance-of-month mispricing is cheap to exploit and to test (FP-C) |
 
 ## 2. The GPU1/GPU2 book (all pre-registered, all shadow, all nightly)

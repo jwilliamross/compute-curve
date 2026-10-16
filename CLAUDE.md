@@ -15,6 +15,10 @@ compute futures: GPU1 (Silicon Data H100 Rental Index) and GPU2 (B200).
   Every Alpaca client must hard-fail unless `APCA_API_BASE_URL` is exactly
   the paper endpoint. Paper orders only when the claim-4 validation gate
   passes; otherwise shadow mode. Never a live endpoint or real money.
+- Second paper exception (owner request, 2026-10-16; D63): SA2-M stock
+  stat-arb may trade the same Alpaca **paper** account (`statarb/paper.py`)
+  with the readiness doc's sizing and kill criteria. Claim 4 stays in shadow
+  mode while it runs. Fake money only.
 - Alpaca market data is never committed (D29); it is cached under `var/`.
 - GetDeploying API raw data is never committed in plain form (D60); only the
   encrypted archive under `data/private/`, and aggregates in reports.
@@ -38,6 +42,7 @@ uv run compute-curve backtest --synthetic-engine-check
 uv run compute-curve claim4 check         # Alpaca paper endpoint + data check (names only)
 uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_plan.md)
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
+uv run compute-curve statarb paper        # SA2-M Alpaca PAPER orders for the next open (D63; kill switches)
 uv run compute-curve statarb signals      # SA2-M practice sheet for the next session (reports/statarb/practice/; no orders)
 uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals

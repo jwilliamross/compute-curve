@@ -1116,3 +1116,41 @@ The owner asked for finance, commodities, derivatives and trading skills.
   values are taken only from Kalshi's own `expiration_value` field.
 - **Scope.** Research only: no account, no orders. Kalshi serves US persons,
   and the owner is in Canada.
+
+## D63. SA2-M paper trading starts before its forward test (owner override, 2026-10-16)
+
+**Context.** docs/statarb_paper_readiness.md made paper trading of SA2-M
+conditional on two things: the forward test passing (about late December)
+and owner approval. On 2026-10-16 the owner chose "Start paper trading now"
+and added: "its paper money if this burns we can always try another
+strategy on another account."
+
+**Decision.**
+
+- **Paper only, fake money.** SA2-M trades the existing Alpaca **paper**
+  account through `claim4.alpaca.AlpacaPaperClient`, which hard-fails
+  unless `APCA_API_BASE_URL` is the paper endpoint (D30). Never a live
+  endpoint or real money.
+- **Sizing, limits and kill criteria** are exactly those of the readiness
+  doc, sections 3–4, in `[statarb.paper]`:
+  - USD 8,600 of capital;
+  - at most USD 10,000 per symbol and USD 20,000 gross;
+  - kill and flatten on a USD 1,500 drawdown, on two daily-loss breaches
+    in 20 sessions, on a negative return after 60 sessions, or when more
+    than 10% of fills are worse than 3× the assumed cost;
+  - an environment kill switch.
+  A kill writes `reports/statarb/paper/killed.json` and stops for good.
+- **Orders.** Market day orders, sent after the close, for the next open.
+  Names that Alpaca cannot borrow are never shorted; the whole trade is
+  dropped, hedge included.
+- **One strategy per account.** While SA2-M paper trading is enabled,
+  claim 4 stays in shadow mode. SA2-M refuses to run if claim 4 has ever
+  traded the account.
+- **The forward test is unchanged.** The 60- and 250-session forward tests
+  keep running in shadow mode and still decide whether the edge is
+  confirmed. Paper results add real fills and costs; they confirm nothing.
+- **Reports.** Percentages and counts only (D29). Raw fills stay in
+  `var/statarb_paper/`.
+
+**To stop.** Set `[statarb.paper] enabled = false`, or set
+`COMPUTE_CURVE_KILL_SWITCH=1`, or ask.

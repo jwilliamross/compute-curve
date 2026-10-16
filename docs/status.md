@@ -3,6 +3,21 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## SA2-M paper trading is live (2026-10-16, owner override; D63)
+
+- **What runs.** SA2-M trades the Alpaca **paper** account (fake money).
+  - The first 15 orders were queued for the 2026-10-16 open: 16 stocks
+    plus the XLK hedge, gross 1.28 of USD 8,600 capital.
+  - From now on, the nightly run rebalances after each close.
+- **Kill switches.** A USD 1,500 drawdown, two daily-loss breaches in 20
+  sessions, a negative return after 60 sessions, or bad fills: any of these
+  flattens the account and stops trading for good.
+  `reports/statarb/paper/status.md` shows the state.
+- **One strategy per account.** Claim 4 stays in shadow mode while SA2-M
+  trades.
+- **The forward test is unchanged.** It still decides whether the edge is
+  confirmed.
+
 ## Practice trading (2026-10-16)
 
 - **What it is.** `compute-curve statarb signals` writes the exact SA2-M

@@ -121,6 +121,7 @@ def _parser() -> argparse.ArgumentParser:
             "forward-extended",
             "claim6d",
             "power",
+            "signals",
         ],
     )
     return p
@@ -209,6 +210,7 @@ def _wayback(cfg: Config, dry_run: bool, providers: list[str] | None) -> int:
 def _statarb(cfg: Config, stage: str) -> int:
     from compute_curve.statarb import pipeline as sp
     from compute_curve.statarb.power import write_power
+    from compute_curve.statarb.signals import run_signals
 
     run = {
         "exploration": sp.run_exploration,
@@ -219,6 +221,7 @@ def _statarb(cfg: Config, stage: str) -> int:
         "forward-extended": lambda c: sp.run_forward(c, sp.EXTENDED_SESSIONS),
         "claim6d": sp.run_claim6d,
         "power": write_power,
+        "signals": run_signals,
     }
     print(f"wrote {run[stage](cfg)}")
     return 0

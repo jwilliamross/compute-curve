@@ -38,6 +38,7 @@ uv run compute-curve backtest --synthetic-engine-check
 uv run compute-curve claim4 check         # Alpaca paper endpoint + data check (names only)
 uv run compute-curve claim4 evaluate      # claim-4 tests + gate (docs/claim4_plan.md)
 uv run compute-curve claim4 daily         # shadow log, or gated PAPER orders
+uv run compute-curve statarb signals      # SA2-M practice sheet for the next session (reports/statarb/practice/; no orders)
 uv run compute-curve claim5 fetch         # AWS spot archive (Zenodo, CC BY 4.0) -> daily GPU series
 uv run compute-curve claim5 evaluate      # claim 4's battery on the AWS spot signals
 uv run compute-curve index-gap            # claim 1b: our index vs Silicon Data's (licensed SD CSVs; B7)

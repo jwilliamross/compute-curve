@@ -121,6 +121,8 @@ Total 315.
 Round 7 post-hoc (docs/exploration_round7.md section 3, exploratory) adds 9:
 seven robustness variants (six of R7-01, one of R7-04), index-construction
 comparison and monthly settlement risk. Total 324.
+Claim 8, the GPU2/GPU1 spread (docs/spread_plan.md), adds 4: SP-I, SP-F, SP-0 and
+the C0 forecast gate. Total 328.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

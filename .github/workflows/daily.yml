@@ -124,6 +124,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve futures-premium
 
+      - name: Claim 8 GPU2/GPU1 spread shadow (derived numbers only; no orders)
+        id: sp_shadow
+        if: ${{ always() }}
+        continue-on-error: true
+        run: uv run compute-curve spread
+
       - name: Commit and push data and reports
         if: ${{ always() }}
         run: |
@@ -155,7 +161,8 @@ jobs:
                    "explore4-confirm:${{ steps.xconfirm4.outcome }}" \
                    "statarb-forward:${{ steps.sa_forward.outcome }}" \
                    "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}" \
-                   "futures-premium:${{ steps.fp_shadow.outcome }}"; do
+                   "futures-premium:${{ steps.fp_shadow.outcome }}" \
+                   "spread:${{ steps.sp_shadow.outcome }}"; do
             name="${s%%:*}"; outcome="${s#*:}"
             echo "$name: ${outcome:-skipped}"
             if [ "$outcome" = "failure" ]; then failed=1; fi

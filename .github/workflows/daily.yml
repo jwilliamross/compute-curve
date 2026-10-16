@@ -118,6 +118,12 @@ jobs:
         continue-on-error: true
         run: uv run compute-curve statarb forward-extended
 
+      - name: SA2-M practice sheet for the next session (weights only; no orders)
+        id: sa_signals
+        if: ${{ steps.tests.outcome == 'success' && !inputs.skip_claim4 }}
+        continue-on-error: true
+        run: uv run compute-curve statarb signals
+
       - name: Claim 7 futures premium shadow log (derived numbers only; no orders)
         id: fp_shadow
         if: ${{ always() }}
@@ -185,6 +191,7 @@ jobs:
                    "explore4-confirm:${{ steps.xconfirm4.outcome }}" \
                    "statarb-forward:${{ steps.sa_forward.outcome }}" \
                    "statarb-forward-ext:${{ steps.sa_forward_ext.outcome }}" \
+                   "statarb-signals:${{ steps.sa_signals.outcome }}" \
                    "futures-premium:${{ steps.fp_shadow.outcome }}" \
                    "spread:${{ steps.sp_shadow.outcome }}" \
                    "fair-value:${{ steps.fair_value.outcome }}" \

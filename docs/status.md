@@ -3,6 +3,18 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## Practice trading (2026-10-16)
+
+- **What it is.** `compute-curve statarb signals` writes the exact SA2-M
+  book for the next session to `reports/statarb/practice/latest.md`
+  (weights and s-scores only). It runs nightly.
+- **Check.** It matches the backtest engine's held weights exactly on three
+  past dates.
+- **Practice plan.** docs/learn_to_trade.md: daily routine, journal, a
+  two-week concept plan, and a weekly Ornn H100 forecasting exercise.
+- **Status.** Practice only. The paper-trading preconditions are unmet
+  until the forward test passes.
+
 ## GPU1/GPU2 strategy book (2026-10-16): seven pre-registered rules, launch-ready
 
 Full book: docs/strategy_book.md. Interview notes: docs/interview_guide.md.

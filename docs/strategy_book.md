@@ -7,7 +7,7 @@ _As of 2026-10-16. Research and simulation only: no real money, no orders._
 - **No strategy on GPU1 or GPU2 can be proven profitable yet.** The
   contracts are not listed (the CFTC review runs to about 2026-11-09), so no
   futures price exists to test against.
-- **What exists is a launch-ready book.** Six pre-registered rules, each
+- **What exists is a launch-ready book.** Seven pre-registered rules, each
   written down with its costs and pass/fail test before any futures data
   exists, are coded and run every night in shadow mode. On listing day they
   start logging decisions with no room for hindsight tuning.

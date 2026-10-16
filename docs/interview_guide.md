@@ -18,7 +18,7 @@ list prices haven't fallen in two years. Yet Silicon Data's forward curve
 prices declines. That's the normal-backwardation setup, where longs earn a
 hedging premium.
 
-I've pre-registered a book of six futures rules, including balance-of-month,
+I've pre-registered a book of seven futures rules, including balance-of-month,
 backwardation carry and a GPU2/GPU1 spread. They run nightly in shadow mode
 and start logging decisions the day the contracts list."
 

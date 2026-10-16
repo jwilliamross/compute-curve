@@ -133,6 +133,8 @@ The exploratory Ornn-vs-list-price basis comparison (docs/kalshi_results.md sect
 adds 1. Total 337.
 FP-K, GPU1 against Kalshi's H100 monthly average (docs/crossvenue_plan.md), adds 2:
 the rule and its forecast gate. Total 339.
+The SA2-M paper-trading risk review (2026-10-16, descriptive) adds 2: the exploration
+period re-run at quoted costs, and the bootstrapped P&L ranges. Total 341.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

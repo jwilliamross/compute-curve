@@ -44,6 +44,7 @@ uv run compute-curve index-gap            # claim 1b: our index vs Silicon Data'
 uv run compute-curve futures-premium      # claim 7: GPU1/GPU2 premium shadow log (manual CME CSVs; no orders)
 uv run compute-curve spread               # claim 8: GPU2/GPU1 spread shadow + own-index forward check (docs/spread_plan.md)
 uv run compute-curve fair-value           # GPU1/GPU2 balance-of-month fair value sheet + FP-C (docs/bom_plan.md)
+uv run compute-curve carry                # FP-D: long the backwardation on GPU1/GPU2 (docs/carry_plan.md)
 uv run compute-curve kalshi               # claim 9: Kalshi GPU binaries, public data (docs/kalshi_plan.md; D62)
 uv run compute-curve getdeploying-api check     # GetDeploying API key check (D60; needs GETDEPLOYING_API_KEY)
 uv run compute-curve getdeploying-api download  # full per-provider history -> var/ (encrypted copy via workflow)
@@ -139,6 +140,7 @@ src/compute_curve/
                         spread), shadow log and one-shot evaluation (docs/futures_premium_plan.md)
   spread.py             claim 8: GPU2/GPU1 relative value (B200/H100 ratio), shadow + SP-0
   bom.py                balance-of-month fair value for monthly-average contracts; FP-C
+  carry.py              FP-D: long the backwardation (hedging-pressure carry), shadow
   kalshi.py             claim 9: Kalshi GPU price binaries (public API, var/kalshi only)
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point

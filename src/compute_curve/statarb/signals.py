@@ -129,8 +129,8 @@ def render(lines: list[BookLine], scores: dict[str, float], asof: str, capital: 
     return "\n".join(out) + "\n"
 
 
-def latest_prices(cfg: Any) -> Any:  # pragma: no cover - Alpaca market data
-    """Daily bars through yesterday (cached under var/), as the forward test fetches them."""
+def latest_bars(cfg: Any) -> tuple[Any, pd.DataFrame]:  # pragma: no cover - Alpaca data
+    """Daily bars through yesterday (cached under var/) and their wide prices."""
     from datetime import timedelta  # noqa: PLC0415
 
     from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
@@ -152,7 +152,12 @@ def latest_prices(cfg: Any) -> Any:  # pragma: no cover - Alpaca market data
             feed=c4.feed,
             end_param=f"{last.isoformat()}T23:59:00Z",
         )
-    return wide_prices(bars, symbols, dict(c5.member_start), sa.min_history)
+    return wide_prices(bars, symbols, dict(c5.member_start), sa.min_history), bars
+
+
+def latest_prices(cfg: Any) -> Any:  # pragma: no cover - Alpaca market data
+    """Daily bars through yesterday (cached under var/), as the forward test fetches them."""
+    return latest_bars(cfg)[0]
 
 
 def run_signals(cfg: Any, capital: float = 10_000.0) -> Path:  # pragma: no cover - Alpaca data

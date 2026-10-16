@@ -1,6 +1,6 @@
 # Evaluation of the three claims (real data only)
 
-Generated 2026-10-16T00:39:09.064057+00:00. Variants declared project-wide: 66.
+Generated 2026-10-16T01:37:09.241995+00:00. Variants declared project-wide: 66.
 No synthetic data is used in this report.
 
 ## Bottom line
@@ -24,8 +24,8 @@ Annualized volatility of log changes (calendar days for daily series, weeks for 
 | own headline | B200 | 2026-07-06 | 2026-10-16 | 103 | 6.840 | 0.598 | 0.556 | 0.437 | 0.659 |
 | own history panel | H100 | 2026-08-04 | 2026-10-15 | 73 | 3.490 | 0.847 | 0.467 | 0.177 | 0.695 |
 | own history panel | B200 | 2026-08-04 | 2026-10-15 | 73 | 8.030 | 0.625 | 0.306 | 0.044 | 0.474 |
-| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-16 | 48 | 3.802 | 0.000 | 0.212 | 0.173 | 0.244 |
-| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-16 | 48 | 7.556 | 0.000 | 0.146 | 0.081 | 0.208 |
+| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-16 | 48 | 3.803 | 0.000 | 0.211 | 0.173 | 0.242 |
+| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-16 | 48 | 7.556 | 0.000 | 0.146 | 0.082 | 0.208 |
 | GetDeploying weekly median | H100 | 2025-10-06 | 2026-10-12 | 54 | 3.805 | 0.245 | 0.258 | 0.187 | 0.315 |
 | GetDeploying weekly median | B200 | 2025-10-06 | 2026-10-12 | 54 | 7.726 | 0.377 | 0.366 | 0.237 | 0.482 |
 
@@ -35,7 +35,7 @@ Computable GPU Index data: (c) 2026 Computable, CC BY-NC 4.0. GetDeploying data:
 
 A construction cross-check, not a tracking error against the settlement index.
 
-- H100: 47 overlapping days. Mean log difference (ours minus CGI) -0.126 [-0.157, -0.089]; RMSE 0.138; correlation of daily changes -0.09.
+- H100: 47 overlapping days. Mean log difference (ours minus CGI) -0.126 [-0.157, -0.090]; RMSE 0.139; correlation of daily changes -0.09.
 - B200: 47 overlapping days. Mean log difference (ours minus CGI) +0.004 [-0.026, +0.036]; RMSE 0.052; correlation of daily changes 0.10.
 
 ## Our index versus the settlement index

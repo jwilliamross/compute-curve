@@ -41,6 +41,7 @@ and the archives.
 | **FP-A** outright premium | Sell or buy next month when it is more than 5% away from the index | Forward premium | SD index + CME prices | About 80 at a 5% gap |
 | **FP-B** calendar | Month after next vs next month when the curve slopes more than 3% | Calendar spread | CME prices only | Depends on curve noise |
 | **SP-I / SP-F** GPU2 vs GPU1 | Bet the B200/H100 ratio reverts | Spark spread / inter-commodity spread | CME prices (SP-F); SD index (SP-I) | Unknown; the proxy warns it can lose |
+| **FP-K** cross-venue | Sell or buy GPU1 next month when it is more than 8% away from Kalshi's implied H100 monthly average (Ornn index, about equal to SD's level) | The same product on two exchanges | CME prices + nightly Kalshi curve log | Depends on basis; a forecast gate comes first |
 | **SP-0** forward check | Our own index's B200/H100 ratio must revert as R7-04 says | – | Nothing (running) | Evaluates 2027-07 |
 
 - **Costs everywhere:**

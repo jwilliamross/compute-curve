@@ -310,6 +310,65 @@ def calibration(trades: pd.DataFrame) -> dict[str, Any]:
     return out
 
 
+MONTHLY = ("KXH100MS", "KXB200MS", "KXH200MS", "KXA100MS")
+MAX_SPREAD = 0.20
+
+
+def implied_median(
+    markets: list[dict[str, Any]], max_spread: float = MAX_SPREAD
+) -> dict[str, Any] | None:
+    """Strike where the YES mid of 'greater than K' markets crosses 0.5 (crossvenue plan)."""
+    pts = []
+    for m in markets:
+        if m.get("strike_type") != "greater":
+            continue
+        bid, ask = _f(m.get("yes_bid_dollars")), _f(m.get("yes_ask_dollars"))
+        k = _f(m.get("floor_strike"))
+        if bid is None or ask is None or k is None or not (0 < ask < 1) or bid <= 0:
+            continue
+        if ask - bid > max_spread:
+            continue
+        pts.append((k, (bid + ask) / 2, ask - bid))
+    if len(pts) < 3:
+        return None
+    pts.sort()
+    strikes = np.array([x[0] for x in pts])
+    mids = np.minimum.accumulate(np.array([x[1] for x in pts]))
+    if not (mids.max() >= 0.5 >= mids.min()):
+        return None
+    med = float(np.interp(0.5, mids[::-1], strikes[::-1]))
+    return {
+        "implied_median": med,
+        "n_strikes": len(pts),
+        "median_spread": float(np.median([x[2] for x in pts])),
+    }
+
+
+def implied_curve(root: Path, day: date) -> pd.DataFrame:  # pragma: no cover - reads var/
+    rows = []
+    for s in MONTHLY:
+        f = root / "markets" / f"{s}.json"
+        if not f.exists():
+            continue
+        markets = [m for m in json.loads(f.read_text()) if m.get("status") == "active"]
+        for ev in sorted({m["event_ticker"] for m in markets}):
+            res = implied_median([m for m in markets if m["event_ticker"] == ev])
+            if res is not None:
+                month = pd.to_datetime(ev.split("-")[-1], format="%y%b").strftime("%Y-%m")
+                rows.append({"date": str(day), "series": s, "month": month} | res)
+    return pd.DataFrame(
+        rows, columns=["date", "series", "month", "implied_median", "n_strikes", "median_spread"]
+    )
+
+
+def append_curve(path: Path, new: pd.DataFrame) -> None:  # pragma: no cover - file IO
+    if new.empty:
+        return
+    old = pd.read_csv(path) if path.exists() else pd.DataFrame(columns=new.columns)
+    out = pd.concat([old, new]).drop_duplicates(["date", "series", "month"], keep="first")
+    out.to_csv(path, index=False)
+
+
 def split(trades: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     if trades.empty:
         return trades, trades
@@ -385,6 +444,7 @@ def run(cfg: Any, refresh: bool = True) -> Path:  # pragma: no cover - network a
     retro, fwd = split(trades)
     out = cfg.path("reports") / "kalshi"
     out.mkdir(parents=True, exist_ok=True)
+    append_curve(out / "implied_curve.csv", implied_curve(root, datetime.now(UTC).date()))
     seed = cfg.project.seed
     res: dict[str, Any] = {"kb2": calibration(retro)}
     retro_file = out / "kb1r.json"

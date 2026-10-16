@@ -131,6 +131,8 @@ FP-D, long the backwardation (docs/carry_plan.md), adds 3: FP-D-I, FP-D-F and th
 descriptive list-price drift study. Total 336.
 The exploratory Ornn-vs-list-price basis comparison (docs/kalshi_results.md section 5)
 adds 1. Total 337.
+FP-K, GPU1 against Kalshi's H100 monthly average (docs/crossvenue_plan.md), adds 2:
+the rule and its forecast gate. Total 339.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

@@ -125,6 +125,8 @@ Claim 8, the GPU2/GPU1 spread (docs/spread_plan.md), adds 4: SP-I, SP-F, SP-0 an
 the C0 forecast gate. Total 328.
 The balance-of-month plan (docs/bom_plan.md) adds 2: FP-C and the descriptive
 fair-value sheet. Total 330.
+Claim 9, the Kalshi GPU binaries (docs/kalshi_plan.md), adds 3: KB-1R, KB-1F and
+KB-2. Total 333.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

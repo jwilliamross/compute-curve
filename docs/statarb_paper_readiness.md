@@ -89,3 +89,37 @@ Stop the strategy, close every position and report, if any of these happens:
 - **Small at this size.** Even if the edge holds, the money is small: about
   USD 2,000 a year on about USD 8,600, before any decay. The aim of paper
   trading is to **measure real costs and fills**, not to make money.
+
+## 7. Risk review at the start of paper trading (2026-10-16, descriptive)
+
+These figures were computed after the owner's override (D63). They change
+no rule.
+
+**The edge sits in 2026.** At the claim-6c quoted costs, the frozen SA2-M
+pooled book earned:
+
+| Period | Sessions | Mean net | Sharpe | One-sided p |
+|---|---|---|---|---|
+| Exploration, 2024-09 to 2026-02 | 367 | 1.5 bps/day | 0.32 | 0.32 |
+| Confirmation, 2026-02 to 2026-10 | 157 | 10.6 bps/day | 1.80 | 0.011 |
+| Both | 524 | 4.4 bps/day | 0.85 | – |
+
+By half-year: 2024H2 0.0, 2025H1 4.2, 2025H2 0.4, 2026H1 7.0, 2026H2 15.4
+bps a day.
+
+- The confirmation window was used once, and no parameter was tuned on it.
+- But the edge is concentrated in the most recent eight months. That fits
+  a 2026 regime of high volatility in AI stocks as well as it fits a
+  durable effect.
+
+**P&L ranges at USD 8,600.** 20,000 circular block-bootstrap paths, block
+10, project seed:
+
+| Scenario | 1 session, 90% range | 20 sessions, median (90% range) | 60 sessions, median (90% range) | P(loss) at 60 sessions |
+|---|---|---|---|---|
+| Edge as in the confirmation | −114 to +125 | +182 (−197 to +544) | +536 (−116 to +1,240) | 9% |
+| Two-year average | −98 to +120 | +56 (−312 to +509) | +197 (−454 to +960) | 31% |
+| No edge (1 bp/day drag) | −124 to +136 | −19 (−393 to +339) | −75 (−689 to +591) | 58% |
+
+**Kill switch.** A USD 1,500 drawdown within 60 sessions did not occur in
+5,000 paths under either the edge or the no-edge scenario.

@@ -1154,3 +1154,24 @@ strategy on another account."
 
 **To stop.** Set `[statarb.paper] enabled = false`, or set
 `COMPUTE_CURVE_KILL_SWITCH=1`, or ask.
+
+## D64. Three risk skills vendored; finance-skills repository declined (owner request, 2026-10-16)
+
+**Vendored.** `bet-sizing`, `forward-risk` and `historical-risk`, from
+joellewis/finance_skills at `5c498eac` (MIT). This is the same repository
+and commit reviewed in D61.
+
+- Each SKILL.md was read and scanned for network calls, shell execution,
+  installs, secrets and prompt-injection phrasing.
+- The script-usage text was removed, and `scripts/` was not vendored.
+- Each copy carries a compute-curve note.
+
+**Declined: himself65/finance-skills** (`cedadc4`, MIT).
+
+- Its market-data skills depend on yfinance (Yahoo Finance). Yahoo's terms
+  restrict automated use.
+- Its TradingView skills (`tradingview-mcp`, `tradingview-reader`) read
+  TradingView through unofficial channels, which TradingView's terms
+  prohibit.
+- Its social-media readers scrape Discord, LinkedIn, X and Telegram.
+- None of these fits this project's source rules.

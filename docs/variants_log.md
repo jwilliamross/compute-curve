@@ -135,6 +135,9 @@ FP-K, GPU1 against Kalshi's H100 monthly average (docs/crossvenue_plan.md), adds
 the rule and its forecast gate. Total 339.
 The SA2-M paper-trading risk review (2026-10-16, descriptive) adds 2: the exploration
 period re-run at quoted costs, and the bootstrapped P&L ranges. Total 341.
+Claim 10, modern strategies on the SA2 universe (docs/modern_plan.md), adds 8: MX1,
+MX2a, MX2b, MX3-k1/k2/k3, MX4 and MX4's IC gate. One post-hoc descriptive comparison
+(return per unit gross, docs/modern_results.md) adds 1. Total 350.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

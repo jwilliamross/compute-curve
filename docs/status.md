@@ -3,6 +3,23 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## Claim 10: modern strategies tested, none beats SA2-M (2026-10-16; D65)
+
+- **What was tested.** Four published ideas, pre-registered in
+  docs/modern_plan.md:
+  - volatility management (Moreira–Muir);
+  - volume-conditioned reversal and momentum (Medhat–Schmeling);
+  - statistical-factor residuals (Avellaneda–Lee PCA);
+  - a walk-forward ridge forecast (Gu–Kelly–Xiu).
+- **Result.** Three of seven variants survived the exploration screen, and
+  none passed the one-shot Holm confirmation.
+  - Closest: quiet-move reversal (MX2a), raw p 0.036, Holm p 0.107.
+  - The ridge model lost to its naive baseline in both windows.
+  - Details: docs/modern_results.md.
+- **Consequence.** SA2-M stays unchanged on the paper account.
+- **Nightly lab.** `statarb lab` logs every MX book as a descriptive forward
+  shadow from 2026-10-19 (`reports/statarb/lab/latest.md`).
+
 ## SA2-M paper trading is live (2026-10-16, owner override; D63)
 
 - **What runs.** SA2-M trades the Alpaca **paper** account (fake money).

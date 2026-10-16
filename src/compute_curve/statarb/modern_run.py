@@ -277,6 +277,19 @@ def lab_lines(
     return out
 
 
+def _confirmed_note(d: Path) -> str:
+    path = d / "confirmation.json"
+    if not path.exists():
+        return "The one-shot confirmation has not run yet."
+    ok = [str(c["strategy"]) for c in json.loads(path.read_text())["decisions"] if c["confirmed"]]
+    if not ok:
+        return (
+            "No MX strategy passed the one-shot confirmation (reports/statarb/modern/"
+            "confirmation.md), so every forward number here is descriptive only."
+        )
+    return "Confirmed, so their forward verdict counts: " + ", ".join(ok) + "."
+
+
 def run_lab(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data
     """Nightly: forward shadow P&L of every MX book next to SA2-M; evaluates once at 60."""
     from compute_curve.statarb.pipeline import quoted_costs  # noqa: PLC0415
@@ -303,6 +316,8 @@ def run_lab(cfg: Config) -> Path:  # pragma: no cover - calls Alpaca data
         f"send orders. Forward window starts {mx.FORWARD_START}; {len(fwd)} of "
         f"{mx.FORWARD_SESSIONS} sessions so far. Plan: {PLAN}. Until 60 sessions exist "
         "these numbers are descriptive and decide nothing.",
+        "",
+        _confirmed_note(d),
         "",
         "| Strategy | Forward sessions | Net return since start | Gross stock exposure now |",
         "|---|---|---|---|",

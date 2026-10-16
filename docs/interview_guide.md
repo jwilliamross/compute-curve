@@ -63,6 +63,10 @@ and start logging decisions the day the contracts list."
    - Prices aren't predictable from their own past.
    - The B200/H100 spread rule loses on proxy data, because the ratio
      trended up all year.
+   - Four "modern" upgrades to the stock strategy (volatility management,
+     volume conditioning, PCA factors, a ridge ML forecast) were
+     pre-registered and tested. None beat the plain version; the ML model
+     lost to its own one-feature baseline.
    - Negative results are most of the work.
 
 7. **What's basis risk here?**

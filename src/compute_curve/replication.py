@@ -246,3 +246,155 @@ def run_claim12(cfg: Any) -> Path:  # pragma: no cover - fetches Alpaca data, re
     path = out / "claim12.md"
     path.write_text(render(res))
     return path
+
+
+# ---------------------------------------------------------------------------
+# Claim 13: Nagel volatility regime (docs/regime_plan.md)
+# ---------------------------------------------------------------------------
+VOL_WINDOW = 60
+MIN_VOL_OBS = 120
+HAC_LAG = 10
+
+
+def high_regime(xlk_close: pd.Series) -> pd.Series:
+    """1.0 if XLK's 60-session vol up to d-1 is above the expanding median of past values."""
+    lr = np.log(xlk_close.astype(float)).diff()
+    v = lr.rolling(VOL_WINDOW, min_periods=VOL_WINDOW).std() * np.sqrt(252)
+    v_prev = v.shift(1)  # known at the close of d-1
+    med = v_prev.expanding(min_periods=MIN_VOL_OBS).median().shift(1)
+    out = (v_prev > med).astype(float)
+    return out.where(med.notna() & v_prev.notna())
+
+
+def regime_tests(r: pd.Series, high: pd.Series) -> dict[str, Any]:
+    import scipy.stats as st  # noqa: PLC0415
+
+    from compute_curve.claim4 import stats as cs  # noqa: PLC0415
+
+    j = pd.concat([r.rename("r"), high.rename("h")], axis=1).dropna()
+    rr, hh = j["r"].to_numpy(float), j["h"].to_numpy(float)
+    fit = cs.ols_hac(hh, rr, HAC_LAG)
+    hi = rr[hh == 1]
+    out: dict[str, Any] = {
+        "n": int(rr.size),
+        "n_high": int(hi.size),
+        "mean_high_bps": float(hi.mean() * 1e4) if hi.size else float("nan"),
+        "mean_low_bps": float(rr[hh == 0].mean() * 1e4) if (hh == 0).any() else float("nan"),
+    }
+    out["p_n13_1"] = (
+        float(st.t.sf(fit.t_stat, df=fit.n - 2))
+        if fit and np.isfinite(fit.t_stat)
+        else float("nan")
+    )
+    out["diff_bps"] = float(fit.slope * 1e4) if fit else float("nan")
+    out["p_n13_2"] = ev.hac_p_one_sided(hi, HAC_LAG) if hi.size > 3 * HAC_LAG else float("nan")
+    return out
+
+
+def finish_13(t: dict[str, Any]) -> None:
+    ps = [t["p_n13_1"], t["p_n13_2"]]
+    adj = holm([p if np.isfinite(p) else 1.0 for p in ps])
+    t["holm_n13_1"], t["holm_n13_2"] = float(adj[0]), float(adj[1])
+    t["passes"] = bool(
+        adj[0] <= ALPHA and t["diff_bps"] > 0 and adj[1] <= ALPHA and t["mean_high_bps"] > 0
+    )
+
+
+def render_13(res: dict[str, Any]) -> str:
+    t = res["universe_b"]
+    lines = [
+        "# Claim 13 results: does residual reversal pay only in volatile markets?",
+        "",
+        "Plan: docs/regime_plan.md. One shot on universe B, 2019-01-02 to 2024-08-30 "
+        "(never fetched before). Frozen SA2-M, weights accounting. Costs (ASSUMPTIONS): "
+        "universe-B quoted spreads (claim 6d) + 2 bps, sell fee 1 bp, borrow 3%/yr.",
+        "",
+        "| Sample | Days | High-vol days | Mean high (bps) | Mean low (bps) | Diff p (N13-1) |"
+        " High mean p (N13-2) |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for name, x in [("Universe B 2019-24 (test)", t), *res["descriptive"].items()]:
+        lines.append(
+            f"| {name} | {x['n']} | {x['n_high']} | {x['mean_high_bps']:+.2f} | "
+            f"{x['mean_low_bps']:+.2f} | {x['p_n13_1']:.3f} | {x['p_n13_2']:.3f} |"
+        )
+    lines += [
+        "",
+        f"Holm p: N13-1 {t['holm_n13_1']:.3f}, N13-2 {t['holm_n13_2']:.3f}. "
+        f"**Verdict: {'passes' if t['passes'] else 'fails'}.** "
+        "Rows after the first are descriptive and contaminated (plan section 1).",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def run_claim13(cfg: Any) -> Path:  # pragma: no cover - fetches Alpaca data, reads var/
+    from compute_curve.claim4.alpaca import AlpacaDataClient  # noqa: PLC0415
+    from compute_curve.claim4.market_data import (  # noqa: PLC0415
+        _read_duckdb,
+        cache_path,
+        fetch_bars_cached,
+    )
+    from compute_curve.claim5.pipeline import claim5_cfg  # noqa: PLC0415
+    from compute_curve.statarb.pipeline import (  # noqa: PLC0415
+        UNIVERSE_6D,
+        quoted_costs,
+        wide_prices,
+    )
+
+    out = cfg.path("reports") / "replication"
+    done = out / "claim13.json"
+    if done.exists():
+        raise RuntimeError(f"{done} exists; claim 13 runs once")
+    sa, c4 = cfg.statarb, cfg.claim4
+    market = cfg.path("var") / "market_data"
+
+    def costs_from(name: str) -> Any:
+        sp = json.loads((cfg.path("reports") / "statarb" / name).read_text())
+        return quoted_costs(sa, pd.Series(sp["median_quoted_spread"], dtype=float))
+
+    sym_b = [*UNIVERSE_6D, "XLK"]
+    with AlpacaDataClient() as client:
+        bars_b = fetch_bars_cached(
+            client,
+            sym_b,
+            BARS_START_A.isoformat(),
+            WINDOW_A[1].isoformat(),
+            market,
+            feed=c4.feed,
+            end_param=f"{WINDOW_A[1].isoformat()}T23:59:00Z",
+        )
+    pb = wide_prices(bars_b, sym_b, {}, sa.min_history)
+    rb = pooled_series(pb, sa, WINDOW_A, costs_from("claim6d_spreads.json")[0])
+    test = regime_tests(rb, high_regime(pb.closes["XLK"]))
+    finish_13(test)
+    # Descriptive, contaminated: the AI universe 2019-24 (claim 12 cache) and 2026 confirm.
+    sym_a = [*c4.universe.members(), c4.benchmark]
+    ca = costs_from("claim6c_spreads.json")[0]
+    bars_a = _read_duckdb(
+        cache_path(market, sym_a, BARS_START_A.isoformat(), WINDOW_A[1].isoformat(), c4.feed)
+    )
+    pa = wide_prices(bars_a, sym_a, MEMBER_START_A, sa.min_history)
+    desc = {
+        "AI universe 2019-24": regime_tests(
+            pooled_series(pa, sa, WINDOW_A, ca), high_regime(pa.closes["XLK"])
+        )
+    }
+    c5 = claim5_cfg(cfg)
+    bars_c = _read_duckdb(
+        cache_path(market, sym_a, c5.bars_start.isoformat(), str(sa.confirm[1]), c4.feed)
+    )
+    xlk_all = pd.concat(
+        [
+            pa.closes["XLK"],
+            wide_prices(bars_c, sym_a, dict(c5.member_start), sa.min_history).closes["XLK"],
+        ]
+    )
+    xlk_all = xlk_all[~xlk_all.index.duplicated(keep="last")].sort_index()
+    pc = wide_prices(bars_c, sym_a, dict(c5.member_start), sa.min_history)
+    rc = pooled_series(pc, sa, sa.confirm, ca)
+    desc["AI universe 2026 confirm window"] = regime_tests(rc, high_regime(xlk_all))
+    res = {"universe_b": test, "descriptive": desc}
+    done.write_text(json.dumps(_clean(res), indent=2, default=float))
+    path = out / "claim13.md"
+    path.write_text(render_13(res))
+    return path

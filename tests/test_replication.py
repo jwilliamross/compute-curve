@@ -60,3 +60,26 @@ def test_by_year_groups_sessions() -> None:
 def test_window_is_before_the_existing_data() -> None:
     assert rp.WINDOW_A[1] < pd.Timestamp("2024-09-03").date()
     assert rp.MEMBER_START_A["NBIS"] == rp.NEVER
+
+
+def test_high_regime_is_lagged() -> None:
+    idx = pd.bdate_range("2030-01-01", periods=400)
+    rng = np.random.default_rng(2)
+    r = np.where(np.arange(400) < 250, 0.005, 0.02) * rng.normal(size=400)
+    xlk = pd.Series(100 * np.exp(np.cumsum(r)), index=idx)
+    h = rp.high_regime(xlk)
+    assert h.iloc[:180].isna().all()
+    assert h.iloc[-50:].mean() > 0.9  # the volatile tail is "high"
+    bumped = xlk.copy()
+    bumped.iloc[300:] *= np.exp(np.cumsum(rng.normal(0, 0.1, 100)))
+    pd.testing.assert_series_equal(rp.high_regime(bumped).iloc[:301], h.iloc[:301])
+
+
+def test_regime_tests_detect_a_planted_split() -> None:
+    idx = pd.bdate_range("2030-01-01", periods=600)
+    rng = np.random.default_rng(3)
+    high = pd.Series((np.arange(600) // 50) % 2, index=idx, dtype=float)
+    r = pd.Series(rng.normal(0, 0.005, 600) + 0.002 * high.to_numpy(), index=idx)
+    t = rp.regime_tests(r, high)
+    rp.finish_13(t)
+    assert t["diff_bps"] > 0 and t["p_n13_1"] < 0.01 and t["passes"]

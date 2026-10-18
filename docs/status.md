@@ -3,6 +3,21 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## Final candidate (2026-10-18; D67): FP-C, GPU1/GPU2 balance of month
+
+- **Three clean replications all failed** (docs/replication_results.md):
+  - SA2-M on 2019–2024 lost 1.65 bps a day, negative in 5 of 6 years.
+  - The rates effect does not appear on AWS spot prices.
+  - The volatility-regime explanation has the right direction but is not
+    significant.
+- **SA2-M is a regime bet.** Its 2026 edge came in an unusually volatile year.
+  Paper trading continues as fake money with kill switches, and is never sized
+  up.
+- **FP-C is the final candidate.** It rests on an accounting identity, not a
+  fitted pattern. It waits for GPU1/GPU2 to list (about 2026-11-09) and for
+  Silicon Data history (B7).
+- **FP-M is dropped.** MD-4F still runs forward.
+
 ## Claim 11: what moves GPU rents? Interest rates do, AI stocks don't (2026-10-18; D66)
 
 - **Question.** Do AI-economy signals predict next month's H100 rent? The

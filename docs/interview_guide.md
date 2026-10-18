@@ -67,6 +67,9 @@ and start logging decisions the day the contracts list."
      volume conditioning, PCA factors, a ridge ML forecast) were
      pre-registered and tested. None beat the plain version; the ML model
      lost to its own one-feature baseline.
+   - The stock strategy that passed its 2026 holdout lost money when re-run,
+     frozen, on 2019–2024. It was a regime, not an edge. Finding that before
+     sizing up is the point of out-of-sample work.
    - Negative results are most of the work.
 
 7. **What's basis risk here?**

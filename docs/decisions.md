@@ -1238,3 +1238,26 @@ trends signal when GPU rents will rise.
 - **NVIDIA earnings dates.** Each was verified against NVIDIA or SEC releases; the
   two that could not be verified were dropped.
 
+## D67. Final candidate: FP-C; SA2-M downgraded to a regime bet; FP-M dropped (2026-10-18)
+
+**Context.** The owner asked for a final candidate. Claims 12 and 13 tested the two
+live leads on data never used before, under pre-registered rules
+(docs/replication_plan.md §4, docs/regime_plan.md §5).
+
+**Outcome** (docs/replication_results.md):
+
+- **R12-A failed.** SA2-M lost money in 2019–2024.
+- **R12-B failed.** There was no rates effect on AWS spot.
+- **N13 failed.** The volatility-regime split had the right direction but was not
+  significant.
+
+**Decision, as fixed in the plans before the results:**
+
+- **The final candidate is FP-C** (balance of month, docs/bom_plan.md). It runs in
+  shadow until GPU1/GPU2 list and Silicon Data history is available.
+- **SA2-M is a regime bet.**
+  - Paper trading continues unchanged: fake money, kill switches, never sized up.
+  - The 60- and 250-session forward tests still run.
+  - No further SA2 variant is tested on historical data.
+- **FP-M is dropped.** MD-4F still runs forward.
+

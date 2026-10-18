@@ -3,6 +3,23 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## Claim 11: what moves GPU rents? Interest rates do, AI stocks don't (2026-10-18; D66)
+
+- **Question.** Do AI-economy signals predict next month's H100 rent? The
+  candidates were AI-chip, neocloud, hyperscaler and power stocks, and the
+  2-year Treasury yield. The economics are in docs/macro_drivers_plan.md:
+  complements, substitutes and the user cost of capital.
+- **Result** (two years of GetDeploying weekly prices, one shot, Holm over 5):
+  - Only **rates** passed. A rising 2-year yield goes with slightly higher
+    rents a month later: corr 0.29, Holm p 0.035.
+  - The effect is concentrated in the last year.
+  - No stock basket leads rents.
+  - Details: docs/macro_drivers.md.
+- **Trading.**
+  - Too small to trade alone against futures costs.
+  - Pre-registered as FP-M, a rates filter on FP-D, judged forward.
+  - The forward checks MD-4F and MD-3R evaluate on or after 2027-10-25.
+
 ## Claim 10: modern strategies tested, none beats SA2-M (2026-10-16; D65)
 
 - **What was tested.** Four published ideas, pre-registered in

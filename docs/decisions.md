@@ -1209,3 +1209,32 @@ by simulation and nightly shadow only.
 - **If one is wanted later.** Trading an MX strategy with paper money would need
   a second paper account and an owner decision.
 
+## D66. Claim 11: macro drivers of GPU rents; FRED Treasury yields; FP-M (2026-10-18)
+
+**Context.** The owner asked whether AI-economy news, earnings, stock prices or macro
+trends signal when GPU rents will rise.
+
+**Decision.**
+
+- **Pre-registration.** Five predictors (MD-1 to MD-5) were written down before any
+  was joined to a GPU price (docs/macro_drivers_plan.md):
+  - four equity baskets;
+  - the 2-year Treasury yield.
+- **Run once,** with Holm correction.
+- **Data source: FRED.** DGS2 and DGS10 come from FRED's public `fredgraph.csv`.
+  - robots.txt allows the path for all agents, and the data is US Treasury, public
+    domain.
+  - Requests go through the rate-limited `PoliteClient`.
+  - The cached copy lives in `var/fred/`. It is small and public domain, but is
+    kept out of git to follow the same pattern as other market data.
+  - ICE BofA credit-spread series were not used, because their FRED licence
+    restricts redistribution.
+- **Outcome.** MD-4 (the rates effect) was confirmed: Holm p 0.035, concentrated
+  in the last year. No equity basket leads rents.
+- **Next.**
+  - Forward checks MD-4F and MD-3R run on data after 2026-10-18.
+  - FP-M, a rates filter on FP-D, is fixed in docs/macro_drivers.md §4. It is
+    shadow only and judged forward.
+- **NVIDIA earnings dates.** Each was verified against NVIDIA or SEC releases; the
+  two that could not be verified were dropped.
+

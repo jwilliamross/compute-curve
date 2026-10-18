@@ -658,3 +658,42 @@ def synthetic_modern_bars(n_days: int, n_names: int, seed: int) -> pd.DataFrame:
             )
         )
     return pd.concat(rows, ignore_index=True).assign(is_synthetic=True)
+
+
+def synthetic_macro_inputs(
+    n_weeks: int, seed: int, lead: float = 0.0
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """SYNTHETIC claim-11 inputs (labelled ``is_synthetic`` via ``attrs``).
+
+    Returns (weekly log-price panel of 12 providers on Mondays, daily closes of
+    ``S1``-``S3`` and ``SPY``, daily ``DGS2``). When ``lead`` > 0 the providers'
+    4-week change loads on the S-basket's prior 20-session excess return.
+    """
+    rng = np.random.default_rng(seed)
+    days = pd.bdate_range("2030-01-01", periods=n_weeks * 5 + 40)
+    spy = np.cumsum(rng.normal(0.0, 0.01, len(days)))
+    closes = {"SPY": np.exp(4.0 + spy)}
+    common = np.cumsum(rng.normal(0.0, 0.02, len(days)))
+    for k in range(1, 4):
+        closes[f"S{k}"] = np.exp(3.0 + spy + common + np.cumsum(rng.normal(0, 0.01, len(days))))
+    cl = pd.DataFrame(closes, index=days)
+    dgs2 = pd.Series(4.0 + np.cumsum(rng.normal(0, 0.03, len(days))), index=days)
+    mondays = pd.date_range(days[30], periods=n_weeks, freq="W-MON")
+    lr = np.log(cl).diff(20)
+    sig = (
+        (lr[["S1", "S2", "S3"]].mean(axis=1) - lr["SPY"])
+        .reindex(mondays - pd.Timedelta(days=3), method="ffill")
+        .to_numpy()
+    )
+    base = np.zeros(n_weeks)
+    for t in range(n_weeks - 1):
+        push = lead * np.nan_to_num(sig[t]) / 4 if t + 4 < n_weeks else 0.0
+        base[t + 1] = base[t] + push + rng.normal(0, 0.004)
+    panel = pd.DataFrame(
+        {f"p{i}": np.log(2.0 + 0.1 * i) + base + rng.normal(0, 0.002, n_weeks) for i in range(12)},
+        index=mondays,
+    )
+    for f in (panel, cl):
+        f.attrs["is_synthetic"] = True
+    dgs2.attrs["is_synthetic"] = True
+    return panel, cl, dgs2

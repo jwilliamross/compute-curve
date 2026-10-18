@@ -104,6 +104,7 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("carry", help="FP-D: long the backwardation on GPU1/GPU2 (shadow; no orders)")
     sub.add_parser("crossvenue", help="FP-K: GPU1 vs Kalshi H100 monthly average (shadow)")
     sub.add_parser("macro", help="claim 11: AI-economy signals vs GPU rents (one shot)")
+    sub.add_parser("replicate", help="claim 12: SA2-M 2019-2024 and MD-4 on AWS spot (one shot)")
     wbp = sub.add_parser("wayback", help="archived pricing pages, Claude extraction (D58)")
     wbp.add_argument("--dry-run", action="store_true", help="count captures only; no API calls")
     wbp.add_argument("--provider", action="append", help="limit to provider (repeatable)")
@@ -140,6 +141,11 @@ def _index_gap(cfg: Config) -> int:
 
 
 def _shadow_claim(cfg: Config, command: str) -> int:
+    if command == "replicate":
+        from compute_curve.replication import run_claim12
+
+        print(f"wrote {run_claim12(cfg)}")
+        return 0
     if command == "macro":
         from compute_curve.macro import run_claim11
 
@@ -401,6 +407,7 @@ def main(argv: list[str] | None = None) -> int:
         "carry",
         "crossvenue",
         "macro",
+        "replicate",
     ):
         return _shadow_claim(cfg, args.command)
     if args.command == "getdeploying-api":

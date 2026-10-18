@@ -141,6 +141,9 @@ MX2a, MX2b, MX3-k1/k2/k3, MX4 and MX4's IC gate. One post-hoc descriptive compar
 Claim 11, AI-economy signals vs GPU rents (docs/macro_drivers_plan.md, docs/macro_drivers.md),
 adds 17: MD-1 to MD-5 (Holm over 5), 4 descriptive measures, 5 post-hoc robustness checks
 of MD-4, forward checks MD-4F and MD-3R, and rule FP-M. Total 367.
+Claim 12, replications (docs/replication_plan.md), adds 4: R12-A, R12-B for H100 and A100,
+and the per-year descriptive. Claim 13, the volatility regime (docs/regime_plan.md), adds 3:
+N13-1, N13-2 and the contaminated descriptive rows. Total 374.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

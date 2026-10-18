@@ -15,6 +15,19 @@ _As of 2026-10-16. Research and simulation only: no real money, no orders._
   stock statistical arbitrage on compute-linked names, is in a live forward
   test.
 
+## 0. Final candidate (D67, 2026-10-18)
+
+**FP-C, balance of month, is the final candidate.**
+
+- **Why.** SA2-M, the only strategy with a historical pass, lost money in
+  2019–2024. The rates effect did not replicate on AWS spot
+  (docs/replication_results.md).
+- **What remains.** FP-C is the one rule whose edge is an accounting identity
+  rather than a fitted pattern.
+- **What it waits for:**
+  - GPU1/GPU2 listing (about 2026-11-09);
+  - Silicon Data's daily index.
+
 ## 1. What we know about the underlying
 
 These results come from 2 years of per-provider data (54 providers), round 7
@@ -43,7 +56,7 @@ and the archives.
 | **FP-B** calendar | Month after next vs next month when the curve slopes more than 3% | Calendar spread | CME prices only | Depends on curve noise |
 | **SP-I / SP-F** GPU2 vs GPU1 | Bet the B200/H100 ratio reverts | Spark spread / inter-commodity spread | CME prices (SP-F); SD index (SP-I) | Unknown; the proxy warns it can lose |
 | **FP-K** cross-venue | Sell or buy GPU1 next month when it is more than 8% away from Kalshi's implied H100 monthly average (Ornn index, about equal to SD's level) | The same product on two exchanges | CME prices + nightly Kalshi curve log | Depends on basis; a forecast gate comes first |
-| **FP-M** rates filter | FP-D's long, taken only when the 2-year yield has not fallen by more than 0.10 pp over 20 sessions | Rate-driven cost of capital (capacity financing) | As FP-D, plus FRED DGS2 | Judged forward against unfiltered FP-D (docs/macro_drivers.md §4) |
+| **FP-M** rates filter (**dropped**, D67: did not replicate on AWS spot) | FP-D's long, taken only when the 2-year yield has not fallen by more than 0.10 pp over 20 sessions | Rate-driven cost of capital (capacity financing) | As FP-D, plus FRED DGS2 | Judged forward against unfiltered FP-D (docs/macro_drivers.md §4) |
 | **SP-0** forward check | Our own index's B200/H100 ratio must revert as R7-04 says | – | Nothing (running) | Evaluates 2027-07 |
 
 - **Costs everywhere:**
@@ -73,7 +86,7 @@ and the archives.
 
 | Strategy | Instrument | Status | Evidence |
 |---|---|---|---|
-| **SA2-M** residual reversal | 20 compute-linked US stocks against XLK | Live forward test (7/60 sessions; 250-session extension) | Held-out: 10.6 bps a day net, Sharpe 1.80, Holm p 0.023; fragile (5 days carry it); failed on large-cap tech |
+| **SA2-M** residual reversal | 20 compute-linked US stocks against XLK | Paper trading (D63); forward test running. **Regime bet:** lost money in 2019–24 (claim 12) | Held-out: 10.6 bps a day net, Sharpe 1.80, Holm p 0.023; fragile (5 days carry it); failed on large-cap tech |
 | **MX1–MX4** modern overlays and models | Same 20 stocks against XLK | Tested 2026-10-16: none confirmed; nightly descriptive shadow (`reports/statarb/lab/`) | Vol management, volume conditioning, PCA factors and a ridge forecast all failed to beat plain SA2-M (docs/modern_results.md) |
 | **KB-1** favourite-longshot | Kalshi GPU price binaries (Ornn indices) | Forward test (needs 30 close dates, about Q1 2027) | Retrospective: too little history; market looks under-confident (logit slope 1.57, SE 0.30). Kalshi serves US persons only |
 

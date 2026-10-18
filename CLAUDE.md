@@ -52,6 +52,7 @@ uv run compute-curve futures-premium      # claim 7: GPU1/GPU2 premium shadow lo
 uv run compute-curve spread               # claim 8: GPU2/GPU1 spread shadow + own-index forward check (docs/spread_plan.md)
 uv run compute-curve fair-value           # GPU1/GPU2 balance-of-month fair value sheet + FP-C (docs/bom_plan.md)
 uv run compute-curve carry                # FP-D: long the backwardation on GPU1/GPU2 (docs/carry_plan.md)
+uv run compute-curve macro                # claim 11: AI-economy signals vs GPU rents, one shot (docs/macro_drivers_plan.md)
 uv run compute-curve crossvenue           # FP-K: GPU1 vs Kalshi H100 monthly-average implied curve (docs/crossvenue_plan.md)
 uv run compute-curve kalshi               # claim 9: Kalshi GPU binaries, public data (docs/kalshi_plan.md; D62)
 uv run compute-curve getdeploying-api check     # GetDeploying API key check (D60; needs GETDEPLOYING_API_KEY)
@@ -151,6 +152,7 @@ src/compute_curve/
   carry.py              FP-D: long the backwardation (hedging-pressure carry), shadow
   crossvenue.py         FP-K: GPU1 vs Kalshi's H100 monthly-average market, shadow
   kalshi.py             claim 9: Kalshi GPU price binaries (public API, var/kalshi only)
+  macro.py              claim 11: AI-economy and rates signals vs GPU rents (FRED cache in var/fred)
   synthetic.py          TEST-ONLY synthetic generators (labelled)
   cli.py                command-line entry point
 tests/

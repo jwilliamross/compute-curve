@@ -138,6 +138,9 @@ period re-run at quoted costs, and the bootstrapped P&L ranges. Total 341.
 Claim 10, modern strategies on the SA2 universe (docs/modern_plan.md), adds 8: MX1,
 MX2a, MX2b, MX3-k1/k2/k3, MX4 and MX4's IC gate. One post-hoc descriptive comparison
 (return per unit gross, docs/modern_results.md) adds 1. Total 350.
+Claim 11, AI-economy signals vs GPU rents (docs/macro_drivers_plan.md, docs/macro_drivers.md),
+adds 17: MD-1 to MD-5 (Holm over 5), 4 descriptive measures, 5 post-hoc robustness checks
+of MD-4, forward checks MD-4F and MD-3R, and rule FP-M. Total 367.
 
 Claim 4 entries stand for several tests each. The total declared for claim 4
 is 114: 96 hypothesis tests plus 18 strategy evaluations used only inside

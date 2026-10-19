@@ -1,4 +1,4 @@
 # FP-D long-the-backwardation: shadow
 
-As of 2026-10-18. Plan: docs/carry_plan.md. No orders.
+As of 2026-10-19. Plan: docs/carry_plan.md. No orders.
 - No CME settlements yet (GPU1/GPU2 not listed, B8). Waiting.

@@ -1261,3 +1261,32 @@ live leads on data never used before, under pre-registered rules
   - No further SA2 variant is tested on historical data.
 - **FP-M is dropped.** MD-4F still runs forward.
 
+## D68. The SA2-M paper kill switch fired on a noise-dominated fill criterion (2026-10-20)
+
+**What happened.**
+
+- The nightly run on 2026-10-20 stopped SA2-M paper trading: "12% of fills worse
+  than 3x the assumed cost". Three of 25 fills (VRT, TLN and VST on 2026-10-16)
+  were more than 45 bps worse than the official open.
+- The account was flattened at the 2026-10-20 open.
+- Total paper P&L was −USD 137.46.
+
+**What the inspection shows** (recomputed per fill against Alpaca SIP daily opens):
+
+- The mean slippage over the 25 fills was about −16 bps, i.e. better than the
+  open.
+- Market orders fill in continuous trading after the opening print. In volatile
+  small caps the fill sits up to ±100 bps or more from the open, in either
+  direction.
+- A one-sided tail count therefore measures timing noise, not trading cost.
+
+**Decision.**
+
+- **The criterion is a design flaw.** If paper trading ever restarts, kill 4 must
+  use the mean slippage over at least 20 fills, against the same open benchmark,
+  with a limit of 3 × the assumed cost. It must not count the tail.
+- **The account stays stopped, as D63 requires.** Restarting needs an owner
+  decision. Given D67 (SA2-M is a regime bet), the default is not to restart.
+- **Forward tests unchanged.** The 60- and 250-session forward tests and the
+  strategy lab keep running in shadow mode.
+

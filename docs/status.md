@@ -3,6 +3,25 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## SA2-M paper trading stopped by its kill switch (2026-10-20; D68)
+
+- **What fired.** The bad-fill criterion: 3 of 25 fills (12%, above the 10%
+  limit) were worse than 45 bps (3 × 15 bps) against the official open.
+  - The account was flattened at the 2026-10-20 open.
+  - It holds no positions and sends no orders.
+- **Result.** −USD 137.46 in total, about −1.6% of the USD 8,600 capital:
+  - 10-16: −47.18;
+  - 10-19: −31.38;
+  - 10-20: −58.90, including the cost of flattening.
+- **On inspection the trigger was noise, not cost.**
+  - The 25 fills averaged 16 bps **better** than the open.
+  - Market orders fill seconds to minutes after the opening print, so
+    small-cap fills scatter about ±100 bps either side of it.
+  - A count of only the bad tail fires on symmetric noise. That is a design
+    flaw in the criterion, recorded in D68.
+- **Stays stopped,** per D63 ("stops for good"). With claim 12's result
+  (SA2-M is a regime bet), restarting is an owner decision.
+
 ## Final candidate (2026-10-18; D67): FP-C, GPU1/GPU2 balance of month
 
 - **Three clean replications all failed** (docs/replication_results.md):

@@ -1,26 +1,26 @@
 # GPU1/GPU2 balance-of-month fair value
 
-As of 2026-10-20. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
+As of 2026-10-21. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
 
 ### GPU1 (proxy: our own index)
 
 | Month | Days averaged | Realised avg | Fair value | 90% range | Market | Market - FV |
 |---|---|---|---|---|---|---|
-| 2026-10 | 14/22 | 3.447 | 3.463 | 3.366-3.562 | - | - |
-| 2026-11 | 0/21 | - | 3.490 | 2.938-4.145 | - | - |
-| 2026-12 | 0/23 | - | 3.490 | 2.674-4.555 | - | - |
-| 2027-01 | 0/21 | - | 3.490 | 2.491-4.889 | - | - |
+| 2026-10 | 15/22 | 3.450 | 3.463 | 3.382-3.545 | - | - |
+| 2026-11 | 0/21 | - | 3.490 | 2.956-4.121 | - | - |
+| 2026-12 | 0/23 | - | 3.490 | 2.685-4.537 | - | - |
+| 2027-01 | 0/21 | - | 3.490 | 2.500-4.872 | - | - |
 
-Daily volatility used: 0.0266 (60 daily changes).
+Daily volatility used: 0.0265 (60 daily changes).
 
 ### GPU2 (proxy: our own index)
 
 | Month | Days averaged | Realised avg | Fair value | 90% range | Market | Market - FV |
 |---|---|---|---|---|---|---|
-| 2026-10 | 14/22 | 7.738 | 7.880 | 7.734-8.029 | - | - |
-| 2026-11 | 0/21 | - | 8.130 | 7.256-9.108 | - | - |
-| 2026-12 | 0/23 | - | 8.130 | 6.818-9.693 | - | - |
-| 2027-01 | 0/21 | - | 8.130 | 6.507-10.156 | - | - |
+| 2026-10 | 15/22 | 7.767 | 7.889 | 7.767-8.012 | - | - |
+| 2026-11 | 0/21 | - | 8.149 | 7.301-9.096 | - | - |
+| 2026-12 | 0/23 | - | 8.149 | 6.851-9.694 | - | - |
+| 2027-01 | 0/21 | - | 8.149 | 6.536-10.162 | - | - |
 
 Daily volatility used: 0.0175 (60 daily changes).
 

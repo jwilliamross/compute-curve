@@ -1,6 +1,6 @@
 # Evaluation of the three claims (real data only)
 
-Generated 2026-10-22T01:46:57.867922+00:00. Variants declared project-wide: 66.
+Generated 2026-10-23T01:51:55.768678+00:00. Variants declared project-wide: 66.
 No synthetic data is used in this report.
 
 ## Bottom line
@@ -11,8 +11,8 @@ None of the three claims can be tested on 2026-10-05. GPU1/GPU2 are not listed (
 
 | product | own_headline_days | own_panel_days | settlement_index_days | settlement_trade_days | complete_published_months |
 |---|---|---|---|---|---|
-| GPU1 | 109 | 79 | 0 | 0 | 0 |
-| GPU2 | 109 | 79 | 0 | 0 | 0 |
+| GPU1 | 110 | 80 | 0 | 0 | 0 |
+| GPU2 | 110 | 80 | 0 | 0 | 0 |
 
 ## Descriptive statistics of the price series held
 
@@ -20,14 +20,14 @@ Annualized volatility of log changes (calendar days for daily series, weeks for 
 
 | series | gpu | first | last | n_obs | last_value | share_unchanged | ann_vol | ann_vol_ci_low | ann_vol_ci_high |
 |---|---|---|---|---|---|---|---|---|---|
-| own headline | H100 | 2026-07-06 | 2026-10-22 | 109 | 3.490 | 0.722 | 0.363 | 0.237 | 0.471 |
-| own headline | B200 | 2026-07-06 | 2026-10-22 | 109 | 6.470 | 0.620 | 0.518 | 0.403 | 0.622 |
-| own history panel | H100 | 2026-08-04 | 2026-10-21 | 79 | 3.490 | 0.859 | 0.448 | 0.174 | 0.669 |
-| own history panel | B200 | 2026-08-04 | 2026-10-21 | 79 | 8.190 | 0.577 | 0.294 | 0.044 | 0.455 |
-| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-22 | 54 | 3.839 | 0.000 | 0.218 | 0.178 | 0.248 |
-| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-22 | 54 | 7.737 | 0.000 | 0.149 | 0.094 | 0.205 |
+| own headline | H100 | 2026-07-06 | 2026-10-23 | 110 | 3.490 | 0.716 | 0.379 | 0.234 | 0.505 |
+| own headline | B200 | 2026-07-06 | 2026-10-23 | 110 | 6.470 | 0.624 | 0.515 | 0.399 | 0.617 |
+| own history panel | H100 | 2026-08-04 | 2026-10-22 | 80 | 3.490 | 0.861 | 0.446 | 0.172 | 0.658 |
+| own history panel | B200 | 2026-08-04 | 2026-10-22 | 80 | 8.231 | 0.570 | 0.292 | 0.044 | 0.455 |
+| Computable GPU Index (daily close) | H100 | 2026-08-30 | 2026-10-23 | 55 | 3.875 | 0.000 | 0.217 | 0.180 | 0.247 |
+| Computable GPU Index (daily close) | B200 | 2026-08-30 | 2026-10-23 | 55 | 7.756 | 0.000 | 0.141 | 0.080 | 0.199 |
 | GetDeploying weekly median | H100 | 2025-10-06 | 2026-10-19 | 55 | 3.990 | 0.241 | 0.259 | 0.188 | 0.318 |
-| GetDeploying weekly median | B200 | 2025-10-06 | 2026-10-19 | 55 | 7.535 | 0.370 | 0.375 | 0.245 | 0.493 |
+| GetDeploying weekly median | B200 | 2025-10-06 | 2026-10-19 | 55 | 7.308 | 0.370 | 0.381 | 0.252 | 0.498 |
 
 Computable GPU Index data: (c) 2026 Computable, CC BY-NC 4.0. GetDeploying data: CC BY 4.0. gpurentalprices.com data: CC BY 4.0.
 
@@ -35,8 +35,8 @@ Computable GPU Index data: (c) 2026 Computable, CC BY-NC 4.0. GetDeploying data:
 
 A construction cross-check, not a tracking error against the settlement index.
 
-- H100: 53 overlapping days. Mean log difference (ours minus CGI) -0.123 [-0.151, -0.093]; RMSE 0.135; correlation of daily changes -0.08.
-- B200: 53 overlapping days. Mean log difference (ours minus CGI) +0.010 [-0.019, +0.040]; RMSE 0.052; correlation of daily changes 0.09.
+- H100: 54 overlapping days. Mean log difference (ours minus CGI) -0.123 [-0.151, -0.093]; RMSE 0.135; correlation of daily changes -0.08.
+- B200: 54 overlapping days. Mean log difference (ours minus CGI) +0.010 [-0.018, +0.040]; RMSE 0.052; correlation of daily changes 0.09.
 
 ## Our index versus the settlement index
 
@@ -63,12 +63,12 @@ Backtests on real futures history require CME settlements; see `reports/backtest
 
 Assumed B200/H100 throughput ratio 2.5 (range 1.8-3.0; docs/relative_value.md).
 
-- headline, 2026-10-22: H100 USD 3.490, B200 USD 6.470 per GPU-hour; break-even ratio 1.85 (min 1.85, median 2.09, max 2.28 over 109 days). B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
-- history panel, 2026-10-21: H100 USD 3.490, B200 USD 8.190 per GPU-hour; break-even ratio 2.35 (min 2.00, median 2.15, max 2.35 over 79 days). B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
-- Computable GPU Index, 2026-10-22: break-even ratio 2.02. B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
-- GetDeploying weekly median, 2026-10-19: break-even ratio 1.89. B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
+- headline, 2026-10-23: H100 USD 3.490, B200 USD 6.470 per GPU-hour; break-even ratio 1.85 (min 1.85, median 2.09, max 2.28 over 110 days). B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
+- history panel, 2026-10-22: H100 USD 3.490, B200 USD 8.231 per GPU-hour; break-even ratio 2.36 (min 2.00, median 2.15, max 2.36 over 80 days). B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
+- Computable GPU Index, 2026-10-23: break-even ratio 2.00. B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
+- GetDeploying weekly median, 2026-10-19: break-even ratio 1.83. B200 is cheaper per unit of compute at the central ratio; not robust: the break-even ratio lies inside the assumed range.
 
-- Spread mean-reversion test (H4): insufficient history (79 days on the fixed panel; minimum 120). Not run.
+- Spread mean-reversion test (H4): insufficient history (80 days on the fixed panel; minimum 120). Not run.
 
 ## Cost assumptions
 

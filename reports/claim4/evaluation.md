@@ -1,8 +1,8 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-10-24T01:57:18.255412+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
+Generated 2026-10-25T01:34:45.315465+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
-Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `ea877f05932b5a21...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
+Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `1f6e9f409083bb79...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 
 This report shows aggregate statistics only. Outcome: category-balanced basket of 21 compute-linked stocks minus XLK, from the open after the signal to the close h sessions later.
 
@@ -200,11 +200,11 @@ corr(signal at session t, basket excess return of session t+k). k < 0: returns r
 
 | k | level_b200 | level_h100 |
 |---|---|---|
-| -5 | -0.04 [-0.22, 0.21] | 0.12 [-0.15, 0.27] |
-| -4 | -0.01 [-0.19, 0.19] | -0.16 [-0.31, 0.08] |
-| -3 | -0.17 [-0.31, 0.06] | -0.15 [-0.35, 0.00] |
-| -2 | -0.14 [-0.38, 0.23] | -0.14 [-0.35, 0.24] |
-| -1 | -0.07 [-0.34, 0.18] | -0.29 [-0.42, -0.01] |
+| -5 | -0.04 [-0.22, 0.21] | 0.13 [-0.12, 0.27] |
+| -4 | -0.01 [-0.19, 0.19] | -0.16 [-0.32, 0.04] |
+| -3 | -0.17 [-0.31, 0.06] | -0.15 [-0.34, 0.01] |
+| -2 | -0.14 [-0.38, 0.23] | -0.12 [-0.35, 0.28] |
+| -1 | -0.07 [-0.34, 0.18] | -0.28 [-0.41, 0.01] |
 | 0 | -0.30 [-0.55, -0.09] | -0.32 [-0.54, 0.10] |
 | 1 | 0.06 [-0.25, 0.42] | -0.03 [-0.24, 0.42] |
 | 2 | 0.03 [-0.37, 0.24] | 0.03 [-0.28, 0.28] |

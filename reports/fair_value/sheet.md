@@ -1,6 +1,6 @@
 # GPU1/GPU2 balance-of-month fair value
 
-As of 2026-10-24. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
+As of 2026-10-25. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
 
 ### GPU1 (proxy: our own index)
 
@@ -17,11 +17,11 @@ Daily volatility used: 0.0264 (60 daily changes).
 
 | Month | Days averaged | Realised avg | Fair value | 90% range | Market | Market - FV |
 |---|---|---|---|---|---|---|
-| 2026-10 | 17/22 | 7.824 | 7.916 | 7.852-7.981 | - | - |
-| 2026-11 | 0/21 | - | 8.231 | 7.464-9.077 | - | - |
-| 2026-12 | 0/23 | - | 8.231 | 6.971-9.719 | - | - |
-| 2027-01 | 0/21 | - | 8.231 | 6.639-10.204 | - | - |
+| 2026-10 | 17/22 | 7.824 | 7.935 | 7.870-8.001 | - | - |
+| 2026-11 | 0/21 | - | 8.314 | 7.539-9.170 | - | - |
+| 2026-12 | 0/23 | - | 8.314 | 7.041-9.819 | - | - |
+| 2027-01 | 0/21 | - | 8.314 | 6.705-10.310 | - | - |
 
-Daily volatility used: 0.0175 (60 daily changes).
+Daily volatility used: 0.0176 (60 daily changes).
 
 FP-C (balance-of-month trade, needs licensed SD values): 0 settled traded decisions. No CME settlements yet; waiting.

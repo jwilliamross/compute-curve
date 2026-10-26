@@ -13,33 +13,33 @@ Two series are kept (full history in `reports/own_index.csv`):
 
 | as_of_date | gpu_model | value | method | n_listings | n_providers | meets_coverage |
 |---|---|---|---|---|---|---|
-| 2026-10-25 | H100 | 3.490 | provider_weighted_median | 32 | 26 | True |
-| 2026-10-25 | B200 | 6.250 | provider_weighted_median | 18 | 13 | True |
+| 2026-10-26 | H100 | 3.245 | provider_weighted_median | 30 | 24 | True |
+| 2026-10-26 | B200 | 6.250 | provider_weighted_median | 18 | 13 | True |
 
 ## History panel, last 10 days
 
 | as_of_date | gpu_model | value | method | n_listings | n_providers | meets_coverage |
 |---|---|---|---|---|---|---|
-| 2026-10-14 | B200 | 7.992 | provider_weighted_median|panel6 | 9 | 6 | True |
-| 2026-10-14 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-10-15 | B200 | 8.030 | provider_weighted_median|panel6 | 27 | 6 | True |
 | 2026-10-15 | H100 | 3.490 | provider_weighted_median|panel12 | 57 | 12 | True |
 | 2026-10-16 | B200 | 8.050 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-10-16 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-10-17 | B200 | 8.089 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-10-17 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
-| 2026-10-18 | H100 | 3.490 | provider_weighted_median|panel12 | 38 | 12 | True |
 | 2026-10-18 | B200 | 8.110 | provider_weighted_median|panel6 | 18 | 6 | True |
-| 2026-10-19 | B200 | 8.130 | provider_weighted_median|panel6 | 9 | 6 | True |
+| 2026-10-18 | H100 | 3.490 | provider_weighted_median|panel12 | 38 | 12 | True |
 | 2026-10-19 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
+| 2026-10-19 | B200 | 8.130 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-10-20 | B200 | 8.149 | provider_weighted_median|panel6 | 18 | 6 | True |
 | 2026-10-20 | H100 | 3.490 | provider_weighted_median|panel12 | 38 | 12 | True |
 | 2026-10-21 | B200 | 8.190 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-10-21 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-10-22 | B200 | 8.231 | provider_weighted_median|panel6 | 18 | 6 | True |
 | 2026-10-22 | H100 | 3.490 | provider_weighted_median|panel12 | 38 | 12 | True |
-| 2026-10-24 | H100 | 3.490 | provider_weighted_median|panel12 | 18 | 11 | True |
 | 2026-10-24 | B200 | 8.314 | provider_weighted_median|panel6 | 9 | 6 | True |
+| 2026-10-24 | H100 | 3.490 | provider_weighted_median|panel12 | 18 | 11 | True |
+| 2026-10-25 | H100 | 3.490 | provider_weighted_median|panel12 | 19 | 12 | True |
+| 2026-10-25 | B200 | 8.314 | provider_weighted_median|panel6 | 9 | 6 | True |
 
 ## H100 by provider, latest day
 
@@ -57,17 +57,15 @@ Two series are kept (full history in `reports/own_index.csv`):
 | ovhcloud | fastgpu | 1 | 2.990 | 2.990 | 2.990 |
 | massedcompute | cgi | 1 | 3.140 | 3.140 | 3.140 |
 | thundercompute | fastgpu | 1 | 3.200 | 3.200 | 3.200 |
-| jarvislabs | fastgpu | 1 | 3.490 | 3.490 | 3.490 |
-| crusoe | cgi | 1 | 3.900 | 3.900 | 3.900 |
-| modal | fastgpu | 1 | 3.949 | 3.949 | 3.949 |
 | daytona | fastgpu | 1 | 3.949 | 3.949 | 3.949 |
+| modal | fastgpu | 1 | 3.949 | 3.949 | 3.949 |
 | together | cgi | 1 | 3.990 | 3.990 | 3.990 |
 | lambda | lambda | 5 | 4.090 | 3.290 | 4.290 |
-| hyperbolic | cgi | 1 | 4.170 | 4.170 | 4.170 |
 | digitalocean | cgi | 1 | 4.410 | 4.410 | 4.410 |
 | paperspace | fastgpu | 1 | 4.410 | 4.410 | 4.410 |
 | nebius | fastgpu | 1 | 4.500 | 4.500 | 4.500 |
 | verda | verda | 1 | 4.560 | 4.560 | 4.560 |
+| hyperbolic | cgi | 1 | 4.850 | 4.850 | 4.850 |
 | replicate | fastgpu | 1 | 5.490 | 5.490 | 5.490 |
 | coreweave | coreweave | 1 | 6.155 | 6.155 | 6.155 |
 | baseten | fastgpu | 1 | 6.500 | 6.500 | 6.500 |

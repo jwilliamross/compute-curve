@@ -1290,3 +1290,38 @@ live leads on data never used before, under pre-registered rules
 - **Forward tests unchanged.** The 60- and 250-session forward tests and the
   strategy lab keep running in shadow mode.
 
+## D69. Insider-buying tracker from SEC EDGAR Form 4 filings (owner request, 2026-10-27)
+
+**Context.** The owner asked for a process that always tracks insider buying and
+notifies them, plus a course on fundamental, insider and Fed-driven investing.
+
+**Decision.**
+
+- **Source: SEC EDGAR.** Public government data, used under SEC fair-access rules:
+  a declared User-Agent with a contact email, at most 10 requests a second, and
+  robots.txt checked.
+  - The contact email comes only from the repository variable `SEC_USER_AGENT`,
+    which the owner sets. It is never hard-coded.
+  - Without it, the tracker refuses to run.
+- **What counts as a purchase:**
+  - Form 4, transaction code P;
+  - not a 10b5-1 plan trade;
+  - price of at least USD 1.
+- **What raises an alert** (an insider counts at USD 25k or more within 14
+  days):
+  - a **cluster** of 3 or more insiders;
+  - a **C-suite buy** of USD 100k or more (CEO, CFO, President or Chair);
+  - a **pair** of 2 insiders;
+  - a **large buy** of USD 1M or more.
+
+  These follow the literature (Lakonishok and Lee 2001; Cohen, Malloy and
+  Pomorski 2012). They are fixed alert rules, not a tested trading rule.
+- **Storage.** Purchases go to `data/raw/insiders/` as immutable daily Parquet
+  files. Owner addresses are never stored.
+- **Notification.** A GitHub issue labelled `insider-alert` per run with alerts.
+  The repository owner is notified by GitHub; no other service is involved.
+- **Schedule.** `.github/workflows/insiders.yml`, Monday to Saturday at 11:17 UTC,
+  before the US open.
+- **No trading.** A trading rule built on these alerts would need its own
+  pre-registered historical test first (docs/investing_course.md, week 8).
+

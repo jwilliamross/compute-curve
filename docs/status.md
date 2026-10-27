@@ -3,6 +3,21 @@
 _Last updated: 2026-10-14, GetDeploying API first download. Branch
 `claude/compassionate-allen-uitctg`._
 
+## Insider-buying tracker and investing course (2026-10-27; D69)
+
+- **The tracker.** `.github/workflows/insiders.yml` runs each weekday morning.
+  - It reads SEC Form 4 filings and keeps open-market purchases.
+  - It flags insider clusters, C-suite buys, pairs and large buys.
+  - It commits the purchases to `data/raw/insiders/` and writes
+    `reports/insiders/latest.md`.
+  - It opens a GitHub issue labelled `insider-alert` when anything is flagged.
+- **Owner action.** Set the repository variable `SEC_USER_AGENT` (e.g.
+  "Your Name you@example.com"). SEC requires it, and the tracker refuses to
+  run without it.
+- **The course.** docs/investing_course.md: 8 weeks covering financial
+  statements, valuation, insiders, the Fed, earnings, sizing, and testing a
+  rule.
+
 ## SA2-M paper trading stopped by its kill switch (2026-10-20; D68)
 
 - **What fired.** The bad-fill criterion: 3 of 25 fills (12%, above the 10%

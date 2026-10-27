@@ -360,3 +360,23 @@ The Wayback Machine could not be reached from this environment.
   already accepted for the live pages. Never Vast.ai, RunPod or Together.
 - **Reachability.** Not reachable from the agent sandbox; runs from GitHub
   Actions only.
+
+## SEC EDGAR Form 4 insider filings (`insiders`, D69, 2026-10-27)
+
+- **What.** EDGAR's daily form index, plus each Form 4's full-text submission.
+  The ownershipDocument XML is parsed for open-market purchases (transaction
+  code P, acquired).
+- **Terms.** Public US government data. SEC's fair-access policy applies:
+  - a declared User-Agent with a contact email (repository variable
+    `SEC_USER_AGENT`);
+  - at most 10 requests a second (we use 8);
+  - robots.txt is checked through `PoliteClient`.
+- **Storage.** `data/raw/insiders/YYYY/MM/insiders_<filed date>.parquet`, one
+  immutable file per filing day (an empty file marks a day with no purchases).
+  - Kept: issuer, ticker, owner CIK and name, role and title, transaction date,
+    shares, price, value, shares after, direct or indirect, the 10b5-1 flag,
+    and the filing URL.
+  - **Never stored:** owner addresses.
+- **Reachability.** sec.gov refuses requests from the agent sandbox without a
+  declared contact. The tracker runs from GitHub Actions
+  (`.github/workflows/insiders.yml`).

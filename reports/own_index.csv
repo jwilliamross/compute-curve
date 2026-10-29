@@ -170,7 +170,8 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-25,H100,3.14,provider_weighted_median,43,33,True,2026-10-25 08:47:04.561000+00:00,headline
 2026-10-26,H100,3.14,provider_weighted_median,43,33,True,2026-10-26 08:47:03.568000+00:00,headline
 2026-10-27,H100,2.99,provider_weighted_median,62,32,True,2026-10-27 19:12:50.992614+00:00,headline
-2026-10-28,H100,3.245,provider_weighted_median,30,24,True,2026-10-28 02:33:37.645556+00:00,headline
+2026-10-28,H100,2.99,provider_weighted_median,42,32,True,2026-10-28 08:47:03.332000+00:00,headline
+2026-10-29,H100,3.245,provider_weighted_median,30,24,True,2026-10-29 02:46:46.769406+00:00,headline
 2026-05-07,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-07 20:40:52.292316+00:00,headline
 2026-05-08,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-08 10:20:07.949226+00:00,headline
 2026-05-09,B200,6.095000000000001,provider_weighted_median,42,2,False,2026-05-09 10:01:55.591603+00:00,headline
@@ -342,7 +343,8 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-25,B200,6.25,provider_weighted_median,22,17,True,2026-10-25 08:47:04.561000+00:00,headline
 2026-10-26,B200,6.25,provider_weighted_median,22,17,True,2026-10-26 08:47:03.568000+00:00,headline
 2026-10-27,B200,6.25,provider_weighted_median,28,17,True,2026-10-27 19:12:50.992614+00:00,headline
-2026-10-28,B200,6.25,provider_weighted_median,18,13,True,2026-10-28 02:33:37.645556+00:00,headline
+2026-10-28,B200,6.25,provider_weighted_median,22,17,True,2026-10-28 08:47:03.332000+00:00,headline
+2026-10-29,B200,6.25,provider_weighted_median,18,13,True,2026-10-29 02:46:46.769406+00:00,headline
 2026-08-04,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-04 07:56:54.817000+00:00,history_panel
 2026-08-05,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-05 07:58:05.296000+00:00,history_panel
 2026-08-06,H100,3.225,provider_weighted_median|panel12,16,12,True,2026-08-06 07:57:19.403000+00:00,history_panel
@@ -427,6 +429,7 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-25,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-25 08:47:04.561000+00:00,history_panel
 2026-10-26,H100,3.49,provider_weighted_median|panel12,19,12,True,2026-10-26 08:47:03.568000+00:00,history_panel
 2026-10-27,H100,3.9,provider_weighted_median|panel12,36,11,True,2026-10-27 08:47:05.925000+00:00,history_panel
+2026-10-28,H100,3.9,provider_weighted_median|panel12,18,11,True,2026-10-28 08:47:03.332000+00:00,history_panel
 2026-08-04,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-04 07:56:54.817000+00:00,history_panel
 2026-08-05,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-05 07:58:05.296000+00:00,history_panel
 2026-08-06,B200,6.92,provider_weighted_median|panel6,6,6,True,2026-08-06 07:57:19.403000+00:00,history_panel
@@ -511,3 +514,4 @@ as_of_date,gpu_model,value,method,n_listings,n_providers,meets_coverage,ts_avail
 2026-10-25,B200,8.314499999999999,provider_weighted_median|panel6,9,6,True,2026-10-25 08:47:04.561000+00:00,history_panel
 2026-10-26,B200,8.344999999999999,provider_weighted_median|panel6,9,6,True,2026-10-26 08:47:03.568000+00:00,history_panel
 2026-10-27,B200,8.344999999999999,provider_weighted_median|panel6,18,6,True,2026-10-27 08:47:05.925000+00:00,history_panel
+2026-10-28,B200,8.344999999999999,provider_weighted_median|panel6,9,6,True,2026-10-28 08:47:03.332000+00:00,history_panel

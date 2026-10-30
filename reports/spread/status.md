@@ -1,7 +1,7 @@
 # Claim 8 GPU2/GPU1 spread: shadow
 
-As of 2026-10-29. Plan: docs/spread_plan.md. Derived numbers only (D59). No orders.
+As of 2026-10-30. Plan: docs/spread_plan.md. Derived numbers only (D59). No orders.
 
-- SP-0 (own-index forward replication of R7-04): 65 forecasts, 10 with a 40-business-day outcome; waiting until 2027-07-01.
-- Latest own-index ratio ln(B200/H100) 0.761; forecast for 40 business days ahead 0.774 (B200 at 2.17x H100).
+- SP-0 (own-index forward replication of R7-04): 66 forecasts, 11 with a 40-business-day outcome; waiting until 2027-07-01.
+- Latest own-index ratio ln(B200/H100) 0.738; forecast for 40 business days ahead 0.762 (B200 at 2.14x H100).
 - SP-I/SP-F: no CME settlements yet (GPU1/GPU2 not listed, B8). Waiting.

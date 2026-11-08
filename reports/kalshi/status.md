@@ -12,7 +12,7 @@ Plan: docs/kalshi_plan.md (pre-registered before any price was read). Ornn GPU i
 
 ## KB-2 calibration (descriptive)
 
-- 60 market quotes; Brier 0.1243 (coin 0.25); logit slope 1.31 (SE 0.32; above 1 = under-confident)
+- 59 market quotes; Brier 0.1257 (coin 0.25); logit slope 1.29 (SE 0.32; above 1 = under-confident)
 
 | Mid bucket | n | Mean mid | YES rate |
 |---|---|---|---|
@@ -23,6 +23,6 @@ Plan: docs/kalshi_plan.md (pre-registered before any price was read). Ornn GPU i
 | 0.4-0.5 | 5 | 0.45 | 0.60 |
 | 0.5-0.6 | 3 | 0.55 | 1.00 |
 | 0.6-0.7 | 6 | 0.63 | 0.83 |
-| 0.7-0.8 | 5 | 0.77 | 0.60 |
+| 0.7-0.8 | 4 | 0.76 | 0.50 |
 | 0.8-0.9 | 9 | 0.85 | 1.00 |
 | 0.9-1.0 | 10 | 0.95 | 1.00 |

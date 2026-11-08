@@ -1,6 +1,6 @@
 # GPU1/GPU2 balance-of-month fair value
 
-As of 2026-11-07. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
+As of 2026-11-08. Method: docs/bom_plan.md. Driftless random walk for the days not yet averaged; 90% range from the recent daily volatility. A **proxy** sheet uses our own index, not Silicon Data's: its level differs (basis risk). Research only; no orders.
 
 ### GPU1 (proxy: our own index)
 

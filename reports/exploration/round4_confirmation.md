@@ -1,6 +1,6 @@
 # Exploration round 4: R4-01 status
 
-Checked 2026-11-11 (UTC).
+Checked 2026-11-12 (UTC).
 
 Waiting for listings to 2026-12-31 (runs from 2027-01-01). No statistic is computed before then.
-Listing days collected in the window so far: 32.
+Listing days collected in the window so far: 33.

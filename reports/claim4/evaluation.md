@@ -1,26 +1,26 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-11-13T03:35:02.463850+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
+Generated 2026-11-14T03:32:28.249563+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
-Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `f52b1af1ea847260...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
+Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `e4fb79451b16cc3d...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 
 This report shows aggregate statistics only. Outcome: category-balanced basket of 21 compute-linked stocks minus XLK, from the open after the signal to the close h sessions later.
 
 ## Verdict
 
 - **No signal passed the validation gate. The paper strategy stays in shadow mode.**
-- Family P (primary lead-lag): 1 of 18 tests pass after Holm and the permutation check.
-- Family E (event study): 0 of 6 pass; events per GPU and horizon range from 1 to 4 (minimum for inference: 10).
-- Family W (walk-forward): 0 of 18 pass; at most 40 out-of-sample forecasts (minimum: 120).
+- Family P (primary lead-lag): 0 of 18 tests pass after Holm and the permutation check.
+- Family E (event study): 0 of 6 pass; events per GPU and horizon range from 1 to 5 (minimum for inference: 10).
+- Family W (walk-forward): 0 of 18 pass; at most 41 out-of-sample forecasts (minimum: 120).
 - Family S (bucket baskets, secondary): 2 of 54 pass at a false discovery rate of 10%.
 
 ## Sample and power
 
 | horizon (sessions) | windows | first | last | MDE |rho|, alpha 0.05 | MDE |rho|, Holm first step |
 |---|---|---|---|---|---|
-| 1 | 60 | 2026-08-20 | 2026-11-12 | 0.35 | 0.47 |
-| 5 | 56 | 2026-08-20 | 2026-11-06 | 0.37 | 0.48 |
-| 20 | 41 | 2026-08-20 | 2026-10-16 | 0.43 | 0.55 |
+| 1 | 61 | 2026-08-20 | 2026-11-13 | 0.35 | 0.46 |
+| 5 | 57 | 2026-08-20 | 2026-11-09 | 0.36 | 0.48 |
+| 20 | 42 | 2026-08-20 | 2026-10-19 | 0.42 | 0.55 |
 
 MDE: smallest correlation detectable with 80% power (Fisher z). Windows overlap for h > 1, so the effective sample is smaller still. Realistic predictive correlations for daily returns are 0.1 or less; detecting 0.1 after Holm needs about 1,463 sessions.
 
@@ -30,30 +30,30 @@ Slope: excess return in % for a signal change of 0.01. rho: Pearson correlation 
 
 | signal | h | n | non-zero | slope | rho | rho 95% CI | p HAC | p adj | p perm | passes | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| level_h100 | 1 | 60 | 26 | -0.087 | -0.043 | [-0.39, 0.20] | 0.794 | 1.000 | 0.683 | False |  |
-| level_h100 | 5 | 56 | 23 | 0.179 | 0.027 | [-0.26, 0.31] | 0.851 | 1.000 | 0.833 | False |  |
-| level_h100 | 20 | 41 | 12 | n/a | -0.137 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| level_b200 | 1 | 60 | 24 | -0.400 | -0.342 | [-0.52, -0.15] | 0.010 | 0.167 | 0.017 | False |  |
-| level_b200 | 5 | 56 | 24 | -0.384 | -0.129 | [-0.32, 0.02] | 0.098 | 1.000 | 0.375 | False |  |
-| level_b200 | 20 | 41 | 19 | n/a | -0.258 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| disp_h100 | 1 | 60 | 47 | 0.086 | 0.114 | [-0.10, 0.35] | 0.371 | 1.000 | 0.333 | False |  |
-| disp_h100 | 5 | 56 | 46 | -0.310 | -0.151 | [-0.46, 0.11] | 0.259 | 1.000 | 0.208 | False |  |
-| disp_h100 | 20 | 41 | 34 | n/a | -0.146 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| disp_b200 | 1 | 60 | 13 | 0.164 | 0.298 | [-0.02, 0.47] | 0.002 | 0.037 | 0.017 | True |  |
-| disp_b200 | 5 | 56 | 12 | 0.203 | 0.141 | [-0.02, 0.27] | 0.003 | 0.046 | 0.333 | False |  |
-| disp_b200 | 20 | 41 | 7 | n/a | 0.205 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| avail_h100 | 1 | 60 | 17 | -0.004 | -0.057 | [-0.28, 0.23] | 0.705 | 1.000 | 0.700 | False |  |
-| avail_h100 | 5 | 56 | 17 | -0.008 | -0.047 | [-0.21, 0.10] | 0.420 | 1.000 | 0.417 | False |  |
-| avail_h100 | 20 | 41 | 8 | n/a | -0.003 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| avail_b200 | 1 | 60 | 14 | -0.003 | -0.051 | [-0.28, 0.24] | 0.740 | 1.000 | 0.750 | False |  |
-| avail_b200 | 5 | 56 | 14 | -0.009 | -0.057 | [-0.22, 0.08] | 0.311 | 1.000 | 0.396 | False |  |
-| avail_b200 | 20 | 41 | 6 | n/a | -0.014 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| level_h100 | 1 | 61 | 27 | 0.063 | 0.048 | [-0.35, 0.24] | 0.658 | 1.000 | 0.787 | False |  |
+| level_h100 | 5 | 57 | 24 | 0.066 | 0.010 | [-0.26, 0.26] | 0.938 | 1.000 | 0.918 | False |  |
+| level_h100 | 20 | 42 | 13 | n/a | -0.135 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| level_b200 | 1 | 61 | 25 | -0.402 | -0.342 | [-0.51, -0.15] | 0.011 | 0.197 | 0.016 | False |  |
+| level_b200 | 5 | 57 | 24 | -0.393 | -0.131 | [-0.33, 0.02] | 0.086 | 1.000 | 0.429 | False |  |
+| level_b200 | 20 | 42 | 20 | n/a | -0.256 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| disp_h100 | 1 | 61 | 48 | 0.071 | 0.095 | [-0.12, 0.32] | 0.450 | 1.000 | 0.426 | False |  |
+| disp_h100 | 5 | 57 | 47 | -0.210 | -0.109 | [-0.41, 0.15] | 0.329 | 1.000 | 0.265 | False |  |
+| disp_h100 | 20 | 42 | 35 | n/a | -0.113 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| disp_b200 | 1 | 61 | 14 | 0.143 | 0.266 | [-0.08, 0.46] | 0.015 | 0.253 | 0.049 | False |  |
+| disp_b200 | 5 | 57 | 13 | 0.163 | 0.116 | [-0.07, 0.26] | 0.055 | 0.873 | 0.327 | False |  |
+| disp_b200 | 20 | 42 | 7 | n/a | 0.205 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| avail_h100 | 1 | 61 | 18 | -0.004 | -0.056 | [-0.29, 0.22] | 0.712 | 1.000 | 0.689 | False |  |
+| avail_h100 | 5 | 57 | 17 | -0.008 | -0.047 | [-0.21, 0.10] | 0.422 | 1.000 | 0.429 | False |  |
+| avail_h100 | 20 | 42 | 9 | n/a | -0.011 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| avail_b200 | 1 | 61 | 15 | -0.003 | -0.047 | [-0.28, 0.23] | 0.760 | 1.000 | 0.770 | False |  |
+| avail_b200 | 5 | 57 | 14 | -0.009 | -0.057 | [-0.21, 0.09] | 0.313 | 1.000 | 0.429 | False |  |
+| avail_b200 | 20 | 42 | 7 | n/a | -0.021 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
 
 ## Family E: event study on index moves of 2% or more
 
 | GPU | h | events | mean signed CAR % | 95% CI % | p sign-flip | p Holm | passes | note |
 |---|---|---|---|---|---|---|---|---|
-| H100 | 1 | 4 | -0.550 | n/a | 0.875 | 1.000 | False | insufficient events (4 < 10); descriptive only |
+| H100 | 1 | 5 | -0.081 | n/a | 1.000 | 1.000 | False | insufficient events (5 < 10); descriptive only |
 | H100 | 5 | 3 | 0.974 | n/a | 1.000 | 1.000 | False | insufficient events (3 < 10); descriptive only |
 | H100 | 20 | 1 | 2.018 | n/a | 1.000 | 1.000 | False | insufficient events (1 < 10); descriptive only |
 | B200 | 1 | 4 | -2.906 | n/a | 0.125 | 0.750 | False | insufficient events (4 < 10); descriptive only |
@@ -66,24 +66,24 @@ Baselines: B0 zero excess return; B1 expanding mean. R2 OS: out-of-sample R-squa
 
 | signal | h | OOS | R2 OS vs B0 | R2 OS vs B1 | CW p B0 | CW p B1 | hit rate | p Holm | passes | note |
 |---|---|---|---|---|---|---|---|---|---|---|
-| level_h100 | 1 | 40 | -0.209 | -0.188 | 0.643 | 0.692 | 0.500 | 1.000 | False | 40 out-of-sample forecasts < 120 required |
-| level_h100 | 5 | 32 | -0.025 | -0.130 | 0.215 | 0.738 | 0.781 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| level_h100 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
-| level_b200 | 1 | 40 | -0.173 | -0.153 | 0.054 | 0.038 | 0.525 | 0.968 | False | 40 out-of-sample forecasts < 120 required |
-| level_b200 | 5 | 32 | 0.114 | 0.023 | 0.017 | 0.063 | 0.781 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| level_b200 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
-| disp_h100 | 1 | 40 | -0.028 | -0.011 | 0.763 | 0.708 | 0.500 | 1.000 | False | 40 out-of-sample forecasts < 120 required |
-| disp_h100 | 5 | 32 | 0.065 | -0.031 | 0.098 | 0.941 | 0.688 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| disp_h100 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
-| disp_b200 | 1 | 40 | -0.020 | -0.002 | 0.147 | 0.120 | 0.525 | 1.000 | False | 40 out-of-sample forecasts < 120 required |
-| disp_b200 | 5 | 32 | 0.115 | 0.024 | 0.032 | 0.085 | 0.719 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| disp_b200 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
-| avail_h100 | 1 | 40 | -1.276 | -1.237 | 0.380 | 0.425 | 0.475 | 1.000 | False | 40 out-of-sample forecasts < 120 required |
-| avail_h100 | 5 | 32 | -30.348 | -33.561 | 0.544 | 0.631 | 0.656 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| avail_h100 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
-| avail_b200 | 1 | 40 | -0.177 | -0.157 | 0.838 | 0.839 | 0.475 | 1.000 | False | 40 out-of-sample forecasts < 120 required |
-| avail_b200 | 5 | 32 | 0.105 | 0.013 | 0.052 | 0.118 | 0.688 | 1.000 | False | 32 out-of-sample forecasts < 120 required |
-| avail_b200 | 20 | 2 | n/a | n/a | n/a | n/a | n/a | n/a | False | 2 out-of-sample forecasts |
+| level_h100 | 1 | 41 | -0.221 | -0.203 | 0.690 | 0.744 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
+| level_h100 | 5 | 33 | -0.030 | -0.118 | 0.230 | 0.723 | 0.758 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| level_h100 | 20 | 3 | 0.820 | 0.033 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| level_b200 | 1 | 41 | -0.166 | -0.149 | 0.051 | 0.037 | 0.537 | 0.917 | False | 41 out-of-sample forecasts < 120 required |
+| level_b200 | 5 | 33 | 0.101 | 0.024 | 0.028 | 0.060 | 0.758 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| level_b200 | 20 | 3 | 0.891 | 0.414 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| disp_h100 | 1 | 41 | -0.031 | -0.017 | 0.797 | 0.803 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
+| disp_h100 | 5 | 33 | 0.045 | -0.037 | 0.138 | 0.982 | 0.667 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| disp_h100 | 20 | 3 | 0.867 | 0.288 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| disp_b200 | 1 | 41 | -0.044 | -0.029 | 0.196 | 0.174 | 0.512 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
+| disp_b200 | 5 | 33 | 0.083 | 0.005 | 0.062 | 0.239 | 0.697 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| disp_b200 | 20 | 3 | 0.823 | 0.051 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| avail_h100 | 1 | 41 | -1.252 | -1.220 | 0.373 | 0.426 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
+| avail_h100 | 5 | 33 | -30.248 | -32.920 | 0.546 | 0.631 | 0.636 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| avail_h100 | 20 | 3 | -218.601 | -1,177.727 | n/a | n/a | 0.333 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| avail_b200 | 1 | 41 | -0.173 | -0.156 | 0.832 | 0.841 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
+| avail_b200 | 5 | 33 | 0.091 | 0.013 | 0.069 | 0.118 | 0.667 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| avail_b200 | 20 | 3 | 0.814 | 0.000 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
 
 ## Gate G3: long-short strategy on the walk-forward forecasts, net of costs
 
@@ -91,24 +91,24 @@ Trades only when the forecast exceeds the round-trip cost. Mean net return per w
 
 | signal | h | windows | trades | Sharpe | 95% CI | passes | 0x | 0.5x | 1x | 2x | 4x |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| level_h100 | 1 | 40 | 8 | -0.623 | [-4.26, 4.97] | False | 0.038 | -0.002 | -0.041 | -0.121 | -0.280 |
-| level_h100 | 5 | 32 | 25 | 2.761 | [-0.92, 7.80] | False | 2.324 | 2.137 | 1.950 | 1.576 | 0.827 |
-| level_h100 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
-| level_b200 | 1 | 40 | 7 | 1.967 | [-3.51, 6.17] | False | 0.171 | 0.136 | 0.101 | 0.031 | -0.109 |
-| level_b200 | 5 | 32 | 26 | 3.249 | [-0.56, 9.35] | False | 2.712 | 2.517 | 2.323 | 1.933 | 1.154 |
-| level_b200 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
-| disp_h100 | 1 | 40 | 0 | 0.000 | [0.00, 0.00] | False | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
-| disp_h100 | 5 | 32 | 26 | 2.360 | [-1.62, 7.87] | False | 2.176 | 1.984 | 1.793 | 1.409 | 0.641 |
-| disp_h100 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
-| disp_b200 | 1 | 40 | 5 | 1.191 | [-2.64, 5.07] | False | 0.104 | 0.079 | 0.054 | 0.005 | -0.094 |
-| disp_b200 | 5 | 32 | 25 | 3.117 | [-0.74, 8.82] | False | 2.609 | 2.422 | 2.235 | 1.860 | 1.112 |
-| disp_b200 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
-| avail_h100 | 1 | 40 | 9 | -2.135 | [-4.58, 0.81] | False | -0.090 | -0.134 | -0.179 | -0.267 | -0.445 |
-| avail_h100 | 5 | 32 | 26 | 1.627 | [-1.20, 4.56] | False | 1.651 | 1.460 | 1.268 | 0.884 | 0.116 |
-| avail_h100 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
-| avail_b200 | 1 | 40 | 8 | -2.538 | [-5.14, 0.30] | False | -0.131 | -0.170 | -0.209 | -0.288 | -0.445 |
-| avail_b200 | 5 | 32 | 26 | 2.629 | [-0.89, 7.22] | False | 2.337 | 2.144 | 1.950 | 1.564 | 0.791 |
-| avail_b200 | 20 | 2 | 2 | n/a | n/a | False | n/a | n/a | n/a | n/a | n/a |
+| level_h100 | 1 | 41 | 9 | -1.357 | [-5.68, 4.63] | False | -0.007 | -0.050 | -0.093 | -0.180 | -0.354 |
+| level_h100 | 5 | 33 | 26 | 2.578 | [-1.08, 7.75] | False | 2.192 | 2.003 | 1.814 | 1.437 | 0.681 |
+| level_h100 | 20 | 3 | 3 | 5.304 | n/a | False | 5.317 | 4.928 | 4.540 | 3.763 | 2.209 |
+| level_b200 | 1 | 41 | 7 | 1.943 | [-3.67, 6.29] | False | 0.167 | 0.132 | 0.098 | 0.030 | -0.107 |
+| level_b200 | 5 | 33 | 27 | 3.049 | [-0.77, 9.07] | False | 2.567 | 2.371 | 2.175 | 1.783 | 0.999 |
+| level_b200 | 20 | 3 | 3 | 5.304 | n/a | False | 5.317 | 4.928 | 4.540 | 3.763 | 2.209 |
+| disp_h100 | 1 | 41 | 0 | 0.000 | [0.00, 0.00] | False | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| disp_h100 | 5 | 33 | 27 | 2.201 | [-1.62, 7.37] | False | 2.048 | 1.855 | 1.661 | 1.275 | 0.501 |
+| disp_h100 | 20 | 3 | 3 | 5.304 | n/a | False | 5.317 | 4.928 | 4.540 | 3.763 | 2.209 |
+| disp_b200 | 1 | 41 | 6 | -0.003 | [-4.38, 4.69] | False | 0.058 | 0.029 | -0.000 | -0.058 | -0.173 |
+| disp_b200 | 5 | 33 | 26 | 2.922 | [-0.90, 8.65] | False | 2.468 | 2.279 | 2.090 | 1.713 | 0.958 |
+| disp_b200 | 20 | 3 | 3 | 5.304 | n/a | False | 5.317 | 4.928 | 4.540 | 3.763 | 2.209 |
+| avail_h100 | 1 | 41 | 9 | -2.109 | [-4.55, 0.87] | False | -0.088 | -0.131 | -0.174 | -0.261 | -0.434 |
+| avail_h100 | 5 | 33 | 27 | 1.491 | [-1.26, 4.49] | False | 1.539 | 1.346 | 1.152 | 0.766 | -0.008 |
+| avail_h100 | 20 | 3 | 3 | -0.913 | n/a | False | -1.221 | -1.490 | -1.760 | -2.298 | -3.376 |
+| avail_b200 | 1 | 41 | 8 | -2.507 | [-5.14, 0.34] | False | -0.128 | -0.166 | -0.204 | -0.281 | -0.434 |
+| avail_b200 | 5 | 33 | 27 | 2.457 | [-1.06, 7.17] | False | 2.204 | 2.009 | 1.814 | 1.425 | 0.646 |
+| avail_b200 | 20 | 3 | 3 | 5.304 | n/a | False | 5.317 | 4.928 | 4.540 | 3.763 | 2.209 |
 
 ## Gate
 
@@ -123,7 +123,7 @@ Trades only when the forecast exceeds the round-trip cost. Mean net return per w
 | disp_h100|h1 | False | False | False | False | False |
 | disp_h100|h5 | False | False | False | False | False |
 | disp_h100|h20 | False | False | False | False | False |
-| disp_b200|h1 | True | False | False | False | False |
+| disp_b200|h1 | False | False | False | False | False |
 | disp_b200|h5 | False | False | False | False | False |
 | disp_b200|h20 | False | False | False | False | False |
 | avail_h100|h1 | False | False | False | False | False |
@@ -139,60 +139,60 @@ p adj: Benjamini-Hochberg over the 54 tests.
 
 | target | signal | h | n | non-zero | slope | rho | rho 95% CI | p HAC | p adj | p perm | passes | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| neocloud | level_h100 | 1 | 60 | 26 | -0.049 | -0.015 | [-0.38, 0.26] | 0.927 | 1.000 | 0.900 | False |  |
-| neocloud | level_h100 | 5 | 56 | 23 | -0.738 | -0.075 | [-0.30, 0.17] | 0.550 | 1.000 | 0.583 | False |  |
-| neocloud | level_h100 | 20 | 41 | 12 | n/a | -0.191 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| neocloud | level_b200 | 1 | 60 | 24 | -0.664 | -0.354 | [-0.49, -0.20] | 0.000 | 0.008 | 0.017 | True |  |
-| neocloud | level_b200 | 5 | 56 | 24 | -0.877 | -0.196 | [-0.35, -0.05] | 0.010 | 0.104 | 0.125 | False |  |
-| neocloud | level_b200 | 20 | 41 | 19 | n/a | -0.288 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| neocloud | disp_h100 | 1 | 60 | 47 | 0.094 | 0.078 | [-0.12, 0.29] | 0.508 | 1.000 | 0.500 | False |  |
-| neocloud | disp_h100 | 5 | 56 | 46 | -0.431 | -0.140 | [-0.45, 0.11] | 0.277 | 1.000 | 0.333 | False |  |
-| neocloud | disp_h100 | 20 | 41 | 34 | n/a | -0.149 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| neocloud | disp_b200 | 1 | 60 | 13 | 0.283 | 0.321 | [0.03, 0.48] | 0.000 | 0.000 | 0.017 | True |  |
-| neocloud | disp_b200 | 5 | 56 | 12 | 0.400 | 0.186 | [0.04, 0.31] | 0.000 | 0.000 | 0.104 | False |  |
-| neocloud | disp_b200 | 20 | 41 | 7 | n/a | 0.231 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| neocloud | avail_h100 | 1 | 60 | 17 | -0.011 | -0.103 | [-0.35, 0.18] | 0.506 | 1.000 | 0.400 | False |  |
-| neocloud | avail_h100 | 5 | 56 | 17 | -0.009 | -0.038 | [-0.20, 0.11] | 0.542 | 1.000 | 0.667 | False |  |
-| neocloud | avail_h100 | 20 | 41 | 8 | n/a | -0.052 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| neocloud | avail_b200 | 1 | 60 | 14 | -0.010 | -0.101 | [-0.35, 0.18] | 0.522 | 1.000 | 0.433 | False |  |
-| neocloud | avail_b200 | 5 | 56 | 14 | -0.012 | -0.050 | [-0.21, 0.09] | 0.399 | 1.000 | 0.500 | False |  |
-| neocloud | avail_b200 | 20 | 41 | 6 | n/a | -0.063 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | level_h100 | 1 | 60 | 26 | -0.086 | -0.069 | [-0.46, 0.22] | 0.711 | 1.000 | 0.600 | False |  |
-| gpu_semis | level_h100 | 5 | 56 | 23 | 0.327 | 0.071 | [-0.25, 0.37] | 0.652 | 1.000 | 0.458 | False |  |
-| gpu_semis | level_h100 | 20 | 41 | 12 | n/a | -0.168 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | level_b200 | 1 | 60 | 24 | -0.187 | -0.258 | [-0.57, 0.02] | 0.173 | 0.844 | 0.033 | False |  |
-| gpu_semis | level_b200 | 5 | 56 | 24 | -0.215 | -0.102 | [-0.29, 0.07] | 0.172 | 0.844 | 0.479 | False |  |
-| gpu_semis | level_b200 | 20 | 41 | 19 | n/a | -0.305 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | disp_h100 | 1 | 60 | 47 | 0.049 | 0.105 | [-0.16, 0.37] | 0.474 | 1.000 | 0.350 | False |  |
-| gpu_semis | disp_h100 | 5 | 56 | 46 | -0.242 | -0.168 | [-0.44, 0.07] | 0.164 | 0.844 | 0.188 | False |  |
-| gpu_semis | disp_h100 | 20 | 41 | 34 | n/a | -0.090 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | disp_b200 | 1 | 60 | 13 | 0.099 | 0.291 | [-0.08, 0.56] | 0.073 | 0.490 | 0.033 | False |  |
-| gpu_semis | disp_b200 | 5 | 56 | 12 | 0.161 | 0.159 | [-0.02, 0.30] | 0.001 | 0.008 | 0.208 | False |  |
-| gpu_semis | disp_b200 | 20 | 41 | 7 | n/a | 0.253 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | avail_h100 | 1 | 60 | 17 | -0.001 | -0.018 | [-0.27, 0.32] | 0.908 | 1.000 | 0.933 | False |  |
-| gpu_semis | avail_h100 | 5 | 56 | 17 | -0.006 | -0.056 | [-0.19, 0.08] | 0.285 | 1.000 | 0.333 | False |  |
-| gpu_semis | avail_h100 | 20 | 41 | 8 | n/a | -0.047 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| gpu_semis | avail_b200 | 1 | 60 | 14 | -0.000 | -0.005 | [-0.27, 0.34] | 0.976 | 1.000 | 0.983 | False |  |
-| gpu_semis | avail_b200 | 5 | 56 | 14 | -0.008 | -0.069 | [-0.20, 0.07] | 0.188 | 0.844 | 0.354 | False |  |
-| gpu_semis | avail_b200 | 20 | 41 | 6 | n/a | -0.062 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | level_h100 | 1 | 60 | 26 | -0.125 | -0.057 | [-0.27, 0.10] | 0.614 | 1.000 | 0.650 | False |  |
-| power_capacity | level_h100 | 5 | 56 | 23 | 0.947 | 0.144 | [-0.17, 0.44] | 0.315 | 1.000 | 0.188 | False |  |
-| power_capacity | level_h100 | 20 | 41 | 12 | n/a | 0.089 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | level_b200 | 1 | 60 | 24 | -0.350 | -0.275 | [-0.43, -0.09] | 0.022 | 0.200 | 0.017 | False |  |
-| power_capacity | level_b200 | 5 | 56 | 24 | -0.061 | -0.021 | [-0.29, 0.13] | 0.778 | 1.000 | 0.896 | False |  |
-| power_capacity | level_b200 | 20 | 41 | 19 | n/a | -0.028 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | disp_h100 | 1 | 60 | 47 | 0.116 | 0.142 | [-0.07, 0.37] | 0.249 | 1.000 | 0.267 | False |  |
-| power_capacity | disp_h100 | 5 | 56 | 46 | -0.256 | -0.125 | [-0.41, 0.16] | 0.370 | 1.000 | 0.292 | False |  |
-| power_capacity | disp_h100 | 20 | 41 | 34 | n/a | -0.161 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | disp_b200 | 1 | 60 | 13 | 0.110 | 0.184 | [-0.11, 0.33] | 0.050 | 0.389 | 0.117 | False |  |
-| power_capacity | disp_b200 | 5 | 56 | 12 | 0.047 | 0.033 | [-0.13, 0.21] | 0.587 | 1.000 | 0.771 | False |  |
-| power_capacity | disp_b200 | 20 | 41 | 7 | n/a | 0.003 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | avail_h100 | 1 | 60 | 17 | 0.000 | 0.004 | [-0.18, 0.24] | 0.973 | 1.000 | 0.983 | False |  |
-| power_capacity | avail_h100 | 5 | 56 | 17 | -0.007 | -0.046 | [-0.23, 0.14] | 0.500 | 1.000 | 0.458 | False |  |
-| power_capacity | avail_h100 | 20 | 41 | 8 | n/a | 0.177 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | avail_b200 | 1 | 60 | 14 | 0.001 | 0.010 | [-0.17, 0.24] | 0.933 | 1.000 | 0.950 | False |  |
-| power_capacity | avail_b200 | 5 | 56 | 14 | -0.008 | -0.048 | [-0.23, 0.15] | 0.494 | 1.000 | 0.438 | False |  |
-| power_capacity | avail_b200 | 20 | 41 | 6 | n/a | 0.176 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | level_h100 | 1 | 61 | 27 | 0.219 | 0.104 | [-0.35, 0.34] | 0.352 | 1.000 | 0.492 | False |  |
+| neocloud | level_h100 | 5 | 57 | 24 | -0.704 | -0.073 | [-0.29, 0.16] | 0.562 | 1.000 | 0.551 | False |  |
+| neocloud | level_h100 | 20 | 42 | 13 | n/a | -0.192 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | level_b200 | 1 | 61 | 25 | -0.668 | -0.353 | [-0.49, -0.20] | 0.001 | 0.016 | 0.016 | True |  |
+| neocloud | level_b200 | 5 | 57 | 24 | -0.875 | -0.196 | [-0.35, -0.04] | 0.010 | 0.130 | 0.163 | False |  |
+| neocloud | level_b200 | 20 | 42 | 20 | n/a | -0.288 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | disp_h100 | 1 | 61 | 48 | 0.061 | 0.051 | [-0.16, 0.25] | 0.664 | 1.000 | 0.738 | False |  |
+| neocloud | disp_h100 | 5 | 57 | 47 | -0.385 | -0.134 | [-0.43, 0.10] | 0.243 | 1.000 | 0.102 | False |  |
+| neocloud | disp_h100 | 20 | 42 | 35 | n/a | -0.140 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | disp_b200 | 1 | 61 | 14 | 0.238 | 0.275 | [-0.09, 0.47] | 0.003 | 0.046 | 0.016 | True |  |
+| neocloud | disp_b200 | 5 | 57 | 13 | 0.383 | 0.182 | [0.03, 0.30] | 0.000 | 0.000 | 0.122 | False |  |
+| neocloud | disp_b200 | 20 | 42 | 7 | n/a | 0.231 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | avail_h100 | 1 | 61 | 18 | -0.010 | -0.100 | [-0.34, 0.17] | 0.514 | 1.000 | 0.361 | False |  |
+| neocloud | avail_h100 | 5 | 57 | 17 | -0.009 | -0.038 | [-0.20, 0.11] | 0.541 | 1.000 | 0.612 | False |  |
+| neocloud | avail_h100 | 20 | 42 | 9 | n/a | -0.046 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| neocloud | avail_b200 | 1 | 61 | 15 | -0.010 | -0.094 | [-0.34, 0.18] | 0.547 | 1.000 | 0.443 | False |  |
+| neocloud | avail_b200 | 5 | 57 | 14 | -0.012 | -0.050 | [-0.21, 0.10] | 0.399 | 1.000 | 0.531 | False |  |
+| neocloud | avail_b200 | 20 | 42 | 7 | n/a | -0.056 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | level_h100 | 1 | 61 | 27 | -0.010 | -0.012 | [-0.42, 0.19] | 0.919 | 1.000 | 0.951 | False |  |
+| gpu_semis | level_h100 | 5 | 57 | 24 | 0.159 | 0.034 | [-0.25, 0.30] | 0.795 | 1.000 | 0.776 | False |  |
+| gpu_semis | level_h100 | 20 | 42 | 13 | n/a | -0.170 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | level_b200 | 1 | 61 | 25 | -0.188 | -0.259 | [-0.57, 0.03] | 0.173 | 0.937 | 0.033 | False |  |
+| gpu_semis | level_b200 | 5 | 57 | 24 | -0.227 | -0.106 | [-0.29, 0.07] | 0.137 | 0.926 | 0.510 | False |  |
+| gpu_semis | level_b200 | 20 | 42 | 20 | n/a | -0.306 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | disp_h100 | 1 | 61 | 48 | 0.044 | 0.096 | [-0.16, 0.36] | 0.506 | 1.000 | 0.410 | False |  |
+| gpu_semis | disp_h100 | 5 | 57 | 47 | -0.121 | -0.088 | [-0.39, 0.16] | 0.392 | 1.000 | 0.367 | False |  |
+| gpu_semis | disp_h100 | 20 | 42 | 35 | n/a | -0.098 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | disp_b200 | 1 | 61 | 14 | 0.091 | 0.273 | [-0.09, 0.55] | 0.097 | 0.746 | 0.033 | False |  |
+| gpu_semis | disp_b200 | 5 | 57 | 13 | 0.109 | 0.109 | [-0.13, 0.28] | 0.155 | 0.930 | 0.245 | False |  |
+| gpu_semis | disp_b200 | 20 | 42 | 7 | n/a | 0.253 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | avail_h100 | 1 | 61 | 18 | -0.001 | -0.018 | [-0.27, 0.30] | 0.911 | 1.000 | 0.951 | False |  |
+| gpu_semis | avail_h100 | 5 | 57 | 17 | -0.006 | -0.055 | [-0.19, 0.08] | 0.293 | 1.000 | 0.408 | False |  |
+| gpu_semis | avail_h100 | 20 | 42 | 9 | n/a | -0.036 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| gpu_semis | avail_b200 | 1 | 61 | 15 | -0.000 | -0.003 | [-0.26, 0.32] | 0.984 | 1.000 | 0.984 | False |  |
+| gpu_semis | avail_b200 | 5 | 57 | 14 | -0.008 | -0.068 | [-0.20, 0.07] | 0.193 | 0.946 | 0.347 | False |  |
+| gpu_semis | avail_b200 | 20 | 42 | 7 | n/a | -0.050 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | level_h100 | 1 | 61 | 27 | -0.019 | -0.013 | [-0.25, 0.10] | 0.860 | 1.000 | 0.951 | False |  |
+| power_capacity | level_h100 | 5 | 57 | 24 | 0.744 | 0.114 | [-0.19, 0.36] | 0.354 | 1.000 | 0.245 | False |  |
+| power_capacity | level_h100 | 20 | 42 | 13 | n/a | 0.099 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | level_b200 | 1 | 61 | 25 | -0.351 | -0.276 | [-0.44, -0.09] | 0.022 | 0.241 | 0.033 | False |  |
+| power_capacity | level_b200 | 5 | 57 | 24 | -0.076 | -0.025 | [-0.30, 0.11] | 0.723 | 1.000 | 0.878 | False |  |
+| power_capacity | level_b200 | 20 | 42 | 20 | n/a | -0.013 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | disp_h100 | 1 | 61 | 48 | 0.108 | 0.134 | [-0.08, 0.35] | 0.267 | 1.000 | 0.279 | False |  |
+| power_capacity | disp_h100 | 5 | 57 | 47 | -0.124 | -0.064 | [-0.36, 0.19] | 0.576 | 1.000 | 0.531 | False |  |
+| power_capacity | disp_h100 | 20 | 42 | 35 | n/a | -0.025 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | disp_b200 | 1 | 61 | 14 | 0.100 | 0.172 | [-0.11, 0.32] | 0.075 | 0.672 | 0.230 | False |  |
+| power_capacity | disp_b200 | 5 | 57 | 13 | -0.003 | -0.002 | [-0.20, 0.18] | 0.978 | 1.000 | 0.959 | False |  |
+| power_capacity | disp_b200 | 20 | 42 | 7 | n/a | 0.002 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | avail_h100 | 1 | 61 | 18 | 0.000 | 0.005 | [-0.18, 0.23] | 0.970 | 1.000 | 0.951 | False |  |
+| power_capacity | avail_h100 | 5 | 57 | 17 | -0.007 | -0.045 | [-0.22, 0.14] | 0.500 | 1.000 | 0.449 | False |  |
+| power_capacity | avail_h100 | 20 | 42 | 9 | n/a | 0.111 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
+| power_capacity | avail_b200 | 1 | 61 | 15 | 0.001 | 0.012 | [-0.17, 0.23] | 0.925 | 1.000 | 0.934 | False |  |
+| power_capacity | avail_b200 | 5 | 57 | 14 | -0.008 | -0.048 | [-0.22, 0.14] | 0.492 | 1.000 | 0.469 | False |  |
+| power_capacity | avail_b200 | 20 | 42 | 7 | n/a | 0.111 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
 
 ## Diagnostic: cross-correlogram (descriptive, not a test)
 
@@ -200,15 +200,15 @@ corr(signal at session t, basket excess return of session t+k). k < 0: returns r
 
 | k | level_b200 | level_h100 |
 |---|---|---|
-| -5 | 0.02 [-0.16, 0.22] | -0.10 [-0.26, 0.19] |
-| -4 | -0.03 [-0.14, 0.09] | -0.33 [-0.49, -0.14] |
-| -3 | -0.12 [-0.26, 0.04] | 0.08 [-0.15, 0.37] |
-| -2 | -0.23 [-0.41, 0.01] | -0.12 [-0.32, 0.10] |
-| -1 | 0.08 [-0.26, 0.40] | -0.23 [-0.36, -0.06] |
-| 0 | -0.34 [-0.52, -0.15] | -0.04 [-0.39, 0.20] |
+| -5 | 0.02 [-0.15, 0.21] | -0.10 [-0.27, 0.18] |
+| -4 | -0.02 [-0.14, 0.10] | -0.33 [-0.49, -0.13] |
+| -3 | -0.11 [-0.25, 0.04] | 0.08 [-0.15, 0.39] |
+| -2 | -0.22 [-0.42, 0.01] | -0.12 [-0.31, 0.11] |
+| -1 | 0.08 [-0.26, 0.41] | -0.23 [-0.36, -0.06] |
+| 0 | -0.34 [-0.51, -0.15] | 0.05 [-0.35, 0.24] |
 | 1 | -0.06 [-0.30, 0.23] | 0.04 [-0.35, 0.35] |
-| 2 | 0.06 [-0.26, 0.22] | 0.15 [-0.16, 0.39] |
-| 3 | 0.01 [-0.25, 0.29] | 0.11 [-0.08, 0.27] |
-| 4 | -0.03 [-0.15, 0.05] | -0.01 [-0.31, 0.22] |
-| 5 | -0.04 [-0.20, 0.15] | -0.02 [-0.25, 0.20] |
+| 2 | 0.06 [-0.20, 0.22] | 0.06 [-0.19, 0.37] |
+| 3 | 0.01 [-0.25, 0.30] | 0.11 [-0.11, 0.26] |
+| 4 | -0.03 [-0.14, 0.05] | 0.01 [-0.30, 0.25] |
+| 5 | -0.03 [-0.19, 0.15] | -0.08 [-0.26, 0.11] |
 

@@ -1,8 +1,8 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-11-15T03:02:49.471976+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
+Generated 2026-11-16T03:02:18.850606+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
-Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `599ca95032987525...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
+Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `feb16ae20be09221...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 
 This report shows aggregate statistics only. Outcome: category-balanced basket of 21 compute-linked stocks minus XLK, from the open after the signal to the close h sessions later.
 
@@ -57,7 +57,7 @@ Slope: excess return in % for a signal change of 0.01. rho: Pearson correlation 
 | H100 | 5 | 3 | 0.974 | n/a | 1.000 | 1.000 | False | insufficient events (3 < 10); descriptive only |
 | H100 | 20 | 1 | 2.018 | n/a | 1.000 | 1.000 | False | insufficient events (1 < 10); descriptive only |
 | B200 | 1 | 4 | -2.906 | n/a | 0.125 | 0.750 | False | insufficient events (4 < 10); descriptive only |
-| B200 | 5 | 4 | -4.734 | n/a | 0.125 | 0.750 | False | insufficient events (4 < 10); descriptive only |
+| B200 | 5 | 4 | -4.733 | n/a | 0.125 | 0.750 | False | insufficient events (4 < 10); descriptive only |
 | B200 | 20 | 2 | -7.052 | n/a | 1.000 | 1.000 | False | insufficient events (2 < 10); descriptive only |
 
 ## Family W: walk-forward forecasts against naive baselines
@@ -79,8 +79,8 @@ Baselines: B0 zero excess return; B1 expanding mean. R2 OS: out-of-sample R-squa
 | disp_b200 | 5 | 33 | 0.083 | 0.005 | 0.062 | 0.239 | 0.697 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
 | disp_b200 | 20 | 3 | 0.823 | 0.051 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
 | avail_h100 | 1 | 41 | -1.252 | -1.220 | 0.373 | 0.426 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
-| avail_h100 | 5 | 33 | -30.248 | -32.920 | 0.546 | 0.631 | 0.636 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
-| avail_h100 | 20 | 3 | -218.601 | -1,177.727 | n/a | n/a | 0.333 | n/a | False | 3 out-of-sample forecasts < 120 required |
+| avail_h100 | 5 | 33 | -30.249 | -32.921 | 0.546 | 0.631 | 0.636 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
+| avail_h100 | 20 | 3 | -218.603 | -1,177.748 | n/a | n/a | 0.333 | n/a | False | 3 out-of-sample forecasts < 120 required |
 | avail_b200 | 1 | 41 | -0.173 | -0.156 | 0.832 | 0.841 | 0.488 | 1.000 | False | 41 out-of-sample forecasts < 120 required |
 | avail_b200 | 5 | 33 | 0.091 | 0.013 | 0.069 | 0.118 | 0.667 | 1.000 | False | 33 out-of-sample forecasts < 120 required |
 | avail_b200 | 20 | 3 | 0.814 | 0.000 | n/a | n/a | 1.000 | n/a | False | 3 out-of-sample forecasts < 120 required |
@@ -184,7 +184,7 @@ p adj: Benjamini-Hochberg over the 54 tests.
 | power_capacity | disp_h100 | 1 | 61 | 48 | 0.108 | 0.134 | [-0.08, 0.35] | 0.267 | 1.000 | 0.279 | False |  |
 | power_capacity | disp_h100 | 5 | 57 | 47 | -0.124 | -0.064 | [-0.36, 0.19] | 0.576 | 1.000 | 0.531 | False |  |
 | power_capacity | disp_h100 | 20 | 42 | 35 | n/a | -0.025 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
-| power_capacity | disp_b200 | 1 | 61 | 14 | 0.100 | 0.172 | [-0.11, 0.32] | 0.075 | 0.672 | 0.230 | False |  |
+| power_capacity | disp_b200 | 1 | 61 | 14 | 0.100 | 0.172 | [-0.11, 0.32] | 0.075 | 0.673 | 0.230 | False |  |
 | power_capacity | disp_b200 | 5 | 57 | 13 | -0.003 | -0.002 | [-0.20, 0.18] | 0.978 | 1.000 | 0.959 | False |  |
 | power_capacity | disp_b200 | 20 | 42 | 7 | n/a | 0.002 | n/a | n/a | n/a | n/a | False | too few windows for HAC at h=20 (n < 3h) |
 | power_capacity | avail_h100 | 1 | 61 | 18 | 0.000 | 0.005 | [-0.18, 0.23] | 0.970 | 1.000 | 0.951 | False |  |

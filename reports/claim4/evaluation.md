@@ -1,8 +1,8 @@
 # Claim 4 evaluation: does our GPU rental index lead compute-linked equities?
 
-Generated 2026-11-26T05:25:05.430710+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
+Generated 2026-11-27T05:20:00.316727+00:00. Pre-registration: `docs/claim4_plan.md`. Tests and evaluations declared for claim 4: 114; variant entries project-wide: 66.
 
-Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `b8cae6ae1faff218...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
+Bars: Alpaca market data API, SIP feed, adjusted for splits and dividends. Bars are not stored in the repository (D29); manifest `reports/claim4/data_manifest.json`, SHA-256 `b73c2728a9825397...`. Index: fixed-panel history series built from gpurentalprices.com data (CC BY 4.0, "GPU rental price data by gpurentalprices.com").
 
 This report shows aggregate statistics only. Outcome: category-balanced basket of 21 compute-linked stocks minus XLK, from the open after the signal to the close h sessions later.
 
@@ -200,11 +200,11 @@ corr(signal at session t, basket excess return of session t+k). k < 0: returns r
 
 | k | level_b200 | level_h100 |
 |---|---|---|
-| -5 | 0.04 [-0.12, 0.21] | -0.03 [-0.21, 0.24] |
-| -4 | -0.01 [-0.11, 0.11] | -0.29 [-0.44, -0.11] |
-| -3 | -0.10 [-0.23, 0.04] | 0.04 [-0.13, 0.31] |
-| -2 | -0.22 [-0.41, -0.02] | -0.15 [-0.32, 0.04] |
-| -1 | 0.05 [-0.28, 0.36] | -0.23 [-0.35, -0.07] |
+| -5 | 0.04 [-0.12, 0.21] | -0.08 [-0.25, 0.20] |
+| -4 | -0.01 [-0.11, 0.11] | -0.33 [-0.46, -0.17] |
+| -3 | -0.10 [-0.23, 0.04] | 0.02 [-0.16, 0.29] |
+| -2 | -0.22 [-0.41, -0.02] | -0.20 [-0.38, -0.00] |
+| -1 | 0.05 [-0.28, 0.36] | -0.18 [-0.33, 0.04] |
 | 0 | -0.30 [-0.48, -0.12] | 0.00 [-0.31, 0.19] |
 | 1 | -0.08 [-0.32, 0.18] | -0.08 [-0.35, 0.18] |
 | 2 | 0.11 [-0.05, 0.26] | 0.12 [-0.06, 0.38] |

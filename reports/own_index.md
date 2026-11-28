@@ -13,51 +13,51 @@ Two series are kept (full history in `reports/own_index.csv`):
 
 | as_of_date | gpu_model | value | method | n_listings | n_providers | meets_coverage |
 |---|---|---|---|---|---|---|
-| 2026-11-27 | H100 | 3.200 | provider_weighted_median | 35 | 27 | True |
-| 2026-11-27 | B200 | 6.250 | provider_weighted_median | 17 | 13 | True |
+| 2026-11-28 | H100 | 3.200 | provider_weighted_median | 36 | 27 | True |
+| 2026-11-28 | B200 | 6.300 | provider_weighted_median | 17 | 13 | True |
 
 ## History panel, last 10 days
 
 | as_of_date | gpu_model | value | method | n_listings | n_providers | meets_coverage |
 |---|---|---|---|---|---|---|
-| 2026-11-17 | B200 | 8.500 | provider_weighted_median|panel6 | 8 | 5 | True |
-| 2026-11-17 | H100 | 3.490 | provider_weighted_median|panel12 | 18 | 11 | True |
 | 2026-11-18 | B200 | 8.500 | provider_weighted_median|panel6 | 8 | 5 | True |
 | 2026-11-18 | H100 | 3.490 | provider_weighted_median|panel12 | 18 | 11 | True |
 | 2026-11-19 | B200 | 8.500 | provider_weighted_median|panel6 | 8 | 5 | True |
 | 2026-11-19 | H100 | 3.490 | provider_weighted_median|panel12 | 18 | 11 | True |
 | 2026-11-20 | B200 | 8.500 | provider_weighted_median|panel6 | 8 | 5 | True |
 | 2026-11-20 | H100 | 3.900 | provider_weighted_median|panel12 | 18 | 11 | True |
-| 2026-11-21 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-11-21 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
-| 2026-11-22 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
+| 2026-11-21 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-11-22 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
+| 2026-11-22 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-11-23 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-11-23 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-11-24 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-11-24 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-11-25 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
 | 2026-11-25 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
-| 2026-11-26 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
 | 2026-11-26 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
+| 2026-11-26 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
+| 2026-11-27 | H100 | 3.640 | provider_weighted_median|panel12 | 19 | 12 | True |
+| 2026-11-27 | B200 | 8.550 | provider_weighted_median|panel6 | 9 | 6 | True |
 
 ## H100 by provider, latest day
 
 | provider | source | n | median | min | max |
 |---|---|---|---|---|---|
-| lium | lium | 1 | 1.390 | 1.390 | 1.390 |
-| clore | fastgpu | 1 | 1.641 | 1.641 | 1.641 |
+| lium | lium | 2 | 1.345 | 1.300 | 1.390 |
+| clore | fastgpu | 1 | 1.422 | 1.422 | 1.422 |
 | voltagepark | cgi | 1 | 1.990 | 1.990 | 1.990 |
 | theta | fastgpu | 1 | 2.290 | 2.290 | 2.290 |
 | gmi | fastgpu | 1 | 2.600 | 2.600 | 2.600 |
 | openrelay | fastgpu | 1 | 2.600 | 2.600 | 2.600 |
 | hyperstack | hyperstack | 3 | 2.600 | 2.500 | 3.200 |
 | northflank | fastgpu | 1 | 2.740 | 2.740 | 2.740 |
+| fluence | fastgpu | 3 | 2.754 | 2.424 | 4.514 |
 | deepinfra | fastgpu | 1 | 2.900 | 2.900 | 2.900 |
 | civo | cgi | 1 | 2.990 | 2.990 | 2.990 |
 | ovhcloud | fastgpu | 1 | 2.990 | 2.990 | 2.990 |
 | quantacloud | fastgpu | 1 | 3.070 | 3.070 | 3.070 |
-| fluence | fastgpu | 3 | 3.168 | 2.754 | 4.571 |
 | thundercompute | fastgpu | 1 | 3.200 | 3.200 | 3.200 |
 | massedcompute | cgi | 1 | 3.430 | 3.430 | 3.430 |
 | hyperbolic | cgi | 1 | 3.490 | 3.490 | 3.490 |
@@ -82,9 +82,9 @@ Two series are kept (full history in `reports/own_index.csv`):
 | lium | lium | 1 | 5.600 | 5.600 | 5.600 |
 | northflank | fastgpu | 1 | 5.870 | 5.870 | 5.870 |
 | hyperstack | hyperstack | 1 | 6.000 | 6.000 | 6.000 |
-| fluence | fastgpu | 1 | 6.050 | 6.050 | 6.050 |
 | modal | fastgpu | 1 | 6.250 | 6.250 | 6.250 |
 | openrelay | fastgpu | 1 | 6.300 | 6.300 | 6.300 |
+| fluence | fastgpu | 1 | 6.689 | 6.689 | 6.689 |
 | lambda | lambda | 4 | 7.840 | 7.690 | 7.990 |
 | nebius | fastgpu | 1 | 8.500 | 8.500 | 8.500 |
 | coreweave | coreweave | 1 | 8.600 | 8.600 | 8.600 |
